@@ -3,6 +3,7 @@
 
 <head>
    <meta charset="utf-8">
+   <meta http-equiv="Pragma" content="no-cache" />
    <title>iXec Sync</title>
    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='stylesheets/style.css') }}" />
    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='player/video-js.min.css') }}" />
@@ -13,8 +14,10 @@
 
 <body onload="ready()">
    <div class="wrapper">
+      <span id="debugfield">DEBUG TEXT</span>
       <video id="player" class="video-js vjs-big-play-button" controls preload="auto" controls>
-         <source src="/video/rick1.mkv" type="video/mp4">
+         <source src="/video/video.mkv" type="video/mp4">
+         </track>
       </video>
    </div>
 

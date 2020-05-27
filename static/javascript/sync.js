@@ -1,11 +1,7 @@
 var socket
 var user_action = false
-var heartbeat = 5000
+var heartbeat = 30000
 var sync_speed = 10 // percentage for speeding up or slowing down
-var interval_time = heartbeat
-var interval_start_time
-var interval_loop
-var interval_latency = 0
 
 
 var player = videojs('player', {
@@ -17,13 +13,14 @@ player.on("play", user_sync);
 player.on("pause", user_sync);
 player.on("seeking", user_sync);
 player.on("volumechange", saveVolume);
+player.on("timeupdate", timeUpdate);
 
 function ready() {
     socket = io.connect('http://' + document.domain + ':' + location.port + '/sync');
     socket.on('sync', m => sync_player(m));
     socket.on('out of sync', m => out_of_sync(m));
     socket.on('message', m => message(m));
-    // socket.on('latency', m => latency(m));
+    socket.on('push', m => push(m));
 
     var player_volume = window.localStorage.getItem('player_volume') || 100
     player.volume(player_volume)
@@ -42,32 +39,28 @@ function ready() {
 }
 
 setInterval(function () {
-    interval_start_time = new Date().getTime()
     if (!player.paused()) {
         sync_data('interval sync')
     }
-    // latency_check()
 }, heartbeat);
 
 function message(msg) {
     console.log(msg)
 }
 
-// function latency_check() {
-//     socket.emit("latency", {
-//         "time": new Date().getTime()
-//     });
-// }
+function push(m) {
+    sync_data('interval sync')
+}
 
-// function latency(request) {
-//     interval_latency = Math.abs(new Date().getTime() - request["time"])
-// }
+var debug_field = document.getElementById("debugfield");
+
+function timeUpdate() {
+    debug_field.textContent = player.currentTime()
+}
 
 function out_of_sync(request) {
     out_of_sync_speed(request)
 }
-
-
 
 function out_of_sync_speed(request) {
     switch (request["outofsync"]) {
@@ -90,7 +83,7 @@ function out_of_sync_speed(request) {
 }
 
 function out_of_sync_time_needed(request) {
-    var time_needed = (request["delay"] * sync_speed) // + interval_latency
+    var time_needed = (request["delay"] * sync_speed)
     if (time_needed < heartbeat) {
         console.log("Out of sync - give me " + Math.round((time_needed / 1000)) + " second(s) to fix this please")
         setTimeout(normal_speed, time_needed)
@@ -140,7 +133,7 @@ function sync_player(data) {
 
 function sync_data(data_request) {
     socket.emit(data_request, {
-        "time": (player.currentTime() * 1000), // Time in milliseconds
+        "time": (Math.round(player.currentTime() * 1000)), // Time in milliseconds
         "playing": !player.paused(), // if the player is playing
         "ready": player.readyState(), // ready state
         "heartbeat": heartbeat,

@@ -8,10 +8,6 @@ app = Flask(__name__)
 socketio = SocketIO(app)
 
 
-# clients = {}
-# reference = []
-
-
 class iXecSync:
     clients = {}
     reference = []
@@ -19,9 +15,13 @@ class iXecSync:
     def __init__(self, request):
         self.id = request.sid
         self.epoch = int(round(time.time() * 1000))
+        self.time = 0
+        self.playing = False
+        self.ready = 0
         iXecSync.reference.append(self)
         iXecSync.clients[self.id] = self
         print(f"{self.id} - Client connected")
+        self.push()
 
     def update_client(self, client_data):
         self.time = client_data["time"]
@@ -35,9 +35,9 @@ class iXecSync:
     def sync_client(self):
         emit("sync", self.get_reference_profile(), room=self.id)
 
-    def sync_all_clients(self):
+    def push(self):
         emit(
-            "sync", self.get_reference_profile(), broadcast=True,
+            "push", {"request": "data"}, room=self.id,
         )
 
     def get_reference(self):
@@ -73,12 +73,14 @@ class iXecSync:
         max_out_of_sync = 5000  # in milliseconds
 
         delay = self.epoch - reference.epoch
-        reference_time_delay = reference.time + delay
 
-        delay_between_players = abs(self.time - reference_time_delay) + self.latency
+        if reference.playing:
+            reference.time = reference.time + delay
+
+        delay_between_players = abs(self.time - reference.time)  # - self.latency
 
         if delay_between_players > max_delay:
-            if self.time > reference_time_delay:
+            if self.time > reference.time:
                 print(
                     f"{request.sid} - not in sync - slowing down ({round(delay_between_players)}ms)"
                 )
@@ -129,13 +131,8 @@ def stream(file_name):
 
 
 @socketio.on("user sync", namespace="/sync")
-def sync_time(data):
-    emit("sync", data, broadcast=True, include_self=False)
-
-
-# @socketio.on("latency", namespace="/sync")
-# def sync_time(data):
-#     emit("latency", data, room=request.sid)
+def sync_time(client_data):
+    emit("sync", client_data, broadcast=True, include_self=False)
 
 
 @socketio.on("interval sync", namespace="/sync")
