@@ -1,5 +1,5 @@
 FROM python:3-alpine AS compile-image
-RUN apk add --no-cache build-base python3-dev
+RUN apk add --no-cache build-base libffi-dev python3-dev
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 COPY Docker/requirements.txt requirements.txt
