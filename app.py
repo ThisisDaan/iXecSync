@@ -8,91 +8,102 @@ app = Flask(__name__)
 socketio = SocketIO(app)
 
 
-clients = {}
-reference = []
+# clients = {}
+# reference = []
 
 
-def addClient(request):
-    clients[request.sid] = {
-        "id": request.sid,
-        "time": 0,
-        "playing": False,
-        "ready": 0,
-        "epoch": time.time(),
-    }
-    reference.append(request.sid)
-    syncAll()
+class iXecSync:
+    clients = {}
+    reference = []
 
+    def __init__(self, request):
+        self.id = request.sid
+        iXecSync.reference.append(self)
+        iXecSync.clients[self.id] = self
+        print(f"{self.id} - Client connected")
 
-def removeClient(request):
-    del clients[request.sid]
-    reference.remove(request.sid)
+    def update_client(self, client_data):
+        self.time = client_data["time"]
+        self.playing = client_data["playing"]
+        self.ready = client_data["ready"]
+        self.epoch = int(round(time.time() * 1000))
+        self.check_client_in_sync()
 
+    def sync_client(self):
+        emit("sync", get_reference_profile(), room=self.id)
 
-def updateClient(request, data):
-    clients[request.sid]["time"] = data["time"]
-    clients[request.sid]["playing"] = data["playing"]
-    clients[request.sid]["ready"] = data["ready"]
-    clients[request.sid]["epoch"] = int(round(time.time() * 1000))
-    if reference[0] != request.sid:
-        inSync(request, clients[request.sid])
-    else:
-        emit("reference", {"reference": True}, room=request.sid)
-
-
-def syncUser(user):
-    r_id = reference[0]
-    emit("sync", clients[r_id], room=user)
-
-
-def syncAll():
-    r_id = reference[0]
-    emit(
-        "sync", clients[r_id], broadcast=True,
-    )
-
-
-def inSync(request, data):
-    r_id = reference[0]
-
-    max_delay = 100  # in milliseconds
-
-    client_time = data["epoch"]
-    client_player_time = data["time"]
-
-    reference_time = clients[r_id]["epoch"]
-    reference_player_time = clients[r_id]["time"]
-
-    delay = client_time - reference_time
-    reference_player_time = reference_player_time + delay
-
-    delay_between_players = abs(client_player_time - reference_player_time)
-    if abs(client_player_time - reference_player_time) > max_delay:
-        if client_player_time > reference_player_time:
-            print(
-                f"{request.sid} - not in sync - slowing down ({round(delay_between_players)}ms)"
-            )
-            outofsync = 2
-        else:
-            print(
-                f"{request.sid} - not in sync - speeding up ({round(delay_between_players)}ms)"
-            )
-            outofsync = 1
-    else:
-        print(f"{request.sid} - We are in sync ({round(delay_between_players)}ms)")
-        outofsync = 0
-    if delay_between_players > 60000:
-        syncUser(request.sid)
-    else:
+    def sync_all_clients(self):
         emit(
-            "out of sync",
-            {
-                "outofsync": outofsync,
-                "delay": delay_between_players,
-                "max_delay": max_delay,
-            },
-            room=request.sid,
+            "sync", get_reference_profile(), broadcast=True,
         )
+
+    def get_reference(self):
+        return iXecSync.reference[0]
+
+    def get_reference_profile(self):
+        reference_profile = self.get_reference()
+        return self.get_json_profile(reference_profile)
+
+    def get_json_profile(self):
+        profile = {
+            "id": self.id,
+            "time": self.time,
+            "playing": self.playing,
+            "ready": self.ready,
+            "epoch": self.epoch,
+        }
+
+    def check_client_in_sync(self):
+        reference = self.get_reference()
+
+        if reference == self:
+            return
+
+        max_delay = 100  # in milliseconds
+
+        delay = self.epoch - reference.epoch
+        reference.time = reference.time + delay
+
+        delay_between_players = abs(self.time - reference.time)
+
+        if delay_between_players > max_delay:
+            if self.time > reference.time:
+                print(
+                    f"{request.sid} - not in sync - slowing down ({round(delay_between_players)}ms)"
+                )
+                outofsync = 2
+            else:
+                print(
+                    f"{request.sid} - not in sync - speeding up ({round(delay_between_players)}ms)"
+                )
+                outofsync = 1
+        else:
+            print(f"{request.sid} - We are in sync ({round(delay_between_players)}ms)")
+            outofsync = 0
+
+        if delay_between_players > 60000:
+            self.sync_client()
+        else:
+            emit(
+                "out of sync",
+                {
+                    "outofsync": outofsync,
+                    "delay": delay_between_players,
+                    "max_delay": max_delay,
+                },
+                room=self.id,
+            )
+
+
+def get_client(request):
+    return iXecSync.clients[request.sid]
+
+
+def remove_client(request):
+    client = iXecSync.clients[request.sid]
+    iXecSync.reference.remove(client)
+    del client
+    print(f"{request.sid} - Client disconnected")
 
 
 @app.route("/")
@@ -117,20 +128,19 @@ def sync_time(data):
 
 
 @socketio.on("interval sync", namespace="/sync")
-def sync_time(data):
-    updateClient(request, data)
+def sync_time(client_data):
+    client = get_client(request)
+    client.update_client(client_data)
 
 
 @socketio.on("connect", namespace="/sync")
 def on_connect():
-    addClient(request)
-    print(f"{request.sid} - Client connected")
+    iXecSync(request)
 
 
 @socketio.on("disconnect", namespace="/sync")
 def on_disconnect():
-    removeClient(request)
-    print(f"{request.sid} - Client disconnected")
+    remove_client(request)
 
 
 if __name__ == "__main__":
