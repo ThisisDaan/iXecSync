@@ -6,26 +6,16 @@
    <title>iXec Sync</title>
    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='stylesheets/style.css') }}" />
    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='player/video-js.min.css') }}" />
-   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+   <script src="{{ url_for('static', filename='javascript/jquery.min.js') }}"></script>
+   <script src="{{ url_for('static', filename='javascript/socket.io.js') }}"></script>
    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='stylesheets/vsg-skin.css') }}" />
 </head>
 
 <body onload="ready()">
    <div class="wrapper">
-      <!-- <div id="overlay">
-         <button onclick="alert(player.currentTime())">alert time</button>
-         <button onclick="player.currentTime(100)">time to 100</button>
-         <button onclick="player.playbackRate(0.98)">playback time</button>
-         <button onclick="player.playbackRate(1)">playback time normal</button>
-         <button onclick="sync_data('user sync')">Sync time</button>
-         <button onclick="skipForward(1)">time +1</button>
-      </div> -->
       <video id="player" class="video-js vjs-big-play-button" controls preload="auto" controls>
          <source src="/video/rick1.mkv" type="video/mp4">
       </video>
-
-
    </div>
 
 </body>
