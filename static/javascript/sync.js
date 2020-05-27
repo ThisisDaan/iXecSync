@@ -1,6 +1,6 @@
 var socket
 var user_action = false
-var heartbeat = 30000
+var heartbeat = 5000
 var sync_speed = 10 // percentage for speeding up or slowing down
 
 
@@ -16,7 +16,12 @@ player.on("volumechange", saveVolume);
 player.on("timeupdate", timeUpdate);
 
 function ready() {
-    socket = io.connect('http://' + document.domain + ':' + location.port + '/sync');
+    var hostname = location.hostname;
+    var port = location.port;
+    var protocol = (location.protocol === 'https:' ? 'https://' : 'http://');
+    var url = protocol + hostname + ':' + port + '/sync';
+    socket = io.connect(url);
+    //socket = io.connect('http://' + document.domain + ':' + location.port + '/sync');
     socket.on('sync', m => sync_player(m));
     socket.on('out of sync', m => out_of_sync(m));
     socket.on('message', m => message(m));
