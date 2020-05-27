@@ -7,6 +7,7 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 FROM python:3-alpine AS build-image
 WORKDIR /app
+COPY . /app
 COPY Docker/entrypoint.sh /entrypoint.sh
 COPY --from=compile-image /opt/venv /opt/venv
 RUN chmod 755 /entrypoint.sh
