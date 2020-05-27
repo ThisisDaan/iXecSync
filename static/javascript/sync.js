@@ -22,8 +22,8 @@ function ready() {
     socket = io.connect('http://' + document.domain + ':' + location.port + '/sync');
     socket.on('sync', m => sync_player(m));
     socket.on('out of sync', m => out_of_sync(m));
-    socket.on('reference', m => reference(m));
-    socket.on('latency', m => latency(m));
+    socket.on('message', m => message(m));
+    // socket.on('latency', m => latency(m));
 
     var player_volume = window.localStorage.getItem('player_volume') || 100
     player.volume(player_volume)
@@ -46,22 +46,22 @@ setInterval(function () {
     if (!player.paused()) {
         sync_data('interval sync')
     }
-    latency_check()
+    // latency_check()
 }, heartbeat);
 
-function reference(data) {
-    console.log("=== Reference ===")
+function message(msg) {
+    console.log(msg)
 }
 
-function latency_check() {
-    socket.emit("latency", {
-        "time": new Date().getTime()
-    });
-}
+// function latency_check() {
+//     socket.emit("latency", {
+//         "time": new Date().getTime()
+//     });
+// }
 
-function latency(request) {
-    interval_latency = Math.abs(new Date().getTime() - request["time"])
-}
+// function latency(request) {
+//     interval_latency = Math.abs(new Date().getTime() - request["time"])
+// }
 
 function out_of_sync(request) {
     out_of_sync_speed(request)
@@ -72,8 +72,7 @@ function out_of_sync(request) {
 function out_of_sync_speed(request) {
     switch (request["outofsync"]) {
         case 0:
-            player.playbackRate(1)
-            console.log("playing video at normal speed")
+            normal_speed()
             break;
         case 1:
             player_speed = 1 + (1 / sync_speed)
@@ -91,18 +90,23 @@ function out_of_sync_speed(request) {
 }
 
 function out_of_sync_time_needed(request) {
-    var time_needed = (request["delay"] * sync_speed) + interval_latency
+    var time_needed = (request["delay"] * sync_speed) // + interval_latency
     if (time_needed < heartbeat) {
-        console.log("Out of sync - give me " + Math.round((time_needed / 1000)) + " seconds to fix this please")
+        console.log("Out of sync - give me " + Math.round((time_needed / 1000)) + " second(s) to fix this please")
         setTimeout(normal_speed, time_needed)
     } else {
-        console.log("Out of sync - give me " + Math.round((time_needed / 1000)) + " seconds to fix this please")
+        console.log("Out of sync - give me " + Math.round((time_needed / 1000)) + " second(s) to fix this please")
     }
 }
 
 function normal_speed() {
     player.playbackRate(1)
-    console.log("In sync - sorry for the trouble")
+    if (player.playbackRate() != '1') {
+        console.log("playing video at normal speed")
+    } else {
+        console.log("You are in sync")
+    }
+
 }
 
 function skipForward(seconds) {
@@ -125,7 +129,6 @@ function saveVolume() {
 }
 
 function sync_player(data) {
-    console.log(data)
     sync_player_time = data["time"] / 1000
     player.currentTime(sync_player_time)
     if (data["playing"]) {
@@ -140,5 +143,6 @@ function sync_data(data_request) {
         "time": (player.currentTime() * 1000), // Time in milliseconds
         "playing": !player.paused(), // if the player is playing
         "ready": player.readyState(), // ready state
+        "heartbeat": heartbeat,
     });
 }
