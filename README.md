@@ -1,2 +1,2 @@
 # iXecSync
-Python video player that syncs the time
+Syncs a video with multiple users.
