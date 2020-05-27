@@ -34,13 +34,6 @@ def updateClient(request, data):
     clients[request.sid]["playing"] = data["playing"]
     clients[request.sid]["ready"] = data["ready"]
     clients[request.sid]["epoch"] = int(round(time.time() * 1000))
-    # clients[request.sid] = {
-    #     "id": request.sid,
-    #     "time": data["time"],
-    #     "playing": data["playing"],
-    #     "ready": data["ready"],
-    #     "epoch": time.time(),
-    # }
     if reference[0] != request.sid:
         inSync(request, clients[request.sid])
     else:
@@ -72,9 +65,6 @@ def inSync(request, data):
 
     delay = client_time - reference_time
     reference_player_time = reference_player_time + delay
-    # print(delay)
-    # print(client_player_time)
-    # print(reference_player_time)
 
     delay_between_players = abs(client_player_time - reference_player_time)
     if abs(client_player_time - reference_player_time) > max_delay:
