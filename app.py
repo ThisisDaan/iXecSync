@@ -11,7 +11,7 @@ folder_location = os.path.join(
     os.path.dirname(os.path.realpath(__file__)) + os.sep + "video" + os.sep
 )
 video_dir = folder_location
-video_filename = "rick.mp4"
+video_filename = ""
 
 
 class iXecSync:
@@ -130,7 +130,7 @@ def index(path, file_name):
     global video_dir
     global video_filename
 
-    video_dir = folder_location + path + os.sep
+    video_dir = folder_location + path
     video_filename = file_name
 
     return render_template("index.html")
@@ -155,8 +155,10 @@ def index(path, file_name):
 #     return list
 
 
-@app.route("/player/<string:file_name>")
-def stream(file_name):
+@app.route("/player/video.sync")
+def stream():
+    print(video_dir)
+    print(video_filename)
     return send_from_directory(directory=video_dir, filename=video_filename)
 
 
