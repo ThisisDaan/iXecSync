@@ -106,7 +106,8 @@ function out_of_sync_time_needed(request) {
 }
 
 function skipForward(seconds) {
-    player.currentTime(player.currentTime() + seconds)
+    time = player.currentTime() + seconds
+    player.currentTime(time)
 }
 
 function user_sync() {
@@ -121,8 +122,12 @@ function saveVolume() {
 }
 
 function sync_player(data) {
-    player.currentTime(data["time"] / 1000)
+    if (data["time"] != false) {
+        time = data["time"] / 1000
+        player.currentTime(time)
+    }
     data["paused"] ? player.pause() : player.play()
+    sync_data('interval sync')
 }
 
 function sync_data(data_request) {

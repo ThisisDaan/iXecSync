@@ -15,9 +15,7 @@ class iXecSync:
 
     def __init__(self, request):
         self.id = request.sid
-        self.epoch = self.get_time()
-
-        self.time = 0
+        self.update_client_time(0)
         self.paused = True
 
         iXecSync.reference.append(self)
@@ -25,13 +23,16 @@ class iXecSync:
         print(f"{self.id} - Client connected")
         self.push()
 
+    def update_client_time(self, time):
+        self.time = time
+        self.epoch = self.get_time()
+
     def get_time(self):
         return int(round(time.time() * 1000))
 
     def update_client(self, client_data):
-        self.time = client_data["time"]
+        self.update_client_time(client_data["time"])
         self.paused = client_data["paused"]
-        self.epoch = self.get_time()
         if self.time != 0:
             self.check_client_in_sync()
 
@@ -83,14 +84,12 @@ class iXecSync:
         delay = self.epoch - reference.epoch
 
         if not reference.paused:
-            reference_time = reference.time + delay
-        else:
-            reference_time = reference_time
+            reference.update_client_time(reference.time + delay)
 
-        delay_between_players = abs(self.time - reference_time)
+        delay_between_players = abs(self.time - reference.time)
 
         if delay_between_players > max_delay:
-            if self.time > reference_time:
+            if self.time > reference.time:
                 print(
                     f"{request.sid} - not in sync - slowing down ({round(delay_between_players)}ms)"
                 )
@@ -105,9 +104,8 @@ class iXecSync:
             outofsync = 0
 
         if delay_between_players > max_out_of_sync:
-            # DO NOTHING
             print("syncing client")
-            # self.sync_client()
+            self.sync_client()
         else:
             emit(
                 "out of sync",
@@ -144,6 +142,8 @@ def stream(file_name):
 
 @socketio.on("user sync", namespace="/sync")
 def sync_time(client_data):
+    client = get_client(request)
+    client.update_client_time(client_data["time"])
     emit("sync", client_data, broadcast=True, include_self=False)
 
 
@@ -156,7 +156,7 @@ def sync_time(client_data):
 @socketio.on("connect", namespace="/sync")
 def on_connect():
     iXecSync(request)
-    emit("sync", {"paused": True}, broadcast=True, include_self=False)
+    emit("sync", {"time": False, "paused": True}, broadcast=True, include_self=False)
 
 
 @socketio.on("disconnect", namespace="/sync")
