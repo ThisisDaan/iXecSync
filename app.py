@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, emit
 import datetime
 import json
 import time
+import copy
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -14,31 +15,37 @@ class iXecSync:
 
     def __init__(self, request):
         self.id = request.sid
-        self.epoch = int(round(time.time() * 1000))
+        self.epoch = self.get_time()
+
         self.time = 0
-        self.playing = False
-        self.ready = 0
+        self.paused = True
+
         iXecSync.reference.append(self)
         iXecSync.clients[self.id] = self
         print(f"{self.id} - Client connected")
         self.push()
 
+    def get_time(self):
+        return int(round(time.time() * 1000))
+
     def update_client(self, client_data):
         self.time = client_data["time"]
-        self.playing = client_data["playing"]
-        self.ready = client_data["ready"]
-        self.last_epoch = self.epoch
-        self.epoch = int(round(time.time() * 1000))
-        self.latency = abs((self.epoch - self.last_epoch) - client_data["heartbeat"])
-        self.check_client_in_sync()
+        self.paused = client_data["paused"]
+        self.epoch = self.get_time()
+        if self.time != 0:
+            self.check_client_in_sync()
 
     def sync_client(self):
         emit("sync", self.get_reference_profile(), room=self.id)
 
     def push(self):
-        emit(
-            "push", {"request": "data"}, room=self.id,
-        )
+        reference = self.get_reference()
+        delay = self.epoch - reference.epoch
+        profile = {
+            "time": reference.time + delay,
+            "paused": True,
+        }
+        emit("push", profile, room=self.id)
 
     def get_reference(self):
         return iXecSync.reference[0]
@@ -48,14 +55,15 @@ class iXecSync:
         return reference.get_json_profile()
 
     def get_json_profile(self):
-        profile = {
-            "id": self.id,
-            "time": self.time,
-            "playing": self.playing,
-            "ready": self.ready,
-            "epoch": self.epoch,
-        }
-        return profile
+        try:
+            profile = {
+                "time": self.time,
+                "paused": self.paused,
+            }
+
+            return profile
+        except AttributeError:
+            return False
 
     def message(self, message):
         emit(
@@ -65,7 +73,7 @@ class iXecSync:
     def check_client_in_sync(self):
         reference = self.get_reference()
 
-        if reference == self:
+        if reference.id == self.id:
             self.message("You are the reference")
             return
 
@@ -74,13 +82,15 @@ class iXecSync:
 
         delay = self.epoch - reference.epoch
 
-        if reference.playing:
-            reference.time = reference.time + delay
+        if not reference.paused:
+            reference_time = reference.time + delay
+        else:
+            reference_time = reference_time
 
-        delay_between_players = abs(self.time - reference.time)  # - self.latency
+        delay_between_players = abs(self.time - reference_time)
 
         if delay_between_players > max_delay:
-            if self.time > reference.time:
+            if self.time > reference_time:
                 print(
                     f"{request.sid} - not in sync - slowing down ({round(delay_between_players)}ms)"
                 )
@@ -95,7 +105,9 @@ class iXecSync:
             outofsync = 0
 
         if delay_between_players > max_out_of_sync:
-            self.sync_client()
+            # DO NOTHING
+            print("syncing client")
+            # self.sync_client()
         else:
             emit(
                 "out of sync",
@@ -144,6 +156,7 @@ def sync_time(client_data):
 @socketio.on("connect", namespace="/sync")
 def on_connect():
     iXecSync(request)
+    emit("sync", {"paused": True}, broadcast=True, include_self=False)
 
 
 @socketio.on("disconnect", namespace="/sync")
