@@ -125,6 +125,16 @@ class iXecSync:
             )
 
 
+# @app.after_request
+# def add_header(r):
+#     r.cache_control.max_age = 0
+#     r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+#     r.headers["Pragma"] = "no-cache"
+#     r.headers["Expires"] = "0"
+#     r.headers["Cache-Control"] = "public, max-age=0"
+#     return r
+
+
 @app.route("/file/<path:path>/<string:file_name>")
 def index(path, file_name):
     global video_dir
@@ -133,7 +143,7 @@ def index(path, file_name):
     video_dir = folder_location + path
     video_filename = file_name
 
-    return render_template("index.html")
+    return render_template("index.html", filename=video_filename)
 
 
 # @app.route("/overview")
@@ -157,6 +167,8 @@ def index(path, file_name):
 
 @app.route("/player/<string:file_name>")
 def stream(file_name):
+    print(video_dir)
+    print(video_filename)
     return send_from_directory(directory=video_dir, filename=video_filename)
 
 
