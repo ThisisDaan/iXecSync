@@ -1,43 +1,37 @@
 from flask import Flask, render_template, send_from_directory, request
+from jinja2 import Template
 from flask_socketio import SocketIO, emit
-import datetime
-import json
 import time
-import copy
+import os
 
 app = Flask(__name__)
 socketio = SocketIO(app)
 
+folder_location = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)) + os.sep + "video" + os.sep
+)
+video_dir = folder_location
+video_filename = "rick.mp4"
+
 
 class iXecSync:
     clients = {}
-    reference = []
 
-    def __init__(self, request):
+    def add_client(self, request):
         self.id = request.sid
         self.update_client_time(0)
         self.paused = True
 
-        iXecSync.reference.append(self)
         iXecSync.clients[self.id] = self
         print(f"{self.id} - Client connected")
         self.push()
 
-    def update_client_time(self, time):
-        self.time = time
-        self.epoch = self.get_time()
+    def get_client(self, request):
+        return iXecSync.clients[request.sid]
 
-    def get_time(self):
-        return int(round(time.time() * 1000))
-
-    def update_client(self, client_data):
-        self.update_client_time(client_data["time"])
-        self.paused = client_data["paused"]
-        if self.time != 0:
-            self.check_client_in_sync()
-
-    def sync_client(self):
-        emit("sync", self.get_reference_profile(), room=self.id)
+    def remove_client(self):
+        del iXecSync.clients[self.id]
+        print(f"{self.id} - Client disconnected")
 
     def push(self):
         reference = self.get_reference()
@@ -48,8 +42,21 @@ class iXecSync:
         }
         emit("push", profile, room=self.id)
 
+    def update_client_time(self, client_time):
+        self.time = client_time
+        self.epoch = int(round(time.time() * 1000))
+
+    def update_client(self, client_data):
+        self.update_client_time(client_data["time"])
+        self.paused = client_data["paused"]
+        self.check_client_in_sync()
+
+    def sync_client(self):
+        emit("sync", self.get_reference_profile(), room=self.id)
+
     def get_reference(self):
-        return iXecSync.reference[0]
+        reference = next(iter(iXecSync.clients.items()))
+        return reference[1]
 
     def get_reference_profile(self):
         reference = self.get_reference()
@@ -91,16 +98,16 @@ class iXecSync:
         if delay_between_players > max_delay:
             if self.time > reference.time:
                 print(
-                    f"{request.sid} - not in sync - slowing down ({round(delay_between_players)}ms)"
+                    f"{self.id} - not in sync - slowing down ({round(delay_between_players)}ms)"
                 )
                 outofsync = 2
             else:
                 print(
-                    f"{request.sid} - not in sync - speeding up ({round(delay_between_players)}ms)"
+                    f"{self.id} - not in sync - speeding up ({round(delay_between_players)}ms)"
                 )
                 outofsync = 1
         else:
-            print(f"{request.sid} - We are in sync ({round(delay_between_players)}ms)")
+            print(f"{self.id} - We are in sync ({round(delay_between_players)}ms)")
             outofsync = 0
 
         if delay_between_players > max_out_of_sync:
@@ -118,50 +125,65 @@ class iXecSync:
             )
 
 
-def get_client(request):
-    return iXecSync.clients[request.sid]
+@app.route("/file/<path:path>/<string:file_name>")
+def index(path, file_name):
+    global video_dir
+    global video_filename
 
+    video_dir = folder_location + path + os.sep
+    video_filename = file_name
 
-def remove_client(request):
-    client = iXecSync.clients[request.sid]
-    iXecSync.reference.remove(client)
-    del client
-    print(f"{request.sid} - Client disconnected")
-
-
-@app.route("/")
-def index():
     return render_template("index.html")
 
 
-@app.route("/video/<string:file_name>")
+# @app.route("/overview")
+# def overview():
+#     return render_template("overview.html", videos=getVideos())
+
+
+# def getVideos():
+#     list = []
+#     for (root, dirs, files) in os.walk(folder_location):
+#         for filename in files:
+#             if filename.endswith(".mkv") or filename.endswith(".mp4"):
+#                 json = {
+#                     "filename": filename,
+#                     "path": os.path.join(root, filename),
+#                 }
+#                 list.append(json)
+
+#     return list
+
+
+@app.route("/player/<string:file_name>")
 def stream(file_name):
-    video_dir = "./video"
-    return send_from_directory(directory=video_dir, filename=file_name)
+    return send_from_directory(directory=video_dir, filename=video_filename)
 
 
 @socketio.on("user sync", namespace="/sync")
 def sync_time(client_data):
-    client = get_client(request)
+    client = iXecSync().get_client(request)
     client.update_client_time(client_data["time"])
     emit("sync", client_data, broadcast=True, include_self=False)
 
 
 @socketio.on("interval sync", namespace="/sync")
 def sync_time(client_data):
-    client = get_client(request)
+    client = iXecSync().get_client(request)
     client.update_client(client_data)
 
 
 @socketio.on("connect", namespace="/sync")
 def on_connect():
-    iXecSync(request)
+    client = iXecSync()
+    client.add_client(request)
     emit("sync", {"time": False, "paused": True}, broadcast=True, include_self=False)
 
 
 @socketio.on("disconnect", namespace="/sync")
 def on_disconnect():
-    remove_client(request)
+    client = iXecSync().get_client(request)
+    client.remove_client()
 
 
 if __name__ == "__main__":

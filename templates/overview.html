@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Pragma" content="no-cache" />
+    <title>iXec Sync</title>
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='stylesheets/style.css') }}" />
+    <script src="{{ url_for('static', filename='javascript/jquery.min.js') }}"></script> -->
+</head>
+
+<body>
+    <ul>
+        {% for item in videos %}
+        <li id="{{ item.filename }}" data-path="{{ item.path }}">
+            <a><span>{{ item.filename }} - {{ item.id }}</span></a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+<script>
+    function select(id) {
+        var video = document.getElementById(id);
+        var path = video.getAttribute('data-path')
+        alert(path)
+    }
+</script>
+
+</html>
