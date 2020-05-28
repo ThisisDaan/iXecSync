@@ -155,10 +155,8 @@ def index(path, file_name):
 #     return list
 
 
-@app.route("/player/video.sync")
-def stream():
-    print(video_dir)
-    print(video_filename)
+@app.route("/player/<string:file_name>")
+def stream(file_name):
     return send_from_directory(directory=video_dir, filename=video_filename)
 
 
