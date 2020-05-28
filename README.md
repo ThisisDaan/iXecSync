@@ -1,2 +1,2 @@
 # iXecSync
-Syncs a video with multiple users.
+Perfect in sync, like all things should be.
