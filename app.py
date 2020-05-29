@@ -177,10 +177,8 @@ def add_header(r):
 
 @app.route("/")
 def index():
-    content = getContent(folder_location)
-    return render_template(
-        "file_browser.html", dirs=content["dirs"], files=content["files"]
-    )
+    redirect_url = f"{request.base_url}/file/"
+    return redirect(redirect_url, code=302)
 
 
 @app.route("/file/", defaults={"path": ""})

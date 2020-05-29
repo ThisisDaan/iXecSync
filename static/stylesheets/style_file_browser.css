@@ -10,9 +10,20 @@ body {
     user-select: none;
 }
 
+.scrolling {
+    overflow-y: scroll;
+    width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-color) transparent;
+}
+
+.file_browser {
+    max-height: calc(100vh - 250px);
+}
+
 ul {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     grid-gap: 25px;
     justify-items: stretch;
     align-items: stretch;

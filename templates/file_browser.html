@@ -17,25 +17,27 @@
       {% include "header.html" %}
       <a href="/file"><button>Home</button></a>
       <button onclick="goBack()">Go Back</button>
-      <ul id="file_browser">
-         {% for item in dirs %}
-         <li class="folder item" onclick='navigate(this.id)' id='{{ item.name }}'>
-            {{ item.name }}
-         </li>
-         {% endfor %}
+      <section class="scrolling">
+         <ul class="file_browser">
+            {% for item in dirs %}
+            <li class="folder item" onclick='navigate(this.id)' id='{{ item.name }}'>
+               {{ item.name }}
+            </li>
+            {% endfor %}
 
-         {% for item in files %}
-         <li class="file item" onclick='navigate(this.id)' id='{{ item.name }}'>
-            {{ item.name }}
-         </li>
-         {% endfor %}
+            {% for item in files %}
+            <li class="file item" onclick='navigate(this.id)' id='{{ item.name }}'>
+               {{ item.name }}
+            </li>
+            {% endfor %}
 
-         {% for item in empty %}
-         <li>
-            {{ item.name }}
-         </li>
-         {% endfor %}
-      </ul>
+            {% for item in empty %}
+            <li>
+               {{ item.name }}
+            </li>
+            {% endfor %}
+         </ul>
+      </section>
    </main>
 </body>
 <script>
