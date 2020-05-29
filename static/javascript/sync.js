@@ -1,4 +1,5 @@
 var socket
+var session_id
 var user_action = false
 var heartbeat = 6000
 var sync_speed = 10 // percentage for speeding up or slowing down
@@ -12,64 +13,63 @@ var player = videojs('player', {
 player.on("play", user_sync);
 player.on("pause", user_sync);
 player.on("seeking", user_sync);
-player.on("volumechange", saveVolume);
-player.on("timeupdate", timeUpdate);
+player.on("volumechange", player_save_volume);
+// player.on("timeupdate", timeUpdate);
 
 function ready() {
+    if (get_session() == true) {
+        player.src({
+            type: 'video/mp4',
+            src: '/player/' + filename + "/" + session_id
+        });
+        create_websocket()
+    }
+    player_set_volume()
+}
+
+function get_session() {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const param_session = urlParams.get('session')
+    if (param_session != null) {
+        session_id = param_session
+        return true
+    } else {
+        return false
+    }
+}
+
+function create_websocket() {
     var hostname = location.hostname;
     var port = location.port;
     var protocol = (location.protocol === 'https:' ? 'https://' : 'http://');
     var url = protocol + hostname + ':' + port + '/sync';
-    socket = io.connect(url);
+    var query = {
+        "query": {
+            "session": session_id,
+            "filename": filename
+        }
+    }
+    socket = io.connect(url, query);
     socket.on('sync', m => sync_player(m));
     socket.on('out of sync', m => out_of_sync(m));
     socket.on('message', m => message(m));
-    socket.on('push', m => sync_player(m));
+    //socket.on('push', m => sync_player(m));
+    connect_sync_player()
+    setInterval(function () {
+        if (!player.paused()) {
+            sync_data('client update')
+        }
+    }, heartbeat);
+}
 
+function player_set_volume() {
     var player_volume = window.localStorage.getItem('player_volume') || 100
     player.volume(player_volume)
-
-    $(document).click(function (e) {
-        if (e.button == 0) {
-            user_action = true
-        }
-    });
-
-    $(".vjs-progress-control, .vjs-progress-holder, .vjs-load-progress, .vjs-mouse-display, .vjs-control-text, vjs-play-progress, .vjs-live-control")
-        .click(
-            function () {
-                sync_data('user sync')
-            });
 }
 
-setInterval(function () {
-    if (!player.paused()) {
-        sync_data('interval sync')
-    }
-}, heartbeat);
-
-function message(msg) {
-    console.log(msg)
-}
-
-var debug_field = document.getElementById("debugfield");
-
-function timeUpdate() {
-    debug_field.textContent = player.currentTime()
-}
-
-function out_of_sync(request) {
-    switch (request["outofsync"]) {
-        case 0:
-            player_speed_normal()
-            break;
-        case 1:
-            player_speed_faster(request)
-            break;
-        case 2:
-            player_speed_slower(request)
-            break;
-    }
+function player_save_volume() {
+    window.localStorage.setItem('player_volume', player.volume()); // saves volume to local storage
 }
 
 function player_speed_normal() {
@@ -95,6 +95,44 @@ function player_speed_slower(request) {
     console.log("slowing down video by " + sync_speed + "%")
 }
 
+function connect_sync_player() {
+    $(document).click(function (e) {
+        if (e.button == 0) {
+            user_action = true
+        }
+    });
+
+    $(".vjs-progress-control, .vjs-progress-holder, .vjs-load-progress, .vjs-mouse-display, .vjs-control-text, vjs-play-progress, .vjs-live-control")
+        .click(
+            function () {
+                sync_data('client request sync')
+            });
+}
+
+function message(msg) {
+    console.log(msg)
+}
+
+// var debug_field = document.getElementById("debugfield");
+
+// function timeUpdate() {
+//     debug_field.textContent = player.currentTime()
+// }
+
+function out_of_sync(request) {
+    switch (request["outofsync"]) {
+        case 0:
+            player_speed_normal()
+            break;
+        case 1:
+            player_speed_faster(request)
+            break;
+        case 2:
+            player_speed_slower(request)
+            break;
+    }
+}
+
 function out_of_sync_time_needed(request) {
     var time_needed = (request["delay"] * sync_speed)
     if (time_needed < heartbeat) {
@@ -113,12 +151,8 @@ function skipForward(seconds) {
 function user_sync() {
     if (user_action) {
         user_action = false
-        sync_data('user sync')
+        sync_data('client request sync')
     }
-}
-
-function saveVolume() {
-    window.localStorage.setItem('player_volume', player.volume()); // saves volume to local storage
 }
 
 function sync_player(data) {
@@ -127,13 +161,19 @@ function sync_player(data) {
         player.currentTime(time)
     }
     data["paused"] ? player.pause() : player.play()
-    sync_data('interval sync')
+    //sync_data('client update')
 }
 
-function sync_data(data_request) {
-    socket.emit(data_request, {
+function create_profile() {
+    return {
         "time": (Math.round(player.currentTime() * 1000)), // Time in milliseconds
         "paused": player.paused(), // if the player is playing
         "heartbeat": heartbeat,
-    });
+        "session": session_id,
+        "filename": filename,
+    }
+}
+
+function sync_data(data_request) {
+    socket.emit(data_request, create_profile());
 }

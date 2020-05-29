@@ -1,0 +1,57 @@
+html,
+body {
+    font-family: 'Roboto Bold';
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+    color: #fff;
+    background-color: #000;
+    padding: 25px;
+    user-select: none;
+}
+
+ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-gap: 25px;
+    justify-items: stretch;
+    align-items: stretch;
+    padding: 10px 5px 10px 10px;
+}
+
+a {
+    color: inherit;
+    text-decoration: inherit;
+}
+
+
+li {
+    display: flex;
+
+    /* horizontal */
+    justify-content: flex-start;
+
+    /*vertical */
+    align-self: center;
+
+    list-style: none;
+    padding: 5px;
+}
+
+.item {
+    cursor: pointer;
+}
+
+.item:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+li.folder:before {
+    margin-right: 15px;
+    content: "\1F4C1";
+}
+
+li.file:before {
+    margin-right: 15px;
+    content: "\25B6";
+}

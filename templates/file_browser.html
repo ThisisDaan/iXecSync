@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+   <meta charset="utf-8">
+   <meta http-equiv="Pragma" content="no-cache" />
+   <title>iXec Sync</title>
+   <link rel="stylesheet" type="text/css"
+      href="{{ url_for('static', filename='stylesheets/style_file_browser.css') }}" />
+   <!-- <script src="{{ url_for('static', filename='javascript/jquery.min.js') }}"></script> -->
+
+</head>
+
+<body onload="ready()">
+
+   <main>
+      {% include "header.html" %}
+      <a href="/file"><button>Home</button></a>
+      <button onclick="goBack()">Go Back</button>
+      <ul id="file_browser">
+         {% for item in dirs %}
+         <li class="folder item" onclick='navigate(this.id)' id='{{ item.name }}'>
+            {{ item.name }}
+         </li>
+         {% endfor %}
+
+         {% for item in files %}
+         <li class="file item" onclick='navigate(this.id)' id='{{ item.name }}'>
+            {{ item.name }}
+         </li>
+         {% endfor %}
+
+         {% for item in empty %}
+         <li>
+            {{ item.name }}
+         </li>
+         {% endfor %}
+      </ul>
+   </main>
+</body>
+<script>
+   function RemoveLastDirectoryPartOf(the_url) {
+      var the_arr = the_url.split('/');
+      the_arr.pop();
+      return (the_arr.join('/'));
+   }
+
+   function goBack() {
+      window.location.href = RemoveLastDirectoryPartOf(window.location.href)
+   }
+
+   function navigate(id) {
+      redirect_url = window.location.href.slice(-1) == "/" ? window.location.href + id : window.location.href + "/" + id
+      window.location.href = redirect_url
+   }
+</script>
+
+</html>

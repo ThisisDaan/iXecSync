@@ -14,9 +14,9 @@
 
 <body onload="ready()">
    <div class="wrapper">
-      <span id="debugfield">DEBUG TEXT</span>
+      <!-- <span id="debugfield">DEBUG TEXT</span> -->
       <video id="player" class="video-js vjs-big-play-button" controls preload="auto">
-         <source src="/player/{{ filename }}" type="video/mp4">
+         <!-- <source src="/player/{{ filename }}" type="video/mp4"> -->
       </video>
    </div>
 
@@ -24,6 +24,7 @@
 <script src="{{ url_for('static', filename='player/video.min.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/sync.js') }}"></script>
 <script>
+   var filename = "{{ filename }}"
    window.onresize = function () {
       player.height(window.innerHeight) // changes player to height window
       player.width(window.innerWidth) // changes player to width window
