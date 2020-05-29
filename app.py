@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_from_directory, request
+from flask import Flask, render_template, send_from_directory, request, session
 from jinja2 import Template
 from flask_socketio import SocketIO, emit
 import time
@@ -15,24 +15,25 @@ video_filename = ""
 
 
 class iXecSync:
-    clients = {}
+    clients = []
 
-    def add_client(self, request):
+    def __init__(self, request):
         self.id = request.sid
         self.update_client_time(0)
         self.paused = True
 
-        iXecSync.clients[self.id] = self
+        iXecSync.clients.append(self)
         print(f"{self.id} - Client connected")
+        emit("sync", {"time": False, "paused": True}, broadcast=True, skip_sid=self.id)
         self.push()
 
-    def get_client(self, request):
-        return iXecSync.clients[request.sid]
-
     def remove_client(self):
-        del iXecSync.clients[self.id]
+        iXecSync.clients.remove(self)
         print(f"{self.id} - Client disconnected")
 
+    #
+    # NOTE sometimes client doesn't sync with reference on startup
+    #
     def push(self):
         reference = self.get_reference()
         delay = self.epoch - reference.epoch
@@ -51,12 +52,15 @@ class iXecSync:
         self.paused = client_data["paused"]
         self.check_client_in_sync()
 
+    def sync_other_clients(self, client_data):
+        self.update_client_time(client_data["time"])
+        emit("sync", client_data, broadcast=True, skip_sid=self.id)
+
     def sync_client(self):
         emit("sync", self.get_reference_profile(), room=self.id)
 
     def get_reference(self):
-        reference = next(iter(iXecSync.clients.items()))
-        return reference[1]
+        return iXecSync.clients[0]
 
     def get_reference_profile(self):
         reference = self.get_reference()
@@ -125,14 +129,14 @@ class iXecSync:
             )
 
 
-# @app.after_request
-# def add_header(r):
-#     r.cache_control.max_age = 0
-#     r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-#     r.headers["Pragma"] = "no-cache"
-#     r.headers["Expires"] = "0"
-#     r.headers["Cache-Control"] = "public, max-age=0"
-#     return r
+@app.after_request
+def add_header(r):
+    r.cache_control.max_age = 0
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers["Cache-Control"] = "public, max-age=0"
+    return r
 
 
 @app.route("/file/<path:path>/<string:file_name>")
@@ -165,37 +169,34 @@ def index(path, file_name):
 #     return list
 
 
+#
+# NOTE create rooms for each video file that is playing
+#
+
+
 @app.route("/player/<string:file_name>")
 def stream(file_name):
-    print(video_dir)
-    print(video_filename)
     return send_from_directory(directory=video_dir, filename=video_filename)
 
 
 @socketio.on("user sync", namespace="/sync")
 def sync_time(client_data):
-    client = iXecSync().get_client(request)
-    client.update_client_time(client_data["time"])
-    emit("sync", client_data, broadcast=True, include_self=False)
+    session.client.sync_other_clients(client_data)
 
 
 @socketio.on("interval sync", namespace="/sync")
 def sync_time(client_data):
-    client = iXecSync().get_client(request)
-    client.update_client(client_data)
+    session.client.update_client(client_data)
 
 
 @socketio.on("connect", namespace="/sync")
 def on_connect():
-    client = iXecSync()
-    client.add_client(request)
-    emit("sync", {"time": False, "paused": True}, broadcast=True, include_self=False)
+    session.client = iXecSync(request)
 
 
 @socketio.on("disconnect", namespace="/sync")
 def on_disconnect():
-    client = iXecSync().get_client(request)
-    client.remove_client()
+    session.client.remove_client()
 
 
 if __name__ == "__main__":
