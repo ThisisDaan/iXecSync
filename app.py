@@ -43,7 +43,11 @@ class iXecSync:
 
     def cleanup_after(self):
         if len(iXecSync.clients[self.session]) < 1:
-            del video_location[self.session]
+            try:
+                del video_location[self.session]
+                print(f"{self.id}@{self.session} - Tidied up after watching.")
+            except KeyError:
+                print(f"{self.id}@{self.session} - Nothing to clean up.")
 
     # NOTE sometimes client doesn't sync with reference on startup
 
@@ -147,7 +151,7 @@ class iXecSync:
             outofsync = 0
 
         if delay_between_players > max_out_of_sync:
-            print("syncing client")
+            print(f"{self.id}@{self.session} - Syncing client (+{max_out_of_sync}ms)")
             self.sync_client()
         else:
             emit(
@@ -159,10 +163,6 @@ class iXecSync:
                 },
                 room=self.id,
             )
-
-
-def create_session_id(filename, session):
-    return f"{filename}/{session}"
 
 
 @app.after_request
@@ -177,8 +177,7 @@ def add_header(r):
 
 @app.route("/")
 def index():
-    redirect_url = f"{request.base_url}/file/"
-    return redirect(redirect_url, code=302)
+    return redirect("/file", code=303)
 
 
 @app.route("/file/", defaults={"path": ""})
@@ -203,7 +202,7 @@ def getContent(folder_dir):
             }
             folder["dirs"].append(json)
         for filename in files:
-            if filename.endswith(".mkv") or filename.endswith(".mp4"):
+            if filename.endswith((".mp4", ".mkv")):
                 json = {
                     "name": filename,
                     "path": os.path.join(root, filename),
@@ -217,33 +216,49 @@ def getContent(folder_dir):
     return folder
 
 
-@app.route("/file/<string:filename>.<string:extension>", defaults={"path": ""})
-@app.route("/file/<path:path>/<string:filename>.<string:extension>")
-def player(path, filename, extension):
-    session_id = request.args.get("session")
-    file = filename + "." + extension
-    if session_id:
-        video_id = create_session_id(file, session_id)
-        video_location[video_id] = {
-            "directory": folder_location + path,
-            "filename": file,
-        }
-
-        video_filename = video_location[video_id]["filename"]
-
-        return render_template("player.html", filename=video_filename)
-    else:
-        redirect_url = f"{request.base_url}?session={uuid.uuid4()}"
-        return redirect(redirect_url, code=302)
+@app.route("/file/<string:name>.<string:extension>", defaults={"path": ""})
+@app.route("/file/<path:path>/<string:name>.<string:extension>")
+def file_browser_video(path, name, extension):
+    session_id = f"{uuid.uuid4()}"
+    filename = f"{name}.{extension}"
+    video_location[session_id] = {
+        "directory": folder_location + path,
+        "filename": filename,
+        "name": name,
+    }
+    return redirect(f"/video.sync?session={session_id}", code=303)
 
 
-@app.route("/player/<string:filename>/<string:session_id>")
-def stream(session_id, filename):
-    video_id = create_session_id(filename, session_id)
-    return send_from_directory(
-        directory=video_location[video_id]["directory"],
-        filename=video_location[video_id]["filename"],
-    )
+@app.route("/video.sync")
+def player():
+    try:
+        session_id = request.args.get("session")
+        video = video_location[session_id]
+        return render_template("player.html")
+    except KeyError:
+        return redirect("/", code=303)
+
+
+@app.route("/player/<string:session_id>")
+def video(session_id):
+    try:
+        return send_from_directory(
+            directory=video_location[session_id]["directory"],
+            filename=video_location[session_id]["filename"],
+        )
+    except KeyError:
+        print("session not valid")
+
+
+@app.route("/subtitle/<string:session_id>")
+def subtitle(session_id):
+    try:
+        return send_from_directory(
+            directory=video_location[session_id]["directory"],
+            filename=f"{video_location[session_id]['name']}.vtt",
+        )
+    except KeyError:
+        print("session not valid")
 
 
 @socketio.on("client request sync", namespace="/sync")
@@ -258,9 +273,7 @@ def sync_time(client_data):
 
 @socketio.on("connect", namespace="/sync")
 def on_connect():
-    client_session = create_session_id(
-        request.args.get("filename"), request.args.get("session")
-    )
+    client_session = request.args.get("session")
     session.client = iXecSync(request, client_session)
 
 

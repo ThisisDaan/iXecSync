@@ -20,8 +20,13 @@ function ready() {
     if (get_session() == true) {
         player.src({
             type: 'video/mp4',
-            src: '/player/' + filename + "/" + session_id
+            src: '/player/' + session_id
         });
+        player.addRemoteTextTrack({
+            kind: 'captions',
+            label: 'English',
+            src: '/subtitle/' + session_id
+        })
         create_websocket()
     }
     player_set_volume()
@@ -46,15 +51,13 @@ function create_websocket() {
     var url = protocol + hostname + ':' + port + '/sync';
     var query = {
         "query": {
-            "session": session_id,
-            "filename": filename
+            "session": session_id
         }
     }
     socket = io.connect(url, query);
     socket.on('sync', m => sync_player(m));
     socket.on('out of sync', m => out_of_sync(m));
     socket.on('message', m => message(m));
-    //socket.on('push', m => sync_player(m));
     connect_sync_player()
     setInterval(function () {
         if (!player.paused()) {
@@ -113,12 +116,6 @@ function message(msg) {
     console.log(msg)
 }
 
-// var debug_field = document.getElementById("debugfield");
-
-// function timeUpdate() {
-//     debug_field.textContent = player.currentTime()
-// }
-
 function out_of_sync(request) {
     switch (request["outofsync"]) {
         case 0:
@@ -161,7 +158,6 @@ function sync_player(data) {
         player.currentTime(time)
     }
     data["paused"] ? player.pause() : player.play()
-    //sync_data('client update')
 }
 
 function create_profile() {
@@ -170,7 +166,6 @@ function create_profile() {
         "paused": player.paused(), // if the player is playing
         "heartbeat": heartbeat,
         "session": session_id,
-        "filename": filename,
     }
 }
 

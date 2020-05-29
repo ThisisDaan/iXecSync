@@ -7,16 +7,18 @@
    <title>iXec Sync</title>
    <link rel="stylesheet" type="text/css"
       href="{{ url_for('static', filename='stylesheets/style_file_browser.css') }}" />
+   <script src="https://kit.fontawesome.com/79d568081a.js" crossorigin="anonymous"></script>
    <!-- <script src="{{ url_for('static', filename='javascript/jquery.min.js') }}"></script> -->
-
 </head>
 
-<body onload="ready()">
+<body>
 
-   <main>
+   <main class="grid">
       {% include "header.html" %}
-      <a href="/file"><button>Home</button></a>
-      <button onclick="goBack()">Go Back</button>
+      <nav>
+         <button onclick="window.location.href='/file'">Home</button>
+         <button onclick="goBack()">Go Back</button>
+      </nav>
       <section class="scrolling">
          <ul class="file_browser">
             {% for item in dirs %}
