@@ -48,12 +48,14 @@ li {
 
 .item {
     cursor: pointer;
-    border: 2px solid transparent;
+    border: 2px solid #2f3136;
     border-radius: 10px;
     padding: 10px 10px 10px 15px;
     margin-bottom: 5px;
     height: 25px;
-    /* text-transform: lowercase; */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .item:hover {
@@ -80,6 +82,7 @@ li.file-other:before {
 } */
 
 .file-other {
+    border: 2px solid transparent;
     opacity: 0.5;
     pointer-events: none;
     cursor: default;

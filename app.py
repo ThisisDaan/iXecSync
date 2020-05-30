@@ -51,7 +51,7 @@ class iXecSync:
     def sync_with_session(self):
         if self.is_reference():
             try:
-                if session_storage[self.session]["time"] != 0:
+                if session_storage[self.session]["time"] is not None:
                     session_time = session_storage[self.session]["time"]
                     session_paused = True
                 else:
@@ -67,8 +67,6 @@ class iXecSync:
 
         self.time = session_time
         self.paused = session_paused
-        print(f"WELL I SET THE TIME TO: {self.time}")
-        print(f"and paused is: {self.paused}")
 
     def push(self, json):
         emit("sync", json, room=self.id)
@@ -266,11 +264,13 @@ def file_browser_video(path, name, extension):
     if extension.startswith(("mp4", "mkv")):
         session_id = f"{uuid.uuid4()}"
         filename = f"{name}.{extension}"
+        languages = srtToVtt_directory(folder_location + path, name)
         session_storage[session_id] = {
             "directory": folder_location + path,
             "filename": filename,
             "name": name,
-            "time": 0,
+            "time": None,
+            "languages": languages,
         }
         return redirect(f"/video.sync?session={session_id}", code=303)
 
@@ -296,9 +296,9 @@ def video(session_id):
         return abort(404)
 
 
-def srtToVtt(directory, name, language):
-    file_srt = f"{directory}{name}.{language}.srt"
-    file_vtt = f"{subtitle_folder_location}{name}.{language}.vtt"
+def srtToVtt(directory, filename):
+    file_srt = f"{directory}{filename}.srt"
+    file_vtt = f"{subtitle_folder_location}{filename}.vtt"
 
     if not os.path.exists(file_srt):
         return
@@ -325,14 +325,22 @@ def srtToVtt(directory, name, language):
     vtt.close()
 
 
+def srtToVtt_directory(directory, name):
+    language_list = []
+    for (root, dirs, files) in os.walk(directory):
+        for filename in files:
+            if filename.endswith(".srt"):
+                filename = filename.replace(".srt", "")
+                language_list.append(filename.replace(f"{name}.", ""))
+                direcotry = os.path.join(root, filename)
+                srtToVtt(directory, filename)
+        break
+    return language_list
+
+
 @app.route("/subtitle/<string:session_id>/<string:language_code>")
 def subtitle(session_id, language_code):
     try:
-        srtToVtt(
-            session_storage[session_id]["directory"],
-            session_storage[session_id]["name"],
-            language_code,
-        )
         return send_from_directory(
             directory=subtitle_folder_location,
             filename=f"{session_storage[session_id]['name']}.{language_code}.vtt",
@@ -363,4 +371,4 @@ def on_disconnect():
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, host="0.0.0.0")
+    socketio.run(app, host="0.0.0.0")
