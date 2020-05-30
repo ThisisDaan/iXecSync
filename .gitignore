@@ -3,6 +3,8 @@
 # Edit at https://www.gitignore.io/?templates=flask,python
 
 video/
+subtitles/*
+!subtitles/.subtitles
 
 ### Flask ###
 instance/*

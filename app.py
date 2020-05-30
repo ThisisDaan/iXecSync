@@ -22,6 +22,9 @@ socketio = SocketIO(app)
 folder_location = os.path.join(
     os.path.dirname(os.path.realpath(__file__)) + os.sep + "video" + os.sep
 )
+subtitle_folder_location = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)) + os.sep + "subtitles" + os.sep
+)
 
 video_location = {}
 
@@ -271,17 +274,18 @@ def video(session_id):
 
 
 def srtToVtt(directory, name, language):
-    file = f"{directory}{name}.{language}"
+    file_srt = f"{directory}{name}.{language}.srt"
+    file_vtt = f"{subtitle_folder_location}{name}.{language}.vtt"
 
-    if not path.exists(f"{file}.srt"):
+    if not path.exists(file_srt):
         return
 
-    if path.exists(f"{file}.vtt"):
+    if path.exists(file_vtt):
         return
 
-    vtt = open(f"{file}.vtt", "w+")
+    vtt = open(file_vtt, "w+")
     vtt.write("WEBVTT\n\n")
-    srt = open(f"{file}.srt", "r")
+    srt = open(file_srt, "r")
     line = srt.readline()
     while line:
         if line.strip():
@@ -307,7 +311,7 @@ def subtitle(session_id, language_code):
             language_code,
         )
         return send_from_directory(
-            directory=video_location[session_id]["directory"],
+            directory=subtitle_folder_location,
             filename=f"{video_location[session_id]['name']}.{language_code}.vtt",
         )
     except KeyError:
