@@ -64,3 +64,9 @@ li.file:before {
     margin-left: 15px;
     content: "\25B6";
 }
+
+.file-other {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: default;
+}

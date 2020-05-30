@@ -26,13 +26,14 @@
       <section class="scrolling">
          <ul class="file_browser">
             {% for item in dirs %}
-            <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}'>
+            <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
                {{ item.name }}
             </li>
             {% endfor %}
 
             {% for item in files %}
-            <li class="file item" onclick='navigate(this.id)' id='{{ item.path }}'>
+            <li class="file item file-{{ item.format }}" onclick='navigate(this.id)' id='{{ item.path }}'
+               data-type='{{ item.type }}'>
                {{ item.name }}
             </li>
             {% endfor %}
@@ -50,16 +51,24 @@
    function RemoveLastDirectoryPartOf(the_url) {
       var the_arr = the_url.split('/');
       the_arr.pop();
+      the_arr.pop();
       return (the_arr.join('/'));
    }
 
    function goBack() {
-      window.location.href = RemoveLastDirectoryPartOf(window.location.href)
+      var back = RemoveLastDirectoryPartOf(window.location.href)
+      window.location.href = back
    }
 
    function navigate(id) {
       //redirect_url = window.location.href.slice(-1) == "/" ? window.location.href + id : window.location.href + "/" + id
-      window.location.href = "/file/" + id
+      var item = document.getElementById(id)
+      var type = item.getAttribute('data-type')
+      var redirect = "/file/" + id
+      if (type == 'dir') {
+         redirect = redirect + "/"
+      }
+      window.location.href = redirect
    }
 </script>
 

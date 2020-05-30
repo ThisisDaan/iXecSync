@@ -218,17 +218,23 @@ def getContent(folder_dir, search_string=None):
                 json = {
                     "name": directory,
                     "path": os.path.join(root.replace(folder_location, ""), directory),
+                    "type": "dir",
                 }
                 folder["dirs"].append(json)
         for filename in files:
             if search_string is None or search_string.lower() in filename.lower():
-                if filename:  # .endswith((".mp4", ".mkv"))
+                if filename:  # )
                     json = {
                         "name": filename,
                         "path": os.path.join(
                             root.replace(folder_location, ""), filename
                         ),
+                        "type": "file",
                     }
+                    if filename.endswith((".mp4", ".mkv")):
+                        json["format"] = "video"
+                    else:
+                        json["format"] = "other"
                     folder["files"].append(json)
         if search_string is None:
             break
@@ -242,14 +248,15 @@ def getContent(folder_dir, search_string=None):
 @app.route("/file/<string:name>.<string:extension>", defaults={"path": ""})
 @app.route("/file/<path:path>/<string:name>.<string:extension>")
 def file_browser_video(path, name, extension):
-    session_id = f"{uuid.uuid4()}"
-    filename = f"{name}.{extension}"
-    video_location[session_id] = {
-        "directory": folder_location + path,
-        "filename": filename,
-        "name": name,
-    }
-    return redirect(f"/video.sync?session={session_id}", code=303)
+    if extension.startswith(("mp4", "mkv")):
+        session_id = f"{uuid.uuid4()}"
+        filename = f"{name}.{extension}"
+        video_location[session_id] = {
+            "directory": folder_location + path,
+            "filename": filename,
+            "name": name,
+        }
+        return redirect(f"/video.sync?session={session_id}", code=303)
 
 
 @app.route("/video.sync")
