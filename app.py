@@ -278,7 +278,7 @@ def srtToVtt(directory, name):
 
     vtt = open(f"{file}.vtt", "w+")
     vtt.write("WEBVTT\n\n")
-    srt = open(f"{file}.srt", "r")
+    srt = open(f"{file}.eng.srt", "r")
     line = srt.readline()
     while line:
         if line.strip():
