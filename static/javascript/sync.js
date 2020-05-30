@@ -34,8 +34,13 @@ function ready() {
         });
         player.addRemoteTextTrack({
             kind: 'captions',
-            label: 'Default',
-            src: '/subtitle/' + session_id
+            label: 'English',
+            src: '/subtitle/' + session_id + "/en"
+        })
+        player.addRemoteTextTrack({
+            kind: 'captions',
+            label: 'Dutch',
+            src: '/subtitle/' + session_id + "/nl"
         })
         create_websocket()
     }

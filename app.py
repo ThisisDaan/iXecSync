@@ -270,15 +270,15 @@ def video(session_id):
         return ""
 
 
-def srtToVtt(directory, name):
-    file = f"{directory}{name}"
+def srtToVtt(directory, name, language):
+    file = f"{directory}{name}.{language}"
 
     if path.exists(f"{file}.vtt"):
         return
 
     vtt = open(f"{file}.vtt", "w+")
     vtt.write("WEBVTT\n\n")
-    srt = open(f"{directory}english.srt", "r")
+    srt = open(f"{file}.srt", "r")
     line = srt.readline()
     while line:
         if line.strip():
@@ -295,15 +295,17 @@ def srtToVtt(directory, name):
     vtt.close()
 
 
-@app.route("/subtitle/<string:session_id>")
-def subtitle(session_id):
+@app.route("/subtitle/<string:session_id>/<string:language_code>")
+def subtitle(session_id, language_code):
     try:
         srtToVtt(
-            video_location[session_id]["directory"], video_location[session_id]["name"]
+            video_location[session_id]["directory"],
+            video_location[session_id]["name"],
+            language_code,
         )
         return send_from_directory(
             directory=video_location[session_id]["directory"],
-            filename=f"{video_location[session_id]['name']}.vtt",
+            filename=f"{video_location[session_id]['name']}.{language_code}.vtt",
         )
     except KeyError:
         return ""
