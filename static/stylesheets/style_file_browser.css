@@ -12,15 +12,21 @@ body {
 
 
 .nav {
-    margin: 26px 15px 15px 15px
+    padding: 5px 15px 5px 40px;
+    margin: 0;
+    background-color: #202225;
+    display: inline-flex;
+    width: 100vw;
 }
 
 .nav li:hover {
-    color: #52b54b;
+    color: rgba(82, 181, 75)
 }
 
 .nav li {
+    color: #fff;
     cursor: pointer;
+    margin-right: 25px;
 }
 
 .file_browser {
@@ -44,16 +50,17 @@ li {
     cursor: pointer;
     border: 2px solid transparent;
     border-radius: 10px;
-    padding: 5px;
+    padding: 10px 10px 10px 15px;
     margin-bottom: 5px;
-    height: 25px
+    height: 25px;
+    /* text-transform: lowercase; */
 }
 
 .item:hover {
     border: 2px solid #52b54b;
 }
 
-li.folder:before {
+/* li.folder:before {
     margin-right: 15px;
     margin-left: 15px;
     content: "\1F4C1";
@@ -64,6 +71,13 @@ li.file:before {
     margin-left: 15px;
     content: "\25B6";
 }
+
+li.file-other:before {
+    margin-right: 15px;
+    margin-left: 15px;
+    content: "\1F4C4";
+
+} */
 
 .file-other {
     opacity: 0.5;

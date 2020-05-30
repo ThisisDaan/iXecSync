@@ -21,6 +21,7 @@
       <nav>
          <ul class="nav">
             <li onclick="goBack()">Back</li>
+            <!-- <li onclick="goBack()">Home</li> -->
          </ul>
       </nav>
       <section class="scrolling">
@@ -39,7 +40,7 @@
             {% endfor %}
 
             {% for item in empty %}
-            <li>
+            <li class="file item file-other">
                {{ item.name }}
             </li>
             {% endfor %}

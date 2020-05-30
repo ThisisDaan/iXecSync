@@ -240,7 +240,10 @@ def getContent(folder_dir, search_string=None):
             break
 
     if len(folder) == 0:
-        folder["empty"].append({"name": "This folder is empty"})
+        if search_string:
+            folder["empty"].append({"name": "No items match your search."})
+        else:
+            folder["empty"].append({"name": "This folder is empty."})
 
     return folder
 
