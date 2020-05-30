@@ -5,20 +5,20 @@
    <meta charset="utf-8">
    <meta http-equiv="Pragma" content="no-cache" />
    <title>iXec Sync</title>
+   <script src="https://kit.fontawesome.com/79d568081a.js" crossorigin="anonymous"></script>
    <link rel="stylesheet" type="text/css"
       href="{{ url_for('static', filename='stylesheets/style_file_browser.css') }}" />
-   <script src="https://kit.fontawesome.com/79d568081a.js" crossorigin="anonymous"></script>
-   <!-- <script src="{{ url_for('static', filename='javascript/jquery.min.js') }}"></script> -->
+
 </head>
 
 <body>
 
    <main class="grid">
       {% include "header.html" %}
-      <nav>
+      <!-- <nav>
          <button onclick="window.location.href='/file'">Home</button>
          <button onclick="goBack()">Go Back</button>
-      </nav>
+      </nav> -->
       <section class="scrolling">
          <ul class="file_browser">
             {% for item in dirs %}
@@ -43,16 +43,6 @@
    </main>
 </body>
 <script>
-   function RemoveLastDirectoryPartOf(the_url) {
-      var the_arr = the_url.split('/');
-      the_arr.pop();
-      return (the_arr.join('/'));
-   }
-
-   function goBack() {
-      window.location.href = RemoveLastDirectoryPartOf(window.location.href)
-   }
-
    function navigate(id) {
       redirect_url = window.location.href.slice(-1) == "/" ? window.location.href + id : window.location.href + "/" + id
       window.location.href = redirect_url
