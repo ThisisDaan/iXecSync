@@ -13,7 +13,6 @@ import time
 import os
 from collections import defaultdict
 import uuid
-import schedule
 
 
 app = Flask(__name__)
