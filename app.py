@@ -219,7 +219,7 @@ def getContent(folder_dir, search_string=None):
                 folder["dirs"].append(json)
         for filename in files:
             if search_string is None or search_string.lower() in filename.lower():
-                if filename.endswith((".mp4", ".mkv")):
+                if filename:  # .endswith((".mp4", ".mkv"))
                     json = {
                         "name": filename,
                         "path": os.path.join(
@@ -278,7 +278,7 @@ def srtToVtt(directory, name):
 
     vtt = open(f"{file}.vtt", "w+")
     vtt.write("WEBVTT\n\n")
-    srt = open(f"{file}.eng.srt", "r")
+    srt = open(f"{directory}english.srt", "r")
     line = srt.readline()
     while line:
         if line.strip():
