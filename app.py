@@ -298,7 +298,7 @@ def video(session_id):
 
 
 def srtToVtt(directory, filename):
-    file_srt = f"{directory}{filename}.srt"
+    file_srt = f"{directory}.srt"
     file_vtt = f"{subtitle_folder_location}{filename}.vtt"
 
     print(f"FILE_SRT: {file_srt}")
@@ -336,7 +336,7 @@ def srtToVtt_directory(directory, name):
             if filename.endswith(".srt"):
                 filename = filename.replace(".srt", "")
                 language_list.append(filename.replace(f"{name}.", ""))
-                direcotry = os.path.join(root, filename)
+                directory = os.path.join(root, filename)
                 srtToVtt(directory, filename)
         break
     print(f"LANGUAGE_LIST: {language_list}")
