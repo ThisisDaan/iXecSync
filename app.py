@@ -5,15 +5,15 @@ from flask import (
     request,
     session,
     redirect,
+    abort,
 )
 from jinja2 import Template
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import time
 import os
-import os.path
-from os import path
 from collections import defaultdict
 import uuid
+import schedule
 
 
 app = Flask(__name__)
@@ -26,65 +26,71 @@ subtitle_folder_location = os.path.join(
     os.path.dirname(os.path.realpath(__file__)) + os.sep + "subtitles" + os.sep
 )
 
-video_location = {}
+session_storage = {}
 
 
 class iXecSync:
     clients = defaultdict(list)
 
-    def __init__(self, request, session):
+    def __init__(self, request, session_id):
         self.id = request.sid
-        self.update_client_time(0)
-        self.paused = True
-        self.session = session
-        self.join_session()
+        self.join_session(session_id)
+
         print(f"{self.id}@{self.session} - Client connected")
 
     def remove_client(self):
         iXecSync.clients[self.session].remove(self)
         print(f"{self.id}@{self.session} - Client disconnected")
-        self.cleanup_after()
 
-    # NOTE if only one client, and the client refreshes, the video_location will be deleted. #ERROR BUG FIX THISDFSLFKDSJFDSJFSD
+    def join_session(self, session_id):
+        self.session = session_id
+        join_room(session_id)
+        iXecSync.clients[session_id].append(self)
+        self.sync_with_session()
+        self.push(self.get_json_profile())
 
-    def cleanup_after(self):
-        if len(iXecSync.clients[self.session]) < 1:
+    def sync_with_session(self):
+        if self.is_reference():
             try:
-                del video_location[self.session]
-                print(f"{self.id}@{self.session} - Tidied up after watching.")
+                if session_storage[self.session]["time"] != 0:
+                    session_time = session_storage[self.session]["time"]
+                    session_paused = True
+                else:
+                    session_time = 0
+                    session_paused = True
             except KeyError:
-                print(f"{self.id}@{self.session} - Nothing to clean up.")
+                session_time = 0
+                session_paused = True
+        else:
+            reference = self.get_reference()
+            session_time = reference.time
+            session_paused = reference.paused
 
-    # NOTE sometimes client doesn't sync with reference on startup
+        self.time = session_time
+        self.paused = session_paused
+        print(f"WELL I SET THE TIME TO: {self.time}")
+        print(f"and paused is: {self.paused}")
 
-    def join_session(self):
-        join_room(self.session)
-        iXecSync.clients[self.session].append(self)
-        emit(
-            "sync", {"time": False, "paused": True}, room=self.session, skip_sid=self.id
-        )
-        self.push()
-
-    def push(self):
-        reference = self.get_reference()
-        delay = self.epoch - reference.epoch
-        profile = {
-            "time": reference.time + delay,
-            "paused": True,
-        }
-        emit("sync", profile, room=self.id)
+    def push(self, json):
+        emit("sync", json, room=self.id)
 
     def update_client_time(self, client_time):
         self.time = client_time
         self.epoch = int(round(time.time() * 1000))
 
+    def update_session(self):
+        if self.is_reference():
+            session_storage[self.session]["time"] = self.time
+            session_storage[self.session]["paused"] = self.paused
+
     def update_client(self, client_data):
         self.update_client_time(client_data["time"])
         self.paused = client_data["paused"]
+        self.update_session()
         self.check_client_in_sync()
 
     def sync_other_clients(self, client_data):
-        self.update_client_time(client_data["time"])
+        self.update_client(client_data)
         self.update_client_in_session()
         emit("sync", client_data, room=self.session, skip_sid=self.id)
 
@@ -93,11 +99,18 @@ class iXecSync:
             if client.id != self.id:
                 client.update_client_time(self.time)
                 client.paused = self.paused
+                self.update_session()
 
     def sync_client(self):
         reference = self.get_reference()
         self.update_client_time(reference.time)
         emit("sync", reference.get_json_profile(), room=self.id)
+
+    def is_reference(self):
+        if self.get_reference() == self:
+            return True
+        else:
+            return False
 
     def get_reference(self):
         return iXecSync.clients[self.session][0]
@@ -125,7 +138,7 @@ class iXecSync:
     def check_client_in_sync(self):
         reference = self.get_reference()
 
-        if reference.id == self.id:
+        if self.is_reference():
             self.message("You are the reference")
             return
 
@@ -254,10 +267,11 @@ def file_browser_video(path, name, extension):
     if extension.startswith(("mp4", "mkv")):
         session_id = f"{uuid.uuid4()}"
         filename = f"{name}.{extension}"
-        video_location[session_id] = {
+        session_storage[session_id] = {
             "directory": folder_location + path,
             "filename": filename,
             "name": name,
+            "time": 0,
         }
         return redirect(f"/video.sync?session={session_id}", code=303)
 
@@ -266,7 +280,7 @@ def file_browser_video(path, name, extension):
 def player():
     try:
         session_id = request.args.get("session")
-        video = video_location[session_id]
+        video = session_storage[session_id]
         return render_template("player.html")
     except KeyError:
         return redirect("/", code=303)
@@ -276,21 +290,21 @@ def player():
 def video(session_id):
     try:
         return send_from_directory(
-            directory=video_location[session_id]["directory"],
-            filename=video_location[session_id]["filename"],
+            directory=session_storage[session_id]["directory"],
+            filename=session_storage[session_id]["filename"],
         )
     except KeyError:
-        return ""
+        return abort(404)
 
 
 def srtToVtt(directory, name, language):
     file_srt = f"{directory}{name}.{language}.srt"
     file_vtt = f"{subtitle_folder_location}{name}.{language}.vtt"
 
-    if not path.exists(file_srt):
+    if not os.path.exists(file_srt):
         return
 
-    if path.exists(file_vtt):
+    if os.path.exists(file_vtt):
         return
 
     vtt = open(file_vtt, "w+")
@@ -316,16 +330,16 @@ def srtToVtt(directory, name, language):
 def subtitle(session_id, language_code):
     try:
         srtToVtt(
-            video_location[session_id]["directory"],
-            video_location[session_id]["name"],
+            session_storage[session_id]["directory"],
+            session_storage[session_id]["name"],
             language_code,
         )
         return send_from_directory(
             directory=subtitle_folder_location,
-            filename=f"{video_location[session_id]['name']}.{language_code}.vtt",
+            filename=f"{session_storage[session_id]['name']}.{language_code}.vtt",
         )
     except KeyError:
-        return ""
+        return abort(404)
 
 
 @socketio.on("client request sync", namespace="/sync")
