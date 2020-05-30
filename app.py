@@ -273,6 +273,9 @@ def video(session_id):
 def srtToVtt(directory, name, language):
     file = f"{directory}{name}.{language}"
 
+    if not path.exists(f"{file}.srt"):
+        return
+
     if path.exists(f"{file}.vtt"):
         return
 
