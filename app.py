@@ -175,6 +175,7 @@ def add_header(r):
     return r
 
 
+@app.route("/search")
 @app.route("/")
 def index():
     return redirect("/file", code=303)
@@ -192,23 +193,39 @@ def file_browsing_root(path):
     )
 
 
-def getContent(folder_dir):
+@app.route("/search/<string:search>")
+def file_browsing_search(search):
+    content = getContent(folder_location, search)
+    return render_template(
+        "file_browser.html",
+        dirs=content["dirs"],
+        files=content["files"],
+        empty=content["empty"],
+    )
+
+
+def getContent(folder_dir, search_string=None):
     folder = defaultdict(list)
     for (root, dirs, files) in os.walk(folder_dir):
         for directory in dirs:
-            json = {
-                "name": directory,
-                "path": os.path.join(root, directory),
-            }
-            folder["dirs"].append(json)
-        for filename in files:
-            if filename.endswith((".mp4", ".mkv")):
+            if search_string is None or search_string in directory:
                 json = {
-                    "name": filename,
-                    "path": os.path.join(root, filename),
+                    "name": directory,
+                    "path": os.path.join(root.replace(folder_location, ""), directory),
                 }
-                folder["files"].append(json)
-        break
+                folder["dirs"].append(json)
+        for filename in files:
+            if search_string is None or search_string in filename:
+                if filename.endswith((".mp4", ".mkv")):
+                    json = {
+                        "name": filename,
+                        "path": os.path.join(
+                            root.replace(folder_location, ""), filename
+                        ),
+                    }
+                    folder["files"].append(json)
+        if search_string is None:
+            break
 
     if len(folder) == 0:
         folder["empty"].append({"name": "This folder is empty"})

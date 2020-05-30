@@ -13,7 +13,7 @@ body {
 .file_browser {
     padding: 10px 40px 10px 40px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(15em, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     grid-column-gap: 10px;
     grid-row-gap: 10px;
     justify-items: stretch;
@@ -23,7 +23,7 @@ body {
 li {
     display: flex;
     justify-content: flex-start;
-    align-self: flex-start;
+    align-items: center;
     list-style: none;
 }
 
@@ -33,6 +33,7 @@ li {
     border-radius: 10px;
     padding: 5px;
     margin-bottom: 5px;
+    height: 25px
 }
 
 .item:hover {
@@ -41,10 +42,12 @@ li {
 
 li.folder:before {
     margin-right: 15px;
+    margin-left: 15px;
     content: "\1F4C1";
 }
 
 li.file:before {
     margin-right: 15px;
+    margin-left: 15px;
     content: "\25B6";
 }

@@ -5,7 +5,6 @@
    <meta charset="utf-8">
    <meta http-equiv="Pragma" content="no-cache" />
    <title>iXec Sync</title>
-   <script src="https://kit.fontawesome.com/79d568081a.js" crossorigin="anonymous"></script>
    <link rel="stylesheet" type="text/css"
       href="{{ url_for('static', filename='stylesheets/style_file_browser.css') }}" />
 
@@ -22,13 +21,13 @@
       <section class="scrolling">
          <ul class="file_browser">
             {% for item in dirs %}
-            <li class="folder item" onclick='navigate(this.id)' id='{{ item.name }}'>
+            <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}'>
                {{ item.name }}
             </li>
             {% endfor %}
 
             {% for item in files %}
-            <li class="file item" onclick='navigate(this.id)' id='{{ item.name }}'>
+            <li class="file item" onclick='navigate(this.id)' id='{{ item.path }}'>
                {{ item.name }}
             </li>
             {% endfor %}
@@ -44,8 +43,8 @@
 </body>
 <script>
    function navigate(id) {
-      redirect_url = window.location.href.slice(-1) == "/" ? window.location.href + id : window.location.href + "/" + id
-      window.location.href = redirect_url
+      //redirect_url = window.location.href.slice(-1) == "/" ? window.location.href + id : window.location.href + "/" + id
+      window.location.href = "/file/" + id
    }
 </script>
 

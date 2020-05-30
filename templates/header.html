@@ -9,7 +9,7 @@
         flex-direction: row;
         width: 100vw;
         height: 50px;
-        background-color: #202225;
+        background-color: #2f3136;
         justify-content: flex-start;
         align-items: center;
     }
@@ -32,6 +32,31 @@
         color: #fff;
         text-decoration: inherit;
     }
+
+    .search {
+        margin-right: 10%;
+        margin-left: 10%;
+        padding: 5px;
+        font-size: 13px;
+        border: 0px solid #202225;
+        border-radius: 5px;
+        color: #72767d;
+        width: 100%;
+        background-color: #202225;
+        align-self: center;
+        order: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .search>input {
+        background-color: transparent;
+        border: none;
+        outline: 0;
+        width: 100%;
+        color: #dcddde;
+    }
 </style>
 <header class="header">
     <nav>
@@ -40,12 +65,22 @@
         </ul>
     </nav>
     <a href="/file"><span>iXecSync</span></a>
+    <section class="search">
+        <input type="text" placeholder="search" onkeydown="search(this)">
+    </section>
+
 </header>
 <script>
     function RemoveLastDirectoryPartOf(the_url) {
         var the_arr = the_url.split('/');
         the_arr.pop();
         return (the_arr.join('/'));
+    }
+
+    function search(input) {
+        if (event.key === 'Enter') {
+            window.location.href = "/search/" + input.value
+        }
     }
 
     function goBack() {
