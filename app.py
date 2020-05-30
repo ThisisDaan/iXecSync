@@ -262,6 +262,7 @@ def getContent(folder_dir, search_string=None):
 @app.route("/file/<path:path>/<string:name>.<string:extension>")
 def file_browser_video(path, name, extension):
     if extension.startswith(("mp4", "mkv")):
+        print(f"file browser video - YOU CLICKED A VIDEO FILE")
         session_id = f"{uuid.uuid4()}"
         filename = f"{name}.{extension}"
         languages = srtToVtt_directory(folder_location + path, name)
@@ -300,6 +301,9 @@ def srtToVtt(directory, filename):
     file_srt = f"{directory}{filename}.srt"
     file_vtt = f"{subtitle_folder_location}{filename}.vtt"
 
+    print(f"FILE_SRT: {file_srt}")
+    print(f"FILE_VTT: {file_vtt}")
+
     if not os.path.exists(file_srt):
         return
 
@@ -335,17 +339,20 @@ def srtToVtt_directory(directory, name):
                 direcotry = os.path.join(root, filename)
                 srtToVtt(directory, filename)
         break
+    print(f"LANGUAGE_LIST: {language_list}")
     return language_list
 
 
 @app.route("/subtitle/<string:session_id>/<string:language_code>")
 def subtitle(session_id, language_code):
     try:
+        print(f"SEND FROM DIRECTORY SUBTITLE")
         return send_from_directory(
             directory=subtitle_folder_location,
             filename=f"{session_storage[session_id]['name']}.{language_code}.vtt",
         )
     except KeyError:
+        print(f"KEY ERROR SUBTITLE")
         return abort(404)
 
 
