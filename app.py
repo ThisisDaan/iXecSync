@@ -208,14 +208,14 @@ def getContent(folder_dir, search_string=None):
     folder = defaultdict(list)
     for (root, dirs, files) in os.walk(folder_dir):
         for directory in dirs:
-            if search_string is None or search_string in directory:
+            if search_string is None or search_string.lower() in directory.lower():
                 json = {
                     "name": directory,
                     "path": os.path.join(root.replace(folder_location, ""), directory),
                 }
                 folder["dirs"].append(json)
         for filename in files:
-            if search_string is None or search_string in filename:
+            if search_string is None or search_string.lower() in filename.lower():
                 if filename.endswith((".mp4", ".mkv")):
                     json = {
                         "name": filename,
