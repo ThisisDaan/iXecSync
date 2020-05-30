@@ -10,6 +10,19 @@ body {
     overflow-x: hidden;
 }
 
+
+.nav {
+    margin: 26px 15px 15px 15px
+}
+
+.nav li:hover {
+    color: #52b54b;
+}
+
+.nav li {
+    cursor: pointer;
+}
+
 .file_browser {
     padding: 10px 40px 10px 40px;
     display: grid;

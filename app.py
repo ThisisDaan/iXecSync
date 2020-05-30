@@ -10,8 +10,11 @@ from jinja2 import Template
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import time
 import os
+import os.path
+from os import path
 from collections import defaultdict
 import uuid
+
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -264,18 +267,46 @@ def video(session_id):
             filename=video_location[session_id]["filename"],
         )
     except KeyError:
-        print("session not valid")
+        return ""
+
+
+def srtToVtt(directory, name):
+    file = f"{directory}{name}"
+
+    if path.exists(f"{file}.vtt"):
+        return
+
+    vtt = open(f"{file}.vtt", "w+")
+    vtt.write("WEBVTT\n\n")
+    srt = open(f"{file}.srt", "r")
+    line = srt.readline()
+    while line:
+        if line.strip():
+            if "-->" in line:
+                line = line.replace(",", ".")
+
+            if line.rstrip().isdigit():
+                vtt.write(f"\n{line}")
+            else:
+                vtt.write(f"{line}")
+
+        line = srt.readline()
+    srt.close()
+    vtt.close()
 
 
 @app.route("/subtitle/<string:session_id>")
 def subtitle(session_id):
     try:
+        srtToVtt(
+            video_location[session_id]["directory"], video_location[session_id]["name"]
+        )
         return send_from_directory(
             directory=video_location[session_id]["directory"],
             filename=f"{video_location[session_id]['name']}.vtt",
         )
     except KeyError:
-        print("session not valid")
+        return ""
 
 
 @socketio.on("client request sync", namespace="/sync")

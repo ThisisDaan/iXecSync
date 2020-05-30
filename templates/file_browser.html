@@ -18,6 +18,11 @@
          <button onclick="window.location.href='/file'">Home</button>
          <button onclick="goBack()">Go Back</button>
       </nav> -->
+      <nav>
+         <ul class="nav">
+            <li onclick="goBack()">Back</li>
+         </ul>
+      </nav>
       <section class="scrolling">
          <ul class="file_browser">
             {% for item in dirs %}
@@ -42,6 +47,16 @@
    </main>
 </body>
 <script>
+   function RemoveLastDirectoryPartOf(the_url) {
+      var the_arr = the_url.split('/');
+      the_arr.pop();
+      return (the_arr.join('/'));
+   }
+
+   function goBack() {
+      window.location.href = RemoveLastDirectoryPartOf(window.location.href)
+   }
+
    function navigate(id) {
       //redirect_url = window.location.href.slice(-1) == "/" ? window.location.href + id : window.location.href + "/" + id
       window.location.href = "/file/" + id

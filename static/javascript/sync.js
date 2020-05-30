@@ -16,6 +16,16 @@ player.on("seeking", user_sync);
 player.on("volumechange", player_save_volume);
 // player.on("timeupdate", timeUpdate);
 
+// player.on("useractive", useractive);
+// player.on("userinactive", userinactive);
+// function useractive() {
+//     $("#video-overlay").show();
+// }
+
+// function userinactive() {
+//     $("#video-overlay").hide();
+// }
+
 function ready() {
     if (get_session() == true) {
         player.src({
@@ -24,7 +34,7 @@ function ready() {
         });
         player.addRemoteTextTrack({
             kind: 'captions',
-            label: 'English',
+            label: 'Default',
             src: '/subtitle/' + session_id
         })
         create_websocket()

@@ -14,19 +14,8 @@
         align-items: center;
     }
 
-    .nav {
-        margin: 0px 10px 0px 10px
-    }
-
-    .nav li:hover {
-        color: #52b54b;
-    }
-
-    .nav li {
-        cursor: pointer;
-    }
-
     .header a {
+        margin-left: 40px;
         font-weight: 900;
         font-size: 30px;
         color: #fff;
@@ -59,11 +48,6 @@
     }
 </style>
 <header class="header">
-    <nav>
-        <ul class="nav">
-            <li onclick="goBack()">Back</li>
-        </ul>
-    </nav>
     <a href="/file"><span>iXecSync</span></a>
     <section class="search">
         <input type="text" placeholder="search" onkeydown="search(this)">
@@ -71,19 +55,9 @@
 
 </header>
 <script>
-    function RemoveLastDirectoryPartOf(the_url) {
-        var the_arr = the_url.split('/');
-        the_arr.pop();
-        return (the_arr.join('/'));
-    }
-
     function search(input) {
         if (event.key === 'Enter') {
             window.location.href = "/search/" + input.value
         }
-    }
-
-    function goBack() {
-        window.location.href = RemoveLastDirectoryPartOf(window.location.href)
     }
 </script>
