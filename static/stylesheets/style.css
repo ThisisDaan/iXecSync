@@ -17,12 +17,23 @@ body {
 }
 
 .video-overlay h2 {
-    color: #fff;
     position: absolute;
     top: 5px;
     left: 35px;
     font-size: 32px;
     text-transform: capitalize;
+}
+
+.video-overlay.video-overlay-show {
+    color: #fff;
+    opacity: 1;
+    transition: opacity 5s linear;
+}
+
+.video-overlay.video-overlay-hide {
+    color: red;
+    opacity: 0;
+    transition: opacity 5s linear;
 }
 
 .wrapper {

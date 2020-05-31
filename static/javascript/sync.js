@@ -8,12 +8,15 @@ var sync_speed = 10 // percentage for speeding up or slowing down
 var player = videojs('player', {
     width: window.innerWidth,
     height: window.innerHeight,
+    textTrackSettings: false
 });
 
 player.on("play", user_sync);
 player.on("pause", user_sync);
 player.on("seeking", user_sync);
 player.on("volumechange", player_save_volume);
+player.on("useractive", player_show_overlay);
+player.on("userinactive", player_hide_overlay);
 // player.on("timeupdate", timeUpdate);
 
 // player.on("useractive", useractive);
@@ -72,13 +75,21 @@ function create_websocket() {
     }, heartbeat);
 }
 
+function player_hide_overlay() {
+    $(".video-overlay").fadeOut(300);
+}
+
+function player_show_overlay() {
+    $(".video-overlay").fadeIn(300);
+}
+
 function player_meta_data(metadata) {
-    overlay_content = "<div class='video-overlay'><h2>" + metadata["title"] + "</h2></div>";
+    overlay_content = "<h2>" + metadata["title"] + "</h2>";
     player.overlay({
         overlays: [{
-            start: 'pause',
+            class: 'video-overlay',
+            start: 0,
             content: overlay_content,
-            end: 'playing',
             align: 'top'
         }]
     });

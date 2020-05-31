@@ -275,7 +275,8 @@
 }
 
 .video-js .vjs-menu-button-popup .vjs-menu .vjs-menu-item.vjs-selected {
-    background-color: #2483d5
+    background-color: #52b54b;
+    color: #fff
 }
 
 .video-js .vjs-big-play-button {
