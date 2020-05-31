@@ -61,6 +61,10 @@ li {
     border: 2px solid #52b54b;
 }
 
+li.folder {
+    background-color: #202225;
+}
+
 /* li.folder:before {
     margin-right: 15px;
     margin-left: 15px;

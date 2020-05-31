@@ -236,8 +236,8 @@ def getContent(folder_dir, search_string=None):
         for directory in dirs:
             if search_string is None or search_string.lower() in directory.lower():
                 json = {
-                    "name": directory,
-                    "path": os.path.join(root.replace(folder_location, ""), directory),
+                    "name": f"{directory}",
+                    "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
                     "type": "dir",
                     "format": "dir",
                 }
@@ -246,17 +246,17 @@ def getContent(folder_dir, search_string=None):
             if search_string is None or search_string.lower() in filename.lower():
                 if filename:  # )
                     json = {
-                        "name": filename,
-                        "path": os.path.join(
-                            root.replace(folder_location, ""), filename
-                        ),
+                        "name": f"{filename}",
+                        "path": f"{os.path.join(root.replace(folder_location, ''), filename)}",
                         "type": "file",
                     }
                     if filename.endswith((".mp4", ".mkv")):
                         json["format"] = "video"
+                        json["order"] = 0
                         folder["files"].insert(0, json)
                     else:
                         json["format"] = "other"
+                        json["order"] = 1
                         folder["files"].append(json)
 
         if search_string is None:
@@ -267,7 +267,10 @@ def getContent(folder_dir, search_string=None):
             folder["empty"].append({"name": "No items match your search."})
         else:
             folder["empty"].append({"name": "This folder is empty."})
-
+    # folder["files"] = sorted(folder["files"], key=lambda k: k["name"].lower())
+    folder["files"] = sorted(
+        folder["files"], key=lambda k: (k["order"], k["name"].lower())
+    )
     return folder
 
 

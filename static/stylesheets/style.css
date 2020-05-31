@@ -21,7 +21,7 @@ body {
     top: 5px;
     left: 35px;
     font-size: 32px;
-    text-transform: capitalize;
+    /* text-transform: capitalize; */
 }
 
 .video-overlay.video-overlay-show {
