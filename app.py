@@ -363,7 +363,7 @@ def subtitle(session_id, language_code):
     try:
         return send_from_directory(
             directory=subtitle_folder_location,
-            filename=f"{session_storage[session_id]['name']}.{language_code}.vtt",
+            filename=f"{session_storage[session_id]['filename'].split('.')[0]}.{language_code}.vtt",
         )
     except KeyError:
         return abort(404)
@@ -391,4 +391,4 @@ def on_disconnect():
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, host="0.0.0.0")
+    socketio.run(app, host="0.0.0.0")
