@@ -272,24 +272,28 @@ def getContent(folder_dir, search_string=None):
 def file_browser_video(path, name, extension):
     if extension.startswith(("mp4", "mkv")):
         session_id = f"{uuid.uuid4()}"
+        directory = folder_location + path
         filename = f"{name}.{extension}"
-        lang = srtToVtt_directory(folder_location + path, name)
-        lang_name = []
-        for item in lang:
-            try:
-                l = languages.get(alpha2=item)
-                lang_name.append(l.name)
-            except KeyError:
-                lang_name.append("Unknown")
-
-        session_storage[session_id] = {
-            "directory": folder_location + path,
-            "filename": filename,
-            "name": name,
-            "time": None,
-            "meta": {"title": name, "lang": lang, "lang_name": lang_name,},
-        }
+        create_new_session(session_id, directory, filename)
         return redirect(f"/video.sync?session={session_id}", code=303)
+
+
+def create_new_session(session_id, directory, filename):
+    lang = srtToVtt_directory(directory)
+    lang_name = []
+    for item in lang:
+        try:
+            l = languages.get(alpha2=item)
+            lang_name.append(l.name)
+        except KeyError:
+            lang_name.append(item)
+
+    session_storage[session_id] = {
+        "directory": directory,
+        "filename": filename,
+        "time": None,
+        "meta": {"title": filename, "lang": lang, "lang_name": lang_name,},
+    }
 
 
 @app.route("/video.sync")
@@ -313,9 +317,8 @@ def video(session_id):
         return abort(404)
 
 
-def srtToVtt(directory, filename):
-    file_srt = f"{directory}.srt"
-    file_vtt = f"{subtitle_folder_location}{filename}.vtt"
+def srtToVtt(file_srt, filename):
+    file_vtt = f"{subtitle_folder_location}{filename[0]}.{filename[1]}.vtt"
 
     if not os.path.exists(file_srt):
         return
@@ -342,15 +345,15 @@ def srtToVtt(directory, filename):
     vtt.close()
 
 
-def srtToVtt_directory(directory, name):
+def srtToVtt_directory(directory):
     language_list = []
     for (root, dirs, files) in os.walk(directory):
         for filename in files:
             if filename.endswith(".srt"):
-                filename = filename.replace(".srt", "")
-                language_list.append(filename.replace(f"{name}.", ""))
+                filename_split = filename.split(".")
                 directory = os.path.join(root, filename)
-                srtToVtt(directory, filename)
+                srtToVtt(directory, filename_split)
+                language_list.append(filename_split[-2])
         break
     return language_list
 
