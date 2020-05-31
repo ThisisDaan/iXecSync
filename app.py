@@ -213,7 +213,7 @@ def file_browsing_root(path):
     content = getContent(folder_location + path)
     return render_template(
         "file_browser.html",
-        dirs=content["dirs"],
+        folders=content["folders"],
         files=content["files"],
         empty=content["empty"],
     )
@@ -224,24 +224,27 @@ def file_browsing_search(search):
     content = getContent(folder_location, search)
     return render_template(
         "file_browser.html",
-        dirs=content["dirs"],
+        folders=content["folders"],
         files=content["files"],
         empty=content["empty"],
     )
 
 
-def getContent(folder_dir, search_string=None):
-    folder = defaultdict(list)
-    for (root, dirs, files) in os.walk(folder_dir):
+def getContent(folder, search_string=None):
+
+    content = defaultdict(list)
+
+    for (root, dirs, files) in os.walk(folder):
+
         for directory in dirs:
             if search_string is None or search_string.lower() in directory.lower():
                 json = {
                     "name": f"{directory}",
                     "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
-                    "type": "dir",
-                    "format": "dir",
+                    "type": "folder",
                 }
-                folder["dirs"].append(json)
+                content["folders"].append(json)
+
         for filename in files:
             if search_string is None or search_string.lower() in filename.lower():
                 if filename:  # )
@@ -253,25 +256,26 @@ def getContent(folder_dir, search_string=None):
                     if filename.endswith((".mp4", ".mkv")):
                         json["format"] = "video"
                         json["order"] = 0
-                        folder["files"].insert(0, json)
+                        content["files"].insert(0, json)
                     else:
                         json["format"] = "other"
                         json["order"] = 1
-                        folder["files"].append(json)
+                        content["files"].append(json)
 
         if search_string is None:
             break
 
-    if len(folder) == 0:
+    if len(content) == 0:
         if search_string:
-            folder["empty"].append({"name": "No items match your search."})
+            content["empty"].append({"name": "No items match your search."})
         else:
-            folder["empty"].append({"name": "This folder is empty."})
-    # folder["files"] = sorted(folder["files"], key=lambda k: k["name"].lower())
-    folder["files"] = sorted(
-        folder["files"], key=lambda k: (k["order"], k["name"].lower())
+            content["empty"].append({"name": "This folder is empty."})
+
+    content["folders"] = sorted(content["folders"], key=lambda k: (k["name"].lower()))
+    content["files"] = sorted(
+        content["files"], key=lambda k: (k["order"], k["name"].lower())
     )
-    return folder
+    return content
 
 
 @app.route("/file/<string:name>.<string:extension>", defaults={"path": ""})

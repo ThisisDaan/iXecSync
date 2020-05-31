@@ -24,7 +24,7 @@
       </nav>
       <section class="scrolling">
          <ul class="file_browser">
-            {% for item in dirs %}
+            {% for item in folders %}
             <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
                {{ item.name }}
             </li>
