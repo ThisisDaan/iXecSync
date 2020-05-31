@@ -14,6 +14,7 @@ import os
 from collections import defaultdict
 import uuid
 from iso639 import languages
+import io
 
 
 app = Flask(__name__)
@@ -339,9 +340,9 @@ def srtToVtt(srt_path):
     if os.path.exists(vtt_path):
         return
 
-    vtt = open(vtt_path, "w+")
+    vtt = io.open(vtt_path, "w+", encoding="utf-8")
     vtt.write("WEBVTT\n\n")
-    srt = open(srt_path, "r")
+    srt = io.open(srt_path, "r", encoding="utf-8")
     line = srt.readline()
     while line:
         if line.strip():
