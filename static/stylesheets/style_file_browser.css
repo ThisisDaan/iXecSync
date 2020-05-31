@@ -31,7 +31,7 @@ body {
 .file_browser {
     padding: 10px 40px 10px 40px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(25vw, 1fr));
     grid-column-gap: 10px;
     grid-row-gap: 10px;
     justify-items: stretch;
