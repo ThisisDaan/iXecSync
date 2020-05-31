@@ -32,16 +32,6 @@ function ready() {
             type: 'video/mp4',
             src: '/player/' + session_id
         });
-        player.addRemoteTextTrack({
-            kind: 'captions',
-            label: 'English',
-            src: '/subtitle/' + session_id + "/en"
-        })
-        player.addRemoteTextTrack({
-            kind: 'captions',
-            label: 'Dutch',
-            src: '/subtitle/' + session_id + "/nl"
-        })
         create_websocket()
     }
     player_set_volume()
@@ -73,12 +63,33 @@ function create_websocket() {
     socket.on('sync', m => sync_player(m));
     socket.on('out of sync', m => out_of_sync(m));
     socket.on('message', m => message(m));
+    socket.on('meta', m => player_meta_data(m));
     connect_sync_player()
     setInterval(function () {
         if (!player.paused()) {
             sync_data('client update')
         }
     }, heartbeat);
+}
+
+function player_meta_data(metadata) {
+    overlay_content = "<div class='video-overlay'><h2>" + metadata["title"] + "</h2></div>";
+    player.overlay({
+        overlays: [{
+            start: 'pause',
+            content: overlay_content,
+            end: 'playing',
+            align: 'top'
+        }]
+    });
+    for (i = 0; i < metadata["lang"].length; i++) {
+        player.addRemoteTextTrack({
+            kind: 'captions',
+            label: metadata["lang_name"][i],
+            src: '/subtitle/' + session_id + "/" + metadata["lang"][i]
+        })
+    }
+
 }
 
 function player_set_volume() {

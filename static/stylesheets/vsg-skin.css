@@ -311,3 +311,7 @@
 .video-js .vjs-volume-level {
     background-color: #52b54b
 }
+
+.vjs-menu-item-text {
+    text-transform: capitalize;
+}

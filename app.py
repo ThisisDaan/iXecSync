@@ -13,6 +13,7 @@ import time
 import os
 from collections import defaultdict
 import uuid
+from iso639 import languages
 
 
 app = Flask(__name__)
@@ -70,6 +71,11 @@ class iXecSync:
 
     def push(self, json):
         emit("sync", json, room=self.id)
+        self.push_session_meta()
+
+    def push_session_meta(self):
+        metadata = session_storage[self.session]["meta"]
+        emit("meta", metadata, room=self.id)
 
     def update_client_time(self, client_time):
         self.time = client_time
@@ -229,6 +235,7 @@ def getContent(folder_dir, search_string=None):
                     "name": directory,
                     "path": os.path.join(root.replace(folder_location, ""), directory),
                     "type": "dir",
+                    "format": "dir",
                 }
                 folder["dirs"].append(json)
         for filename in files:
@@ -243,9 +250,11 @@ def getContent(folder_dir, search_string=None):
                     }
                     if filename.endswith((".mp4", ".mkv")):
                         json["format"] = "video"
+                        folder["files"].insert(0, json)
                     else:
                         json["format"] = "other"
-                    folder["files"].append(json)
+                        folder["files"].append(json)
+
         if search_string is None:
             break
 
@@ -262,16 +271,23 @@ def getContent(folder_dir, search_string=None):
 @app.route("/file/<path:path>/<string:name>.<string:extension>")
 def file_browser_video(path, name, extension):
     if extension.startswith(("mp4", "mkv")):
-        print(f"file browser video - YOU CLICKED A VIDEO FILE")
         session_id = f"{uuid.uuid4()}"
         filename = f"{name}.{extension}"
-        languages = srtToVtt_directory(folder_location + path, name)
+        lang = srtToVtt_directory(folder_location + path, name)
+        lang_name = []
+        for item in lang:
+            try:
+                l = languages.get(alpha2=item)
+                lang_name.append(l.name)
+            except KeyError:
+                lang_name.append("Unknown")
+
         session_storage[session_id] = {
             "directory": folder_location + path,
             "filename": filename,
             "name": name,
             "time": None,
-            "languages": languages,
+            "meta": {"title": name, "lang": lang, "lang_name": lang_name,},
         }
         return redirect(f"/video.sync?session={session_id}", code=303)
 
@@ -300,9 +316,6 @@ def video(session_id):
 def srtToVtt(directory, filename):
     file_srt = f"{directory}.srt"
     file_vtt = f"{subtitle_folder_location}{filename}.vtt"
-
-    print(f"FILE_SRT: {file_srt}")
-    print(f"FILE_VTT: {file_vtt}")
 
     if not os.path.exists(file_srt):
         return
@@ -339,20 +352,17 @@ def srtToVtt_directory(directory, name):
                 directory = os.path.join(root, filename)
                 srtToVtt(directory, filename)
         break
-    print(f"LANGUAGE_LIST: {language_list}")
     return language_list
 
 
 @app.route("/subtitle/<string:session_id>/<string:language_code>")
 def subtitle(session_id, language_code):
     try:
-        print(f"SEND FROM DIRECTORY SUBTITLE")
         return send_from_directory(
             directory=subtitle_folder_location,
             filename=f"{session_storage[session_id]['name']}.{language_code}.vtt",
         )
     except KeyError:
-        print(f"KEY ERROR SUBTITLE")
         return abort(404)
 
 
@@ -378,4 +388,4 @@ def on_disconnect():
 
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0")
+    socketio.run(app, debug=True, host="0.0.0.0")

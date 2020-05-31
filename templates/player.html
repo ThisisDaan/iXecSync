@@ -14,7 +14,6 @@
 
 <body onload="ready()">
    <!-- <section id="video-overlay">VIDEO FILENAME</section> -->
-
    <div class="wrapper">
       <video id="player" class="video-js vjs-big-play-button" controls preload="auto">
       </video>
@@ -22,6 +21,7 @@
 
 </body>
 <script src="{{ url_for('static', filename='player/video.min.js') }}"></script>
+<script src="{{ url_for('static', filename='player/videojs-overlay.min.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/sync.js') }}"></script>
 <script>
    window.onresize = function () {

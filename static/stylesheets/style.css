@@ -6,14 +6,23 @@ body {
     overflow: hidden;
 }
 
-#video-overlay {
-    position: static;
-    top: 0px;
-    left: 0px;
+.video-overlay {
+    z-index: 99;
+    position: absolute;
+    height: calc(100vh - 50px);
     width: 100vw;
-    height: 40px;
-    color: white;
-    font-size: 35px;
+    user-select: none;
+    pointer-events: none;
+    box-shadow: inset 10px 60px 104px -13px rgba(0, 0, 0, 0.75);
+}
+
+.video-overlay h2 {
+    color: #fff;
+    position: absolute;
+    top: 5px;
+    left: 35px;
+    font-size: 32px;
+    text-transform: capitalize;
 }
 
 .wrapper {
