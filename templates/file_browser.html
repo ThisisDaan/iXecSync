@@ -64,7 +64,7 @@
       var item = document.getElementById(id)
       var type = item.getAttribute('data-type')
       var redirect = "/file/" + id
-      if (type == 'dir') {
+      if (type == 'folder') {
          redirect = redirect + "/"
       }
       window.location.href = redirect
