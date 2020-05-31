@@ -299,10 +299,14 @@ def get_subtitles(video_filename):
     for (root, dirs, files) in os.walk(subtitle_folder_location):
         for filename in files:
             if video_filename[0] in filename:
-                filename = filename.split(".")
-                lang_code = str(filename[-2])
-                lang_name = languages.get(alpha2=lang_code).name
-                subtitles_list.append({"name": lang_name, "code": lang_code})
+                try:
+                    filename = filename.split(".")
+                    lang_code = str(filename[-2])
+                    lang_name = languages.get(alpha2=lang_code).name
+                    subtitles_list.append({"name": lang_name, "code": lang_code})
+                except Exception as e:
+                    print(f"Error get_subtitles: {e}")
+
         break
     return subtitles_list
 
@@ -336,7 +340,6 @@ def srtToVtt(srt_path):
 
     if not os.path.exists(srt_path):
         return
-
     if os.path.exists(vtt_path):
         return
 
