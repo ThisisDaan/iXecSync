@@ -85,8 +85,8 @@ function player_meta_data(metadata) {
     for (i = 0; i < metadata["lang"].length; i++) {
         player.addRemoteTextTrack({
             kind: 'captions',
-            label: metadata["lang_name"][i],
-            src: '/subtitle/' + session_id + "/" + metadata["lang"][i]
+            label: metadata["lang"][i]["name"],
+            src: '/subtitle/' + session_id + "/" + metadata["lang"][i]["code"]
         })
     }
 
