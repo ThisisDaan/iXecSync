@@ -340,9 +340,9 @@ def srtToVtt(srt_path):
     if os.path.exists(vtt_path):
         return
 
-    vtt = io.open(vtt_path, "w+", encoding="utf-8")
+    vtt = io.open(vtt_path, "w+", encoding="utf-8", errors="ignore")
     vtt.write("WEBVTT\n\n")
-    srt = io.open(srt_path, "r", encoding="utf-8")
+    srt = io.open(srt_path, "r", encoding="utf-8", errors="ignore")
     line = srt.readline()
     while line:
         if line.strip():
