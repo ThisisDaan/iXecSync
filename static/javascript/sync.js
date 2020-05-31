@@ -36,8 +36,27 @@ function ready() {
             src: '/player/' + session_id
         });
         create_websocket()
+    } else if (get_youtube() == true) {
+        player.techOrder = ["youtube"]
+        player.src({
+            type: 'video/youtube',
+            src: 'https://www.youtube.com/watch?v=' + session_id
+        });
+        create_websocket()
     }
     player_set_volume()
+}
+
+function get_youtube() {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const video_id = urlParams.get('v')
+    if (video_id != null) {
+        session_id = video_id
+        return true
+    } else {
+        return false
+    }
 }
 
 function get_session() {
@@ -84,23 +103,26 @@ function player_show_overlay() {
 }
 
 function player_meta_data(metadata) {
-    overlay_content = "<h2>" + metadata["title"] + "</h2>";
-    player.overlay({
-        overlays: [{
-            class: 'video-overlay',
-            start: 0,
-            content: overlay_content,
-            align: 'top'
-        }]
-    });
-    for (i = 0; i < metadata["lang"].length; i++) {
-        player.addRemoteTextTrack({
-            kind: 'captions',
-            label: metadata["lang"][i]["name"],
-            src: '/subtitle/' + session_id + "/" + metadata["lang"][i]["code"]
-        })
+    if (metadata["title"] != null) {
+        overlay_content = "<h2>" + metadata["title"] + "</h2>";
+        player.overlay({
+            overlays: [{
+                class: 'video-overlay',
+                start: 0,
+                content: overlay_content,
+                align: 'top'
+            }]
+        });
     }
-
+    if (metadata["lang"] != null) {
+        for (i = 0; i < metadata["lang"].length; i++) {
+            player.addRemoteTextTrack({
+                kind: 'captions',
+                label: metadata["lang"][i]["name"],
+                src: '/subtitle/' + session_id + "/" + metadata["lang"][i]["code"]
+            })
+        }
+    }
 }
 
 function player_set_volume() {
@@ -198,12 +220,19 @@ function sync_player(data) {
 }
 
 function create_profile() {
+    console.log("")
+    console.log("readystate:")
+    console.log(player.readyState())
+    console.log("")
+    console.log("Network state:")
+    console.log(player.networkState())
     return {
         "time": (Math.round(player.currentTime() * 1000)), // Time in milliseconds
         "paused": player.paused(), // if the player is playing
         "heartbeat": heartbeat,
         "session": session_id,
     }
+
 }
 
 function sync_data(data_request) {

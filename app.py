@@ -78,8 +78,8 @@ class iXecSync:
         try:
             metadata = session_storage[self.session]["meta"]
             emit("meta", metadata, room=self.id)
-        except KeyError:
-            print("invalid session")
+        except Exception as e:
+            print(f"invalid session: {e}")
 
     def update_client_time(self, client_time):
         self.time = client_time
@@ -321,8 +321,22 @@ def get_subtitles(video_filename):
 @app.route("/video.sync")
 def player():
     try:
-        session_id = request.args.get("session")
-        video = session_storage[session_id]
+        return render_template("player.html")
+    except KeyError:
+        return redirect("/", code=303)
+
+
+@app.route("/watch")
+def youtube_player():
+    try:
+        session_id = request.args.get("v")
+        t = request.args.get("t")
+        if session_id not in session_storage:
+            session_storage[session_id] = {
+                "directory": "",
+                "filename": "Youtube",
+                "meta": {"Youtube"},
+            }
         return render_template("player.html")
     except KeyError:
         return redirect("/", code=303)
