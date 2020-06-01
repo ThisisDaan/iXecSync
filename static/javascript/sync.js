@@ -1,74 +1,54 @@
 var socket
 var session_id
-var user_action = false
 var heartbeat = 6000
 var sync_speed = 10 // percentage for speeding up or slowing down
+var ignore_sync = false
 
+const window_location_search = window.location.search;
+const url_parameters = new URLSearchParams(window_location_search);
 
 var player = videojs('player', {
     width: window.innerWidth,
     height: window.innerHeight,
-    textTrackSettings: false
+    textTrackSettings: false,
+    userActions: {
+        hotkeys: function (event) {
+            console.log(event.which)
+            if (event.which === 32) {
+                if (this.paused()) {
+                    player.play()
+                } else {
+                    player.pause()
+                }
+            }
+        }
+    },
+    nativeControlsForTouch: false,
 });
 
-player.on("play", user_sync);
-player.on("pause", user_sync);
-player.on("seeking", user_sync);
-player.on("volumechange", player_save_volume);
-player.on("useractive", player_show_overlay);
-player.on("userinactive", player_hide_overlay);
-// player.on("timeupdate", timeUpdate);
-
-// player.on("useractive", useractive);
-// player.on("userinactive", userinactive);
-// function useractive() {
-//     $("#video-overlay").show();
-// }
-
-// function userinactive() {
-//     $("#video-overlay").hide();
-// }
+player.on('play', player_play);
+player.on('pause', player_pause);
+player.on('seeking', user_sync);
+player.on('volumechange', player_save_volume);
+player.on('useractive', player_show_overlay);
+player.on('userinactive', player_hide_overlay);
 
 function ready() {
-    if (get_session() == true) {
+    if (url_parameters.get('session') != null) {
+        session_id = url_parameters.get('session')
         player.src({
             type: 'video/mp4',
             src: '/player/' + session_id
         });
-        create_websocket()
-    } else if (get_youtube() == true) {
-        player.techOrder = ["youtube"]
+    } else if (url_parameters.get('v') != null) {
+        session_id = url_parameters.get('v')
         player.src({
             type: 'video/youtube',
             src: 'https://www.youtube.com/watch?v=' + session_id
         });
-        create_websocket()
     }
+    create_websocket()
     player_set_volume()
-}
-
-function get_youtube() {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const video_id = urlParams.get('v')
-    if (video_id != null) {
-        session_id = video_id
-        return true
-    } else {
-        return false
-    }
-}
-
-function get_session() {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const param_session = urlParams.get('session')
-    if (param_session != null) {
-        session_id = param_session
-        return true
-    } else {
-        return false
-    }
 }
 
 function create_websocket() {
@@ -85,8 +65,7 @@ function create_websocket() {
     socket.on('sync', m => sync_player(m));
     socket.on('out of sync', m => out_of_sync(m));
     socket.on('message', m => message(m));
-    socket.on('meta', m => player_meta_data(m));
-    connect_sync_player()
+    socket.on('meta', m => player_metadata(m));
     setInterval(function () {
         if (!player.paused()) {
             sync_data('client update')
@@ -102,7 +81,17 @@ function player_show_overlay() {
     $(".video-overlay").fadeIn(300);
 }
 
-function player_meta_data(metadata) {
+function player_pause() {
+    $(".video-overlay").fadeIn(300);
+    user_sync()
+}
+
+function player_play() {
+    $(".video-overlay").fadeOut(300);
+    user_sync()
+}
+
+function player_metadata(metadata) {
     if (metadata["title"] != null) {
         overlay_content = "<h2>" + metadata["title"] + "</h2>";
         player.overlay({
@@ -157,20 +146,6 @@ function player_speed_slower(request) {
     console.log("slowing down video by " + sync_speed + "%")
 }
 
-function connect_sync_player() {
-    $(document).click(function (e) {
-        if (e.button == 0) {
-            user_action = true
-        }
-    });
-
-    $(".vjs-progress-control, .vjs-progress-holder, .vjs-load-progress, .vjs-mouse-display, .vjs-control-text, vjs-play-progress, .vjs-live-control")
-        .click(
-            function () {
-                sync_data('client request sync')
-            });
-}
-
 function message(msg) {
     console.log(msg)
 }
@@ -205,13 +180,22 @@ function skipForward(seconds) {
 }
 
 function user_sync() {
-    if (user_action) {
-        user_action = false
+    if (!ignore_sync) {
         sync_data('client request sync')
     }
 }
 
+function set_ignore_sync(ignore) {
+    if (ignore) {
+        ignore_sync = true
+        setTimeout(set_ignore_sync, 250)
+    } else {
+        ignore_sync = false
+    }
+}
+
 function sync_player(data) {
+    set_ignore_sync(true)
     if (data["time"] != false) {
         time = data["time"] / 1000
         player.currentTime(time)
@@ -220,12 +204,6 @@ function sync_player(data) {
 }
 
 function create_profile() {
-    console.log("")
-    console.log("readystate:")
-    console.log(player.readyState())
-    console.log("")
-    console.log("Network state:")
-    console.log(player.networkState())
     return {
         "time": (Math.round(player.currentTime() * 1000)), // Time in milliseconds
         "paused": player.paused(), // if the player is playing

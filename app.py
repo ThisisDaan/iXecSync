@@ -94,7 +94,6 @@ class iXecSync:
         self.update_client_time(client_data["time"])
         self.paused = client_data["paused"]
         self.update_session()
-        self.check_client_in_sync()
 
     def sync_other_clients(self, client_data):
         self.update_client(client_data)
@@ -411,6 +410,7 @@ def sync_time(client_data):
 @socketio.on("client update", namespace="/sync")
 def sync_time(client_data):
     session.client.update_client(client_data)
+    session.client.check_client_in_sync()
 
 
 @socketio.on("connect", namespace="/sync")

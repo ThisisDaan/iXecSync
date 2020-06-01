@@ -316,3 +316,11 @@
 .vjs-menu-item-text {
     text-transform: capitalize;
 }
+
+.vjs-volume-control,
+.vjs-menu-item,
+.vjs-button,
+.vjs-menu-button {
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
