@@ -45,6 +45,8 @@ li {
     list-style: none;
     outline: none;
     -webkit-tap-highlight-color: transparent;
+    font-family: 'Roboto';
+    font-weight: 500;
 }
 
 .item {

@@ -37,7 +37,7 @@ player.on('useractive', player_user_active);
 player.on('userinactive', player_user_inactive);
 
 
-overlay_content = "<section class='video-overlay-container'><button onclick='window.history.back()' class='back-button'></button><h2 id='video-overlay-title'></h2></section>";
+var overlay_content = "<section class='video-overlay-container'><button onclick='window.history.back()' class='back-button'></button><span id='video-overlay-title'></span></section>";
 player.overlay({
     overlays: [{
         class: 'video-overlay',
@@ -90,26 +90,28 @@ function create_websocket() {
 function player_user_inactive() {
     user_active = false
     if (!player.paused()) {
-        $(".video-overlay").fadeTo(500, "0")
+        $(".video-overlay").fadeTo(300, "0")
     }
-}
-
-function player_user_active() {
-    user_active = true
-    $(".video-overlay").fadeTo(500, "1")
-}
-
-function player_pause() {
-    $(".video-overlay").fadeTo(500, "1")
-    user_sync()
 }
 
 function player_play() {
     if (!user_active) {
-        $(".video-overlay").fadeTo(500, "0")
+        $(".video-overlay").fadeTo(300, "0")
     }
     user_sync()
 }
+
+function player_user_active() {
+    user_active = true
+    $(".video-overlay").fadeTo(100, "1")
+}
+
+function player_pause() {
+    $(".video-overlay").fadeTo(100, "1")
+    user_sync()
+}
+
+
 
 function player_metadata(metadata) {
     if (metadata["title"] != null) {

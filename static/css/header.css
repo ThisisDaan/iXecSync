@@ -2,18 +2,21 @@
     display: flex;
     flex-direction: row;
     width: 100vw;
-    height: 50px;
+    height: 100px;
     background-color: #2f3136;
     justify-content: flex-start;
     align-items: center;
+    border-bottom: 2px solid #52b54b;
 }
 
 .header a {
-    margin-left: 40px;
-    font-weight: 900;
     font-size: 30px;
     color: #fff;
     text-decoration: inherit;
+    line-height: 40px;
+    font-size: 40px;
+    font-family: 'Roboto';
+    font-weight: 500;
 }
 
 .search {
@@ -39,4 +42,32 @@
     outline: 0;
     width: 100%;
     color: #dcddde;
+}
+
+.back-button {
+    position: relative;
+
+    display: block;
+    min-width: 100px;
+    min-height: 100px;
+    background-color: #fff;
+
+    -webkit-mask-image: url(../icons/arrow_back_ios-24px.svg);
+    mask-image: url(../icons/arrow_back_ios-24px.svg);
+
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+
+    -webkit-mask-size: 50px;
+    mask-size: 50px;
+
+    -webkit-mask-position: center center;
+    mask-position: center center;
+
+
+    pointer-events: all;
+}
+
+.back-button:hover {
+    background-color: #52b54b;
 }
