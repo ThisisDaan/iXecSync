@@ -23,7 +23,7 @@ body {
 }
 
 .file_browser {
-    padding: 10px 40px 10px 40px;
+    padding: 10px 20px 10px 20px;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(25vw, 1fr));
     grid-column-gap: 10px;
@@ -32,11 +32,19 @@ body {
     align-items: stretch;
 }
 
+@media (max-width: 769px) {
+    .file_browser {
+        grid-template-columns: 1fr;
+    }
+}
+
 li {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     list-style: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .item {

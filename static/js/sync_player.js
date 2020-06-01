@@ -12,6 +12,7 @@ var player = videojs('player', {
     width: window.innerWidth,
     height: window.innerHeight,
     textTrackSettings: false,
+    autoplay: true,
     userActions: {
         hotkeys: function (event) {
             console.log(event.which)
@@ -26,6 +27,7 @@ var player = videojs('player', {
     },
     nativeControlsForTouch: false,
 });
+player.play()
 
 player.on('play', player_play);
 player.on('pause', player_pause);
@@ -33,6 +35,17 @@ player.on('seeking', user_sync);
 player.on('volumechange', player_save_volume);
 player.on('useractive', player_user_active);
 player.on('userinactive', player_user_inactive);
+
+
+overlay_content = "<section class='video-overlay-container'><button onclick='window.history.back()' class='back-button'></button><h2 id='video-overlay-title'></h2></section>";
+player.overlay({
+    overlays: [{
+        class: 'video-overlay',
+        start: 0,
+        content: overlay_content,
+        align: 'top'
+    }]
+});
 
 $(document).ready(function () {
     if (url_parameters.get('session') != null) {
@@ -77,38 +90,31 @@ function create_websocket() {
 function player_user_inactive() {
     user_active = false
     if (!player.paused()) {
-        $(".video-overlay").fadeOut(300);
+        $(".video-overlay").fadeTo(500, "0")
     }
 }
 
 function player_user_active() {
     user_active = true
-    $(".video-overlay").fadeIn(300);
+    $(".video-overlay").fadeTo(500, "1")
 }
 
 function player_pause() {
-    $(".video-overlay").fadeIn(300);
+    $(".video-overlay").fadeTo(500, "1")
     user_sync()
 }
 
 function player_play() {
     if (!user_active) {
-        $(".video-overlay").fadeOut(300);
+        $(".video-overlay").fadeTo(500, "0")
     }
     user_sync()
 }
 
 function player_metadata(metadata) {
     if (metadata["title"] != null) {
-        overlay_content = "<h2>" + metadata["title"] + "</h2>";
-        player.overlay({
-            overlays: [{
-                class: 'video-overlay',
-                start: 0,
-                content: overlay_content,
-                align: 'top'
-            }]
-        });
+        title = document.getElementById("video-overlay-title")
+        title.textContent = metadata["title"]
     }
     if (metadata["lang"] != null) {
         for (i = 0; i < metadata["lang"].length; i++) {
