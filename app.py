@@ -320,7 +320,7 @@ def get_subtitles(video_filename):
 @app.route("/video.sync")
 def player():
     try:
-        return render_template("player.html")
+        return render_template("sync_player.html")
     except KeyError:
         return redirect("/", code=303)
 
@@ -336,7 +336,7 @@ def youtube_player():
                 "filename": "Youtube",
                 "meta": {"Youtube"},
             }
-        return render_template("player.html")
+        return render_template("sync_player.html")
     except KeyError:
         return redirect("/", code=303)
 

@@ -1,0 +1,15 @@
+@font-face {
+    font-family: 'Roboto Bold';
+    src: url("../fonts/Roboto-Bold.ttf") format('truetype')
+}
+
+html,
+body {
+    outline: none;
+    font-family: 'Roboto Bold';
+    margin: 0px;
+    padding: 0px;
+    color: #fff;
+    background-color: #000;
+    user-select: none;
+}

@@ -1,51 +1,50 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
 
-<head>
-   <meta charset="utf-8">
-   <meta http-equiv="Pragma" content="no-cache" />
-   <title>iXec Sync</title>
-   <link rel="stylesheet" type="text/css"
-      href="{{ url_for('static', filename='stylesheets/style_file_browser.css') }}" />
+{% block title %}iXecSync - Files{% endblock %}
 
-</head>
 
-<body>
-   <main class="grid">
-      {% include "header.html" %}
-      <!-- <nav>
-         <button onclick="window.location.href='/file'">Home</button>
-         <button onclick="goBack()">Go Back</button>
-      </nav> -->
-      <nav>
-         <ul class="nav">
-            <li onclick="goBack()">Back</li>
-         </ul>
-      </nav>
-      <section class="scrolling">
-         <ul class="file_browser">
-            {% for item in folders %}
-            <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
-               {{ item.name }}
-            </li>
-            {% endfor %}
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/file_browser.css') }}" />
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/header.css') }}" />
+{% endblock %}
 
-            {% for item in files %}
-            <li class="file item file-{{ item.format }}" onclick='navigate(this.id)' id='{{ item.path }}'
-               data-type='{{ item.type }}'>
-               {{ item.name }}
-            </li>
-            {% endfor %}
 
-            {% for item in empty %}
-            <li class="file item file-other">
-               {{ item.name }}
-            </li>
-            {% endfor %}
-         </ul>
-      </section>
-   </main>
-</body>
+{% block content %}
+<main class="grid">
+   {% include "header.html" %}
+   <nav>
+      <ul class="nav">
+         <li onclick="goBack()">Back</li>
+      </ul>
+   </nav>
+   <section class="scrolling">
+      <ul class="file_browser">
+         {% for item in folders %}
+         <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
+            {{ item.name }}
+         </li>
+         {% endfor %}
+
+         {% for item in files %}
+         <li class="file item file-{{ item.format }}" onclick='navigate(this.id)' id='{{ item.path }}'
+            data-type='{{ item.type }}'>
+            {{ item.name }}
+         </li>
+         {% endfor %}
+
+         {% for item in empty %}
+         <li class="file item file-other">
+            {{ item.name }}
+         </li>
+         {% endfor %}
+      </ul>
+   </section>
+</main>
+{% endblock %}
+
+
+{% block scripts %}
 <script>
    function RemoveLastDirectoryPartOf(the_url) {
       var the_arr = the_url.split('/');
@@ -70,5 +69,4 @@
       window.location.href = redirect
    }
 </script>
-
-</html>
+{% endblock %}
