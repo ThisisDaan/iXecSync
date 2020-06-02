@@ -1,6 +1,6 @@
 html,
 body {
-    overflow-y: auto;
+    overflow-y: hidden;
     overflow-x: hidden;
     margin: 0px;
     padding: 0px;
@@ -8,9 +8,15 @@ body {
 
 .file-overview {
     padding: 15px;
+    overflow-y: scroll;
+    height: calc(100vh - 102px);
 }
 
 .category {
+    margin-top: 25px;
+}
+
+.category span {
     margin-left: 5px;
     font-size: 18px;
     font-family: 'Roboto';
@@ -69,7 +75,7 @@ li {
 }
 
 .item:hover {
-    border: 2px solid #52b54b;
+    border: 2px solid var(--theme-color);
 }
 
 li.folder {

@@ -15,35 +15,41 @@
    {% include "header.html" %}
    <section class="file-overview">
       {% if not folders and not files %}
-      <span class="category">Files</span>
-      <ul class="file_browser">
-         {% for item in empty %}
-         <li class="file item error-message">
-            <span>{{ item.name }}</span>
-         </li>
-         {% endfor %}
-      </ul>
+      <section class="category">
+         <span>Files</span>
+         <ul class="file_browser">
+            {% for item in empty %}
+            <li class="file item error-message">
+               <span>{{ item.name }}</span>
+            </li>
+            {% endfor %}
+         </ul>
+      </section>
       {% endif %}
       {% if folders %}
-      <span class="category">Folders</span>
-      <ul class="file_browser">
-         {% for item in folders %}
-         <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
-            <span>{{ item.name }}</span>
-         </li>
-         {% endfor %}
-      </ul>
+      <section class="category">
+         <span>Folders</span>
+         <ul class="file_browser">
+            {% for item in folders %}
+            <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
+               <span>{{ item.name }}</span>
+            </li>
+            {% endfor %}
+         </ul>
+      </section>
       {% endif %}
       {% if files %}
-      <span class="category">Files</span>
-      <ul class="file_browser">
-         {% for item in files %}
-         <li class="file item file-{{ item.format }}" onclick='navigate(this.id)' id='{{ item.path }}'
-            data-type='{{ item.type }}'>
-            <span>{{ item.name }}</span>
-         </li>
-         {% endfor %}
-      </ul>
+      <section class="category">
+         <span>Files</span>
+         <ul class="file_browser">
+            {% for item in files %}
+            <li class="file item file-{{ item.format }}" onclick='navigate(this.id)' id='{{ item.path }}'
+               data-type='{{ item.type }}'>
+               <span>{{ item.name }}</span>
+            </li>
+            {% endfor %}
+         </ul>
+      </section>
       {% endif %}
    </section>
 </main>

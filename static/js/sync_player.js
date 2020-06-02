@@ -205,11 +205,11 @@ function set_ignore_sync(ignore) {
         ignore_sync = true
         setTimeout(set_ignore_sync, 1000)
         $("body").css("pointer-events", "none");
-        $(".vjs-play-progress").css("background-color", "#ffce42");
+        $(".vjs-play-progress").addClass('syncing')
     } else {
         ignore_sync = false
         $("body").css("pointer-events", "all");
-        $(".vjs-play-progress").css("background-color", "#52b54b");
+        $(".vjs-play-progress").removeClass('syncing')
     }
 }
 

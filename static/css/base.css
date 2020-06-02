@@ -1,3 +1,8 @@
+:root {
+    --theme-color: #52b54b;
+    /* #219ecc; */
+}
+
 @font-face {
     font-family: 'Roboto';
     src: url("../fonts/Roboto-Black.ttf") format('truetype');

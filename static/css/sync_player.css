@@ -52,8 +52,14 @@
     pointer-events: all;
 }
 
+
+
 .video-overlay .back-button:hover {
-    background-color: #52b54b;
+    background-color: var(--theme-color);
+}
+
+.syncing {
+    background-color: #ffce42 !important;
 }
 
 .video-js .vjs-progress-control {
