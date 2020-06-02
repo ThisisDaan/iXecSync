@@ -144,6 +144,7 @@ function player_speed_normal() {
         console.log("playing video at normal speed")
     } else {
         console.log("You are in sync")
+        $(".vjs-play-progress").removeClass('syncing')
     }
 }
 
@@ -152,6 +153,7 @@ function player_speed_faster(request) {
     player.playbackRate(player_speed)
     out_of_sync_time_needed(request)
     console.log("speeding up video by " + sync_speed + "%")
+    $(".vjs-play-progress").addClass('syncing')
 }
 
 function player_speed_slower(request) {
@@ -159,6 +161,7 @@ function player_speed_slower(request) {
     player.playbackRate(player_speed)
     out_of_sync_time_needed(request)
     console.log("slowing down video by " + sync_speed + "%")
+    $(".vjs-play-progress").addClass('syncing')
 }
 
 function message(msg) {
@@ -205,11 +208,11 @@ function set_ignore_sync(ignore) {
         ignore_sync = true
         setTimeout(set_ignore_sync, 1000)
         $("body").css("pointer-events", "none");
-        $(".vjs-play-progress").addClass('syncing')
+        // $(".vjs-play-progress").addClass('syncing')
     } else {
         ignore_sync = false
         $("body").css("pointer-events", "all");
-        $(".vjs-play-progress").removeClass('syncing')
+        // $(".vjs-play-progress").removeClass('syncing')
     }
 }
 

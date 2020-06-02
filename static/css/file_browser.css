@@ -25,6 +25,10 @@ body {
     text-transform: uppercase;
 }
 
+.file_browser span {
+    text-transform: none;
+}
+
 .file_browser {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(25vw, 1fr));

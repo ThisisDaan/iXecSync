@@ -5,7 +5,7 @@
 
 {% block head %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/file_browser.css') }}" />
-{{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/header.css') }}" />
 {% endblock %}
 
 {% block content %}
@@ -51,11 +51,10 @@
       {% endif %}
    </section>
 </main>
-{{ super() }}
 {% endblock %}
 
 
-{% block scripts %}
+{% block scripts_bottom %}
 <script>
    function RemoveLastDirectoryPartOf(the_url) {
       var the_arr = the_url.split('/');
@@ -79,6 +78,11 @@
       }
       window.location.href = redirect
    }
+
+   function search(input) {
+      if (event.key === 'Enter') {
+         window.location.href = "/search/" + input.value
+      }
+   }
 </script>
-{{ super() }}
 {% endblock %}
