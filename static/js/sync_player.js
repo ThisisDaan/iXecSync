@@ -195,7 +195,7 @@ function skipForward(seconds) {
 }
 
 function user_sync() {
-    if (!ignore_sync) {
+    if (!ignore_sync && player.readyState() > 0 && user_active) {
         sync_data('client request sync')
     }
 }
