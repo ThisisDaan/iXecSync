@@ -81,9 +81,9 @@ function create_websocket() {
     socket.on('message', m => message(m));
     socket.on('meta', m => player_metadata(m));
     setInterval(function () {
-        if (!player.paused()) {
-            sync_data('client update')
-        }
+        // if (!player.paused()) {
+        sync_data('client update')
+        // }
     }, heartbeat);
 }
 
@@ -201,9 +201,9 @@ function user_sync() {
 }
 
 function set_ignore_sync(ignore) {
-    if (ignore) {
+    if (ignore == true) {
         ignore_sync = true
-        setTimeout(set_ignore_sync, 250)
+        setTimeout(set_ignore_sync, 2000)
     } else {
         ignore_sync = false
     }

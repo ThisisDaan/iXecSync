@@ -105,7 +105,6 @@ class iXecSync:
             if client.id != self.id:
                 client.update_client_time(self.time)
                 client.paused = self.paused
-                self.update_session()
 
     def sync_client(self):
         reference = self.get_reference()
