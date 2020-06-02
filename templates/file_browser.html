@@ -6,12 +6,18 @@
 {% block head %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/file_browser.css') }}" />
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/header.css') }}" />
+<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
 {% endblock %}
 
 {% block content %}
 <main>
    {% include "header.html" %}
    <section class="file-overview">
+      <section id='search'>
+         <section class="search">
+            <input type="text" placeholder="search" onkeydown="search(this)">
+         </section>
+      </section>
       {% if not folders and not files %}
       <section class="category">
          <span>Files</span>
@@ -61,6 +67,10 @@
       the_arr.pop();
       the_arr.pop();
       return (the_arr.join('/'));
+   }
+
+   function toggle_search() {
+      $("#search").toggle();
    }
 
    function goBack() {

@@ -1,8 +1,12 @@
+/* :root {
+    --header-height: 80px;
+} */
+
 .header {
     display: inline-flex;
     flex-direction: row;
     width: 100vw;
-    height: 100px;
+    height: var(--header-height);
     background-color: #000;
     justify-content: flex-start;
     align-items: center;
@@ -11,66 +15,55 @@
 
 .header a {
     order: 2;
-    font-size: 30px;
+    font-size: calc(var(--header-height) / 2.5);
     color: #fff;
     text-decoration: inherit;
-    line-height: 40px;
-    font-size: 40px;
+    line-height: calc(var(--header-height) / 2.5);
+    font-size: calc(var(--header-height) / 2.5);
     font-family: 'Roboto';
     font-weight: 500;
 }
 
-.search {
-    order: 3;
-    margin-right: 10%;
-    margin-left: 10%;
-    padding: 5px;
-    font-size: 13px;
-    border: 0px solid #202225;
-    border-radius: 5px;
-    color: #72767d;
-    width: 100%;
-    background-color: #202225;
-    align-self: center;
-    order: 2;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.menu-right {
+    display: inherit;
+    flex-direction: inherit;
+    height: inherit;
+    order: 1337;
+    margin-left: auto;
 }
 
-.search>input {
-    background-color: transparent;
-    border: none;
-    outline: 0;
-    width: 100%;
-    color: #dcddde;
-}
-
-.back {
+/* @media (max-width: 769px) {
+    .search {
+        display: none;
+    }
+} */
+.back-icon {
     -webkit-mask-image: url(../icons/arrow_back_ios-24px.svg);
     mask-image: url(../icons/arrow_back_ios-24px.svg);
-    order: 0;
 }
 
-.menu {
+.menu-icon {
     -webkit-mask-image: url(../icons/menu-24px.svg);
     mask-image: url(../icons/menu-24px.svg);
-    order: 4;
-    margin-left: auto;
+}
+
+.search-icon {
+    -webkit-mask-image: url(../icons/search-24px.svg);
+    mask-image: url(../icons/search-24px.svg);
 }
 
 .button {
     position: relative;
     display: block;
-    min-width: 100px;
-    min-height: 100px;
+    min-width: var(--header-height);
+    min-height: var(--header-height);
     background-color: #fff;
     -webkit-mask-position: center center;
     mask-position: center center;
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
-    -webkit-mask-size: 50px;
-    mask-size: 50px;
+    -webkit-mask-size: calc(var(--header-height) / 2);
+    mask-size: calc(var(--header-height) / 2);
     pointer-events: all;
 }
 
@@ -78,10 +71,4 @@
 
 .button:hover {
     background-color: var(--theme-color);
-}
-
-@media (max-width: 769px) {
-    .search {
-        display: none;
-    }
 }

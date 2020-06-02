@@ -229,13 +229,13 @@ def file_browsing_search(search):
 
 
 def getContent(folder, search_string=None):
-
     content = defaultdict(list)
 
     for (root, dirs, files) in os.walk(folder):
 
         for directory in dirs:
             if search_string is None or search_string.lower() in directory.lower():
+
                 json = {
                     "name": f"{directory}",
                     "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",

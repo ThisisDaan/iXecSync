@@ -6,7 +6,7 @@
 
 .video-overlay-container {
     position: relative;
-    height: 100px;
+    height: var(--header-height);
     width: 100vw;
     z-index: 1000;
 
@@ -19,8 +19,8 @@
 #video-overlay-title {
     position: relative;
     z-index: 1;
-    line-height: 40px;
-    font-size: 40px;
+    line-height: calc(var(--header-height) / 2.5);
+    font-size: calc(var(--header-height) / 2.5);
     font-family: 'Roboto';
     font-weight: 500;
     white-space: nowrap;
@@ -32,8 +32,8 @@
     position: relative;
 
     display: block;
-    min-width: 100px;
-    min-height: 100px;
+    min-width: var(--header-height);
+    min-height: var(--header-height);
     background-color: #fff;
 
     -webkit-mask-image: url(../icons/arrow_back_ios-24px.svg);
@@ -42,8 +42,8 @@
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
 
-    -webkit-mask-size: 50px;
-    mask-size: 50px;
+    -webkit-mask-size: calc(var(--header-height) / 2);
+    mask-size: calc(var(--header-height) / 2);
 
     -webkit-mask-position: center center;
     mask-position: center center;

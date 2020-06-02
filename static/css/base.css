@@ -1,6 +1,6 @@
 :root {
     --theme-color: #52b54b;
-    /* #219ecc; */
+    --header-height: 80px;
 }
 
 @font-face {
