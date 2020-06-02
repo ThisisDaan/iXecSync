@@ -203,9 +203,13 @@ function user_sync() {
 function set_ignore_sync(ignore) {
     if (ignore == true) {
         ignore_sync = true
-        setTimeout(set_ignore_sync, 2000)
+        setTimeout(set_ignore_sync, 1000)
+        $("body").css("pointer-events", "none");
+        $(".vjs-play-progress").css("background-color", "#ffce42");
     } else {
         ignore_sync = false
+        $("body").css("pointer-events", "all");
+        $(".vjs-play-progress").css("background-color", "#52b54b");
     }
 }
 
