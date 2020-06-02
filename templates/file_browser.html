@@ -4,11 +4,9 @@
 
 
 {% block head %}
-{{ super() }}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/file_browser.css') }}" />
-<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/header.css') }}" />
+{{ super() }}
 {% endblock %}
-
 
 {% block content %}
 <main>
@@ -53,6 +51,7 @@
       {% endif %}
    </section>
 </main>
+{{ super() }}
 {% endblock %}
 
 
@@ -81,4 +80,5 @@
       window.location.href = redirect
    }
 </script>
+{{ super() }}
 {% endblock %}

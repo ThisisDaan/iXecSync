@@ -1,3 +1,11 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/header.css') }}" />
+{{ super() }}
+{% endblock %}
+
+{% block header %}
 <header class="header">
     <button onclick='goBack()' class='back button'></button>
     <a href="/file"><span>iXecSync</span></a>
@@ -6,7 +14,8 @@
     </section>
     <button onclick='' class='menu button'></button>
 </header>
-
+{% endblock %}
+{% block scripts %}
 <script>
     function search(input) {
         if (event.key === 'Enter') {
@@ -14,3 +23,4 @@
         }
     }
 </script>
+{% endblock %}
