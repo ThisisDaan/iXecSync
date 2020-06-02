@@ -56,11 +56,16 @@ li {
     padding: 10px 10px 10px 15px;
     margin-bottom: 5px;
     height: 25px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
     background-color: #000;
     border-radius: 10px;
+    min-width: 0;
+}
+
+.item span {
+    overflow: hidden;
+    white-space: nowrap;
+    display: block;
+    text-overflow: ellipsis;
 }
 
 .item:hover {

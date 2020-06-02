@@ -1,5 +1,5 @@
 .header {
-    display: flex;
+    display: inline-flex;
     flex-direction: row;
     width: 100vw;
     height: 100px;
@@ -12,6 +12,7 @@
 }
 
 .header a {
+    order: 2;
     font-size: 30px;
     color: #fff;
     text-decoration: inherit;
@@ -22,6 +23,7 @@
 }
 
 .search {
+    order: 3;
     margin-right: 10%;
     margin-left: 10%;
     padding: 5px;
@@ -46,30 +48,42 @@
     color: #dcddde;
 }
 
-.back-button {
-    position: relative;
+.back {
+    -webkit-mask-image: url(../icons/arrow_back_ios-24px.svg);
+    mask-image: url(../icons/arrow_back_ios-24px.svg);
+    order: 0;
+}
 
+.menu {
+    -webkit-mask-image: url(../icons/menu-24px.svg);
+    mask-image: url(../icons/menu-24px.svg);
+    order: 4;
+    margin-left: auto;
+}
+
+.button {
+    position: relative;
     display: block;
     min-width: 100px;
     min-height: 100px;
     background-color: #fff;
-
-    -webkit-mask-image: url(../icons/arrow_back_ios-24px.svg);
-    mask-image: url(../icons/arrow_back_ios-24px.svg);
-
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-
-    -webkit-mask-size: 50px;
-    mask-size: 50px;
-
     -webkit-mask-position: center center;
     mask-position: center center;
-
-
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 50px;
+    mask-size: 50px;
     pointer-events: all;
 }
 
-.back-button:hover {
+
+
+.button:hover {
     background-color: #52b54b;
+}
+
+@media (max-width: 769px) {
+    .search {
+        display: none;
+    }
 }

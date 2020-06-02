@@ -61,6 +61,13 @@
     top: -1.5em
 }
 
+@media (max-width: 769px) {
+    .video-js .vjs-progress-control:hover {
+        height: 1.5em;
+        top: -1.5em
+    }
+}
+
 .vjs-volume-control,
 .vjs-menu-item,
 .vjs-button,
