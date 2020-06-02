@@ -3,10 +3,12 @@
     flex-direction: row;
     width: 100vw;
     height: 100px;
-    background-color: #2f3136;
+    background-color: #000;
     justify-content: flex-start;
     align-items: center;
     border-bottom: 2px solid #52b54b;
+    margin-bottom: 25px;
+
 }
 
 .header a {

@@ -11,34 +11,40 @@
 
 
 {% block content %}
-<main class="grid">
+<main>
    {% include "header.html" %}
-   <!-- <nav>
-      <ul class="nav">
-         <li onclick="goBack()">Back</li>
+   <section class="file-overview">
+      {% if not folders and not files %}
+      <span class="category">Files</span>
+      <ul class="file_browser">
+         {% for item in empty %}
+         <li class="file item error-message">
+            {{ item.name }}
+         </li>
+         {% endfor %}
       </ul>
-   </nav> -->
-   <section class="scrolling">
+      {% endif %}
+      {% if folders %}
+      <span class="category">Folders</span>
       <ul class="file_browser">
          {% for item in folders %}
          <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
             {{ item.name }}
          </li>
          {% endfor %}
-
+      </ul>
+      {% endif %}
+      {% if files %}
+      <span class="category">Files</span>
+      <ul class="file_browser">
          {% for item in files %}
          <li class="file item file-{{ item.format }}" onclick='navigate(this.id)' id='{{ item.path }}'
             data-type='{{ item.type }}'>
             {{ item.name }}
          </li>
          {% endfor %}
-
-         {% for item in empty %}
-         <li class="file item file-other">
-            {{ item.name }}
-         </li>
-         {% endfor %}
       </ul>
+      {% endif %}
    </section>
 </main>
 {% endblock %}
