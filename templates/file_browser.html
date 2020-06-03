@@ -13,8 +13,9 @@
 <main>
    {% include "header.html" %}
    <section class="file-overview">
-      <section id='search'>
-         <section class="search">
+      <section id='search' class='category'>
+         <span>Search</span>
+         <section class="item search">
             <input type="text" placeholder="search" onkeydown="search(this)">
          </section>
       </section>
@@ -70,7 +71,7 @@
    }
 
    function toggle_search() {
-      $("#search").toggle();
+      $("#search").slideToggle(300);
    }
 
    function goBack() {

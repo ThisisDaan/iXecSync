@@ -24,6 +24,11 @@
     font-weight: 500;
 }
 
+.header a:active {
+    color: var(--theme-color);
+    -webkit-tap-highlight-color: transparent;
+}
+
 .menu-right {
     display: inherit;
     flex-direction: inherit;
@@ -32,11 +37,6 @@
     margin-left: auto;
 }
 
-/* @media (max-width: 769px) {
-    .search {
-        display: none;
-    }
-} */
 .back-icon {
     -webkit-mask-image: url(../icons/arrow_back_ios-24px.svg);
     mask-image: url(../icons/arrow_back_ios-24px.svg);
@@ -67,8 +67,12 @@
     pointer-events: all;
 }
 
+@media (min-width: 768px) {
+    .button:hover {
+        background-color: var(--theme-color);
+    }
+}
 
-
-.button:hover {
+.button:active {
     background-color: var(--theme-color);
 }
