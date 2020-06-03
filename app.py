@@ -402,6 +402,72 @@ def subtitle(session_id, language_code):
         return abort(404)
 
 
+def transcodeMime(format):
+    transcode_mime = {"*": "video/mp4", "mp3": "audio/mp3", "jpg": "image/jpg"}
+    """Translate file format to Mime type."""
+    return transcode_mime.get(format) or transcode_mime["*"]
+
+
+def transcode(path, start, format, vcodec, acodec):
+    ffmpeg = os.sep + Libs + os.sep + "ffmpeg"
+
+    ffmpeg_transcode_args = {
+        "*": " -ss {} -i {} -f {} -vcodec {} -acodec {} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1",
+        "mp3": ["-f", "mp3", "-codec", "copy", "pipe:1"],
+    }
+
+    """Transcode in ffmpeg subprocess."""
+    d = mapPath(path)
+    ##underscore = ignore first split output
+    _, ext = os.path.splitext(d)
+    ext = ext[1:]
+    # args = ffmpeg_transcode_args.get(ext) or
+    args = ffmpeg_transcode_args["*"]
+    cmdline = ffmpeg + args.format(str(start), d, format, vcodec, acodec)
+
+    print(cmdline)
+
+    proc = subprocess.Popen(cmdline.split(), stdout=subprocess.PIPE)
+    try:
+        f = proc.stdout
+        byte = f.read(65536)
+        while byte:
+            yield byte
+            byte = f.read(65536)
+    finally:
+        proc.kill()
+
+
+@app.route("/transcode.sync")
+##todo:
+# Get path from local flask storage
+# get format from the filename mp4 etc
+
+
+def media_content_tc(path, format):  # Returns media file
+    # start = float(request.args.get("start") or 0)
+    # vcodec = request.args.get("vcodec")
+    # acodec = request.args.get("acodec")
+    start = 0
+    vcodec = "copy"
+    acodec = "copy"
+    try:
+        mime = transcodeMime(format)
+        return Response(
+            response=transcode(path, start, format, vcodec, acodec),
+            status=200,
+            mimetype=mime,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Content-Type": mime,
+                "Content-Disposition": "inline",
+                "Content-Transfer-Enconding": "binary",
+            },
+        )
+    except FileNotFoundError:
+        abort(404)
+
+
 @socketio.on("client request sync", namespace="/sync")
 def sync_time(client_data):
     session.client.sync_other_clients(client_data)
