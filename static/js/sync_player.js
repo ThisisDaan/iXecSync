@@ -37,7 +37,7 @@ player.on('useractive', player_user_active);
 player.on('userinactive', player_user_inactive);
 
 
-overlay_content = "<section class='video-overlay-container'><button onclick='window.history.back()' class='back-button'></button><h2 id='video-overlay-title'></h2></section>";
+var overlay_content = "<section class='video-overlay-container'><button onclick='window.history.back()' class='back-button'></button><span id='video-overlay-title'></span></section>";
 player.overlay({
     overlays: [{
         class: 'video-overlay',
@@ -81,35 +81,37 @@ function create_websocket() {
     socket.on('message', m => message(m));
     socket.on('meta', m => player_metadata(m));
     setInterval(function () {
-        if (!player.paused()) {
-            sync_data('client update')
-        }
+        // if (!player.paused()) {
+        sync_data('client update')
+        // }
     }, heartbeat);
 }
 
 function player_user_inactive() {
     user_active = false
     if (!player.paused()) {
-        $(".video-overlay").fadeTo(500, "0")
+        $(".video-overlay").fadeTo(300, "0")
     }
-}
-
-function player_user_active() {
-    user_active = true
-    $(".video-overlay").fadeTo(500, "1")
-}
-
-function player_pause() {
-    $(".video-overlay").fadeTo(500, "1")
-    user_sync()
 }
 
 function player_play() {
     if (!user_active) {
-        $(".video-overlay").fadeTo(500, "0")
+        $(".video-overlay").fadeTo(300, "0")
     }
     user_sync()
 }
+
+function player_user_active() {
+    user_active = true
+    $(".video-overlay").fadeTo(100, "1")
+}
+
+function player_pause() {
+    $(".video-overlay").fadeTo(100, "1")
+    user_sync()
+}
+
+
 
 function player_metadata(metadata) {
     if (metadata["title"] != null) {
@@ -143,6 +145,8 @@ function player_speed_normal() {
     } else {
         console.log("You are in sync")
     }
+    $(".vjs-play-progress").removeClass('syncing')
+    $(".vjs-play-progress").removeClass('syncing-slow')
 }
 
 function player_speed_faster(request) {
@@ -150,6 +154,7 @@ function player_speed_faster(request) {
     player.playbackRate(player_speed)
     out_of_sync_time_needed(request)
     console.log("speeding up video by " + sync_speed + "%")
+
 }
 
 function player_speed_slower(request) {
@@ -161,6 +166,8 @@ function player_speed_slower(request) {
 
 function message(msg) {
     console.log(msg)
+    $(".vjs-play-progress").removeClass('syncing')
+    $(".vjs-play-progress").removeClass('syncing-slow')
 }
 
 function out_of_sync(request) {
@@ -174,6 +181,14 @@ function out_of_sync(request) {
         case 2:
             player_speed_slower(request)
             break;
+    }
+
+    if (request["delay"] > (request["max_out_of_sync"] / 4)) {
+        $(".vjs-play-progress").removeClass('syncing')
+        $(".vjs-play-progress").addClass('syncing-slow')
+    } else if (request["outofsync"] != 0) {
+        $(".vjs-play-progress").removeClass('syncing-slow')
+        $(".vjs-play-progress").addClass('syncing')
     }
 }
 
@@ -193,17 +208,21 @@ function skipForward(seconds) {
 }
 
 function user_sync() {
-    if (!ignore_sync) {
+    if (!ignore_sync && player.readyState() > 0 && user_active) {
         sync_data('client request sync')
     }
 }
 
 function set_ignore_sync(ignore) {
-    if (ignore) {
+    if (ignore == true) {
         ignore_sync = true
-        setTimeout(set_ignore_sync, 250)
+        setTimeout(set_ignore_sync, 1000)
+        $("body").css("pointer-events", "none");
+        // $(".vjs-play-progress").addClass('syncing')
     } else {
         ignore_sync = false
+        $("body").css("pointer-events", "all");
+        // $(".vjs-play-progress").removeClass('syncing')
     }
 }
 

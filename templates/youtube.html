@@ -1,0 +1,5 @@
+{% extends "sync_player.html" %}
+
+{% block video_plugins %}
+<script src="{{ url_for('static', filename='player/video-youtube.min.js') }}"></script>
+{% endblock %}

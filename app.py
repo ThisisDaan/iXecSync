@@ -105,7 +105,6 @@ class iXecSync:
             if client.id != self.id:
                 client.update_client_time(self.time)
                 client.paused = self.paused
-                self.update_session()
 
     def sync_client(self):
         reference = self.get_reference()
@@ -183,6 +182,7 @@ class iXecSync:
                 "out of sync",
                 {
                     "outofsync": outofsync,
+                    "max_out_of_sync": max_out_of_sync,
                     "delay": delay_between_players,
                     "max_delay": max_delay,
                 },
@@ -226,17 +226,18 @@ def file_browsing_search(search):
         folders=content["folders"],
         files=content["files"],
         empty=content["empty"],
+        search=True,
     )
 
 
 def getContent(folder, search_string=None):
-
     content = defaultdict(list)
 
     for (root, dirs, files) in os.walk(folder):
 
         for directory in dirs:
             if search_string is None or search_string.lower() in directory.lower():
+
                 json = {
                     "name": f"{directory}",
                     "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
@@ -336,7 +337,7 @@ def youtube_player():
                 "filename": "Youtube",
                 "meta": {"Youtube"},
             }
-        return render_template("sync_player.html")
+        return render_template("youtube.html")
     except KeyError:
         return redirect("/", code=303)
 

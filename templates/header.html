@@ -1,14 +1,9 @@
 <header class="header">
+    <button onclick='goBack()' class='back-icon button'></button>
     <a href="/file"><span>iXecSync</span></a>
-    <section class="search">
-        <input type="text" placeholder="search" onkeydown="search(this)">
+
+    <section class='menu-right'>
+        <button onclick='toggle_search()' class='search-icon button'></button>
+        <!-- <button onclick='menu()' class='menu-icon button'></button> -->
     </section>
 </header>
-
-<script>
-    function search(input) {
-        if (event.key === 'Enter') {
-            window.location.href = "/search/" + input.value
-        }
-    }
-</script>

@@ -275,7 +275,7 @@
 }
 
 .video-js .vjs-menu-button-popup .vjs-menu .vjs-menu-item.vjs-selected {
-    background-color: #52b54b;
+    background-color: var(--theme-color);
     color: #fff
 }
 
@@ -291,11 +291,11 @@
 .video-js:hover .vjs-big-play-button,
 .video-js .vjs-big-play-button:focus,
 .video-js .vjs-big-play-button:active {
-    background-color: #52b54b
+    background-color: var(--theme-color)
 }
 
 .video-js .vjs-loading-spinner {
-    border-color: #52b54b
+    border-color: var(--theme-color)
 }
 
 .video-js .vjs-control-bar2 {
@@ -310,17 +310,9 @@
 
 .video-js .vjs-play-progress,
 .video-js .vjs-volume-level {
-    background-color: #52b54b
+    background-color: var(--theme-color)
 }
 
 .vjs-menu-item-text {
     text-transform: capitalize;
-}
-
-.vjs-volume-control,
-.vjs-menu-item,
-.vjs-button,
-.vjs-menu-button {
-    outline: none;
-    -webkit-tap-highlight-color: transparent;
 }

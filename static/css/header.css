@@ -1,42 +1,78 @@
+/* :root {
+    --header-height: 80px;
+} */
+
 .header {
-    display: flex;
+    display: inline-flex;
     flex-direction: row;
     width: 100vw;
-    height: 50px;
-    background-color: #2f3136;
+    height: var(--header-height);
+    background-color: #000;
     justify-content: flex-start;
     align-items: center;
+    border-bottom: 2px solid var(--theme-color);
 }
 
 .header a {
-    margin-left: 40px;
-    font-weight: 900;
-    font-size: 30px;
+    order: 2;
+    font-size: calc(var(--header-height) / 2.5);
     color: #fff;
     text-decoration: inherit;
+    line-height: calc(var(--header-height) / 2.5);
+    font-size: calc(var(--header-height) / 2.5);
+    font-family: 'Roboto';
+    font-weight: 500;
 }
 
-.search {
-    margin-right: 10%;
-    margin-left: 10%;
-    padding: 5px;
-    font-size: 13px;
-    border: 0px solid #202225;
-    border-radius: 5px;
-    color: #72767d;
-    width: 100%;
-    background-color: #202225;
-    align-self: center;
-    order: 2;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.header a:active {
+    color: var(--theme-color);
+    -webkit-tap-highlight-color: transparent;
 }
 
-.search>input {
-    background-color: transparent;
-    border: none;
-    outline: 0;
-    width: 100%;
-    color: #dcddde;
+.menu-right {
+    display: inherit;
+    flex-direction: inherit;
+    height: inherit;
+    order: 1337;
+    margin-left: auto;
+}
+
+.back-icon {
+    -webkit-mask-image: url(../icons/arrow_back_ios-24px.svg);
+    mask-image: url(../icons/arrow_back_ios-24px.svg);
+}
+
+.menu-icon {
+    -webkit-mask-image: url(../icons/menu-24px.svg);
+    mask-image: url(../icons/menu-24px.svg);
+}
+
+.search-icon {
+    -webkit-mask-image: url(../icons/search-24px.svg);
+    mask-image: url(../icons/search-24px.svg);
+}
+
+.button {
+    position: relative;
+    display: block;
+    min-width: var(--header-height);
+    min-height: var(--header-height);
+    background-color: #fff;
+    -webkit-mask-position: center center;
+    mask-position: center center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: calc(var(--header-height) / 2);
+    mask-size: calc(var(--header-height) / 2);
+    pointer-events: all;
+}
+
+@media (min-width: 768px) {
+    .button:hover {
+        background-color: var(--theme-color);
+    }
+}
+
+.button:active {
+    background-color: var(--theme-color);
 }

@@ -4,53 +4,81 @@
 
 
 {% block head %}
-{{ super() }}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/file_browser.css') }}" />
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/header.css') }}" />
+<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
 {% endblock %}
 
-
 {% block content %}
-<main class="grid">
+<main>
    {% include "header.html" %}
-   <nav>
-      <ul class="nav">
-         <li onclick="goBack()">Back</li>
-      </ul>
-   </nav>
-   <section class="scrolling">
-      <ul class="file_browser">
-         {% for item in folders %}
-         <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
-            {{ item.name }}
-         </li>
-         {% endfor %}
-
-         {% for item in files %}
-         <li class="file item file-{{ item.format }}" onclick='navigate(this.id)' id='{{ item.path }}'
-            data-type='{{ item.type }}'>
-            {{ item.name }}
-         </li>
-         {% endfor %}
-
-         {% for item in empty %}
-         <li class="file item file-other">
-            {{ item.name }}
-         </li>
-         {% endfor %}
-      </ul>
+   <section class="file-overview">
+      <section id='search' class='category'>
+         <span>Search</span>
+         <section class="item search">
+            <input id='search-input' type="search" placeholder="search" onkeydown="search(this)" onkeyup="searchpage()">
+         </section>
+      </section>
+      {% if not folders and not files %}
+      <section class="category">
+         <span>Files</span>
+         <ul class="file_browser">
+            {% for item in empty %}
+            <li class="file item error-message">
+               <span>{{ item.name }}</span>
+            </li>
+            {% endfor %}
+         </ul>
+      </section>
+      {% endif %}
+      {% if folders %}
+      <section class="category">
+         <span>Folders</span>
+         <ul id='folders' class="file_browser">
+            {% for item in folders %}
+            <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
+               <span>{{ item.name }}</span>
+            </li>
+            {% endfor %}
+         </ul>
+      </section>
+      {% endif %}
+      {% if search and folders %}
+      {% elif files %}
+      <section class="category">
+         <span>Files</span>
+         <ul id="files" class="file_browser">
+            {% for item in files %}
+            <li class="file item file-{{ item.format }}" onclick='navigate(this.id)' id='{{ item.path }}'
+               data-type='{{ item.type }}'>
+               <span>{{ item.name }}</span>
+            </li>
+            {% endfor %}
+         </ul>
+      </section>
+      {% endif %}
    </section>
 </main>
 {% endblock %}
 
 
-{% block scripts %}
+{% block scripts_bottom %}
 <script>
    function RemoveLastDirectoryPartOf(the_url) {
       var the_arr = the_url.split('/');
       the_arr.pop();
       the_arr.pop();
       return (the_arr.join('/'));
+   }
+
+   function toggle_search() {
+      $("#search").toggle();
+
+      setTimeout(function () {
+         $("#search-input").val("");
+         $("#search-input").focus();
+         searchpage();
+      }, 100);
    }
 
    function goBack() {
@@ -67,6 +95,47 @@
          redirect = redirect + "/"
       }
       window.location.href = redirect
+   }
+
+   function searchpage() {
+      search_id("folders")
+      search_id("files")
+   }
+
+   function search_id(element_id) {
+      var input, filter, ul, li, a, i, txtValue;
+      input = document.getElementById('search-input');
+      filter = input.value.toUpperCase();
+      ul = document.getElementById(element_id);
+      if (ul) {
+         li = ul.getElementsByTagName('li');
+
+         // Loop through all list items, and hide those who don't match the search query
+         var count = 0
+         for (i = 0; i < li.length; i++) {
+            a = li[i].getElementsByTagName("span")[0];
+            txtValue = a.textContent || a.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+               li[i].style.display = "";
+            } else {
+               count++
+               li[i].style.display = "none";
+            }
+         }
+
+         // check if everything is hidden if so hide the previous item too (the span)
+         if (count == li.length) {
+            $("#" + element_id).prev().hide()
+         } else {
+            $("#" + element_id).prev().show()
+         }
+      }
+   }
+
+   function search(input) {
+      if (event.key === 'Enter') {
+         window.location.href = "/search/" + input.value
+      }
    }
 </script>
 {% endblock %}
