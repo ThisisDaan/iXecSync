@@ -72,13 +72,13 @@
    }
 
    function toggle_search() {
-      $("#search").slideToggle(300);
+      $("#search").toggle();
 
       setTimeout(function () {
          $("#search-input").val("");
          $("#search-input").focus();
          searchpage();
-      }, 300);
+      }, 100);
    }
 
    function goBack() {
