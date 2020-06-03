@@ -225,6 +225,7 @@ def file_browsing_search(search):
         folders=content["folders"],
         files=content["files"],
         empty=content["empty"],
+        search=True,
     )
 
 

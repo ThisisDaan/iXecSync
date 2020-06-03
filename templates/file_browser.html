@@ -16,7 +16,7 @@
       <section id='search' class='category'>
          <span>Search</span>
          <section class="item search">
-            <input type="text" placeholder="search" onkeydown="search(this)">
+            <input id='search-input' type="search" placeholder="search" onkeydown="search(this)" onkeyup="searchpage()">
          </section>
       </section>
       {% if not folders and not files %}
@@ -34,7 +34,7 @@
       {% if folders %}
       <section class="category">
          <span>Folders</span>
-         <ul class="file_browser">
+         <ul id='folders' class="file_browser">
             {% for item in folders %}
             <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
                <span>{{ item.name }}</span>
@@ -43,10 +43,11 @@
          </ul>
       </section>
       {% endif %}
-      {% if files %}
+      {% if search and folders %}
+      {% elif files %}
       <section class="category">
          <span>Files</span>
-         <ul class="file_browser">
+         <ul id="files" class="file_browser">
             {% for item in files %}
             <li class="file item file-{{ item.format }}" onclick='navigate(this.id)' id='{{ item.path }}'
                data-type='{{ item.type }}'>
@@ -72,6 +73,12 @@
 
    function toggle_search() {
       $("#search").slideToggle(300);
+
+      setTimeout(function () {
+         $("#search-input").val("");
+         $("#search-input").focus();
+         searchpage();
+      }, 300);
    }
 
    function goBack() {
@@ -88,6 +95,30 @@
          redirect = redirect + "/"
       }
       window.location.href = redirect
+   }
+
+   function searchpage() {
+      search_id("folders")
+      search_id("files")
+   }
+
+   function search_id(element_id) {
+      var input, filter, ul, li, a, i, txtValue;
+      input = document.getElementById('search-input');
+      filter = input.value.toUpperCase();
+      ul = document.getElementById(element_id);
+      li = ul.getElementsByTagName('li');
+
+      // Loop through all list items, and hide those who don't match the search query
+      for (i = 0; i < li.length; i++) {
+         a = li[i].getElementsByTagName("span")[0];
+         txtValue = a.textContent || a.innerText;
+         if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            li[i].style.display = "";
+         } else {
+            li[i].style.display = "none";
+         }
+      }
    }
 
    function search(input) {
