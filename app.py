@@ -6,6 +6,7 @@ from flask import (
     session,
     redirect,
     abort,
+    Response,
 )
 from jinja2 import Template
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -15,6 +16,8 @@ from collections import defaultdict
 import uuid
 from iso639 import languages
 import io
+import subprocess
+import sys
 
 
 app = Flask(__name__)
@@ -410,24 +413,31 @@ def transcodeMime(format):
 
 
 def transcode(path, start, format, vcodec, acodec):
-    ffmpeg = os.sep + Libs + os.sep + "ffmpeg"
+    if sys.platform == "win32":
+        ffmpeg = (
+            os.path.dirname(os.path.realpath(__file__))
+            + os.sep
+            + "Libs"
+            + os.sep
+            + "ffmpeg.exe"
+        )
+    else:
+        ffmpeg = (
+            os.path.dirname(os.path.realpath(__file__))
+            + os.sep
+            + "Libs"
+            + os.sep
+            + "ffmpeg"
+        )
 
     ffmpeg_transcode_args = {
         "*": " -ss {} -i {} -f {} -vcodec {} -acodec {} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1",
         "mp3": ["-f", "mp3", "-codec", "copy", "pipe:1"],
     }
-
     """Transcode in ffmpeg subprocess."""
-    d = mapPath(path)
-    ##underscore = ignore first split output
-    _, ext = os.path.splitext(d)
-    ext = ext[1:]
-    # args = ffmpeg_transcode_args.get(ext) or
     args = ffmpeg_transcode_args["*"]
-    cmdline = ffmpeg + args.format(str(start), d, format, vcodec, acodec)
-
+    cmdline = ffmpeg + args.format(str(start), path, format, vcodec, acodec)
     print(cmdline)
-
     proc = subprocess.Popen(cmdline.split(), stdout=subprocess.PIPE)
     try:
         f = proc.stdout
@@ -440,12 +450,11 @@ def transcode(path, start, format, vcodec, acodec):
 
 
 @app.route("/transcode.sync")
-##todo:
-# Get path from local flask storage
-# get format from the filename mp4 etc
-
-
-def media_content_tc(path, format):  # Returns media file
+def media_content_tc(path="video/video.mkv", format="mp4"):  # Returns media file
+    ##todo:
+    # Get path from local flask storage
+    # get format from the filename mp4 etc
+    ###oldcode
     # start = float(request.args.get("start") or 0)
     # vcodec = request.args.get("vcodec")
     # acodec = request.args.get("acodec")
