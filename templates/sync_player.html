@@ -20,6 +20,7 @@
 {% block scripts_bottom %}
 <script src="{{ url_for('static', filename='player/video.min.js') }}"></script>
 <script src="{{ url_for('static', filename='player/video-overlay.min.js') }}"></script>
-<script src="{{ url_for('static', filename='player/video-youtube.min.js') }}"></script>
+{% block video_plugins %}
+{% endblock %}
 <script src="{{ url_for('static', filename='js/sync_player.js') }}"></script>
 {% endblock %}

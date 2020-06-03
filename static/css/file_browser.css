@@ -12,6 +12,7 @@ body {
     height: calc(100vh - 102px);
     display: flex;
     flex-direction: column;
+    scrollbar-width: thin;
 }
 
 .category {

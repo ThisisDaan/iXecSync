@@ -182,6 +182,7 @@ function out_of_sync(request) {
             player_speed_slower(request)
             break;
     }
+
     if (request["delay"] > (request["max_out_of_sync"] / 4)) {
         $(".vjs-play-progress").removeClass('syncing')
         $(".vjs-play-progress").addClass('syncing-slow')

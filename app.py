@@ -337,7 +337,7 @@ def youtube_player():
                 "filename": "Youtube",
                 "meta": {"Youtube"},
             }
-        return render_template("sync_player.html")
+        return render_template("youtube.html")
     except KeyError:
         return redirect("/", code=303)
 
