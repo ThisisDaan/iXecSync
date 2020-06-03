@@ -144,8 +144,9 @@ function player_speed_normal() {
         console.log("playing video at normal speed")
     } else {
         console.log("You are in sync")
-        $(".vjs-play-progress").removeClass('syncing')
     }
+    $(".vjs-play-progress").removeClass('syncing')
+    $(".vjs-play-progress").removeClass('syncing-slow')
 }
 
 function player_speed_faster(request) {
@@ -153,7 +154,7 @@ function player_speed_faster(request) {
     player.playbackRate(player_speed)
     out_of_sync_time_needed(request)
     console.log("speeding up video by " + sync_speed + "%")
-    $(".vjs-play-progress").addClass('syncing')
+
 }
 
 function player_speed_slower(request) {
@@ -161,11 +162,12 @@ function player_speed_slower(request) {
     player.playbackRate(player_speed)
     out_of_sync_time_needed(request)
     console.log("slowing down video by " + sync_speed + "%")
-    $(".vjs-play-progress").addClass('syncing')
 }
 
 function message(msg) {
     console.log(msg)
+    $(".vjs-play-progress").removeClass('syncing')
+    $(".vjs-play-progress").removeClass('syncing-slow')
 }
 
 function out_of_sync(request) {
@@ -179,6 +181,13 @@ function out_of_sync(request) {
         case 2:
             player_speed_slower(request)
             break;
+    }
+    if (request["delay"] > (request["max_out_of_sync"] / 4)) {
+        $(".vjs-play-progress").removeClass('syncing')
+        $(".vjs-play-progress").addClass('syncing-slow')
+    } else if (request["outofsync"] != 0) {
+        $(".vjs-play-progress").removeClass('syncing-slow')
+        $(".vjs-play-progress").addClass('syncing')
     }
 }
 

@@ -62,6 +62,10 @@
     background-color: #ffce42 !important;
 }
 
+.syncing-slow {
+    background-color: #f04747 !important;
+}
+
 .video-js .vjs-progress-control {
     height: 1.5em;
     top: -1.5em

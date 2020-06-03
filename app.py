@@ -182,6 +182,7 @@ class iXecSync:
                 "out of sync",
                 {
                     "outofsync": outofsync,
+                    "max_out_of_sync": max_out_of_sync,
                     "delay": delay_between_players,
                     "max_delay": max_delay,
                 },
