@@ -50,9 +50,16 @@ player.overlay({
 $(document).ready(function () {
     if (url_parameters.get('session') != null) {
         session_id = url_parameters.get('session')
+        transcode = url_parameters.get('transcode')
+
+        // hack to set duration
+        // player.duration = function () {
+        //     return 1522; // the amount of seconds of video
+        // }
+
         player.src({
             type: 'video/mp4',
-            src: '/player/' + session_id
+            src: '/player/' + session_id + "/" + transcode
         });
     } else if (url_parameters.get('v') != null) {
         session_id = url_parameters.get('v')

@@ -151,28 +151,32 @@
     width: 4em
 }
 
+
+/* remember this line */
 .video-js .vjs-progress-control {
     position: absolute;
     left: 0;
     right: 0;
     width: 100%;
     height: .5em;
-    top: -.5em
+    top: -.5em;
 }
 
 .video-js .vjs-progress-control .vjs-load-progress,
 .video-js .vjs-progress-control .vjs-play-progress,
 .video-js .vjs-progress-control .vjs-progress-holder {
-    height: 100%
+    height: 100%;
+    border-radius: 1em
 }
 
 .video-js .vjs-progress-control .vjs-progress-holder {
-    margin: 0
+    margin: 0;
+    border-radius: .3em
 }
 
 .video-js .vjs-progress-control:hover {
     height: 1.5em;
-    top: -1.5em
+    top: -1.5em;
 }
 
 .video-js .vjs-control-bar {
@@ -191,11 +195,11 @@
     visibility: visible;
     opacity: 1;
     -webkit-backface-visibility: hidden;
-    -webkit-transform: translateY(3em);
-    -moz-transform: translateY(3em);
-    -ms-transform: translateY(3em);
-    -o-transform: translateY(3em);
-    transform: translateY(3em);
+    -webkit-transform: translateY(6em);
+    -moz-transform: translateY(6em);
+    -ms-transform: translateY(6em);
+    -o-transform: translateY(6em);
+    transform: translateY(6em);
     -webkit-transition: -webkit-transform 1s ease 0s;
     -moz-transition: -moz-transform 1s ease 0s;
     -ms-transition: -ms-transform 1s ease 0s;
@@ -303,14 +307,33 @@
 }
 
 .video-js .vjs-control-bar {
-    background-color: rgba(0, 0, 0, 0.3) !important;
+    background-color: #18191c !important;
     color: #ffffff;
-    font-size: 14px
+    font-size: 14px;
+    width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1em;
+    border-radius: .3em
+}
+
+.vjs-progress-control {
+    height: 1em !important;
+    top: -1.5em !important;
 }
 
 .video-js .vjs-play-progress,
 .video-js .vjs-volume-level {
     background-color: var(--theme-color)
+}
+
+.vjs-icon-placeholder {
+    opacity: 0.8;
+}
+
+.vjs-icon-placeholder:hover {
+    opacity: 1;
+    text-shadow: 0 0 15px rgba(255, 255, 255, .5), 0 0 10px rgba(255, 255, 255, .5);
 }
 
 .vjs-menu-item-text {

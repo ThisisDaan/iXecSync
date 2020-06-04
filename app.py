@@ -345,13 +345,18 @@ def youtube_player():
         return redirect("/", code=303)
 
 
-@app.route("/player/<string:session_id>")
-def video(session_id):
+@app.route("/player/<string:session_id>/<string:transcode>")
+def video(session_id, transcode):
     try:
-        return send_from_directory(
-            directory=session_storage[session_id]["directory"],
-            filename=session_storage[session_id]["filename"],
-        )
+        video_directory = session_storage[session_id]["directory"]
+        video_filename = session_storage[session_id]["filename"]
+        video_path = video_directory + video_filename
+        if transcode == "1":
+            return media_content_tc(video_path)
+        else:
+            return send_from_directory(
+                directory=video_directory, filename=video_filename,
+            )
     except KeyError:
         return abort(404)
 
@@ -449,7 +454,7 @@ def transcode(path, start, format, vcodec, acodec):
         proc.kill()
 
 
-@app.route("/transcode.sync")
+# @app.route("/transcode.sync")
 def media_content_tc(path="video/video.mkv", format="mp4"):  # Returns media file
     ##todo:
     # Get path from local flask storage
@@ -460,7 +465,7 @@ def media_content_tc(path="video/video.mkv", format="mp4"):  # Returns media fil
     # acodec = request.args.get("acodec")
     start = 0
     vcodec = "copy"
-    acodec = "copy"
+    acodec = "mp3"
     try:
         mime = transcodeMime(format)
         return Response(

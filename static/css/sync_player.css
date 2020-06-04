@@ -66,9 +66,9 @@
     background-color: #f04747 !important;
 }
 
-.video-js .vjs-progress-control {
-    height: 1.5em;
-    top: -1.5em
+/* .video-js .vjs-progress-control {
+    height: 1.5em !important;
+    top: -1.5em !important;
 }
 
 @media (max-width: 769px) {
@@ -76,8 +76,7 @@
         height: 1.5em;
         top: -1.5em
     }
-}
-
+} */
 
 .vjs-volume-control,
 .vjs-menu-item,
