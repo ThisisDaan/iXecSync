@@ -77,6 +77,9 @@ def transcode(path, start, format, vcodec, acodec):
     cmdline.append("ultrafast")
     cmdline.append("-movflags")
     cmdline.append("frag_keyframe+empty_moov+faststart")
+    ##audiosyncfix
+    cmdline.append("-filter:a")
+    cmdline.append("aresample=async=1000")
     cmdline.append("-loglevel")
     cmdline.append("verbose")
     cmdline.append("pipe:1")
