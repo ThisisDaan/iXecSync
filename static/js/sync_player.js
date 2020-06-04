@@ -52,9 +52,9 @@ $(document).ready(function () {
         session_id = url_parameters.get('session')
         transcode = url_parameters.get('transcoding')
 
-        player.duration = function () {
-            return player.video_duration;
-        };
+        // player.duration = function () {
+        //     return player.video_duration;
+        // };
 
         player.src({
             type: 'video/mp4',
