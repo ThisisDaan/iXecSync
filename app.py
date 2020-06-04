@@ -297,7 +297,8 @@ def create_new_session(session_id, directory, filename):
     srtToVtt_directory(directory)
     lang = get_subtitles(filename)
     path = os.path.join(directory, filename)
-    duration = 0  # acid_transcode.ffmpeg_getduration(path)
+    duration = 0
+    duration = acid_transcode.ffmpeg_getduration(path)
 
     session_storage[session_id] = {
         "directory": directory,

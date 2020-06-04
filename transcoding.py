@@ -23,20 +23,16 @@ else:
 
 
 def ffmpeg_getduration(path):
-    # cmdline = list()
-    # cmdline.append(ffmpeg)
-    # cmdline.append("-i")
-    # cmdline.append(path)
-    ffmpeg_parameters = f""" -i "{path}" """
-    cmdline = ffmpeg + ffmpeg_parameters  # + " -loglevel quiet"
+    cmdline = list()
+    cmdline.append(ffmpeg)
+    cmdline.append("-i")
+    cmdline.append(path)
+    # ffmpeg_parameters = f""" -i "{path}" """
+    # cmdline = ffmpeg + ffmpeg_parameters  # + " -loglevel quiet"
     duration = -1
-    FNULL = open(os.devnull, "w")
+    FNULL = open(os.devnull, "r")
     proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=FNULL)
     try:
-
-        class LocalBreak(Exception):
-            pass
-
         for line in iter(proc.stderr.readline, ""):
             line = line.rstrip()
             # Duration: 00:00:45.13, start: 0.000000, bitrate: 302 kb/s
@@ -46,10 +42,11 @@ def ffmpeg_getduration(path):
                 duration = (
                     int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)) + 1
                 )
+                print("*" * 80)
                 print("Video duration= " + str(duration))
+                print("*" * 80)
                 return int(duration)
                 break
-                exit
                 ##wtf waarom komt dit drie keer?!?!
     finally:
         proc.kill()
@@ -62,16 +59,16 @@ def transcodeMime(format):
 
 
 def transcode(path, start, format, vcodec, acodec):
-    # ffmpeg_transcode_args = {
-    #     "*": " -ss {} -i {} -f {} -vcodec {} -acodec {} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1",
-    #     "mp3": ["-f", "mp3", "-codec", "copy", "pipe:1"],
-    # }
-    # """Transcode in ffmpeg subprocess."""
-    # args = ffmpeg_transcode_args["*"]
-    # cmdline = ffmpeg + args.format(int(start), path, format, vcodec, acodec)
-    # print(cmdline)
-    ffmpeg_parameters = f""" -ss {start} -i "{path}" -f {format} -vcodec {vcodec} -acodec {acodec} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1"""
-    cmdline = ffmpeg + ffmpeg_parameters  # + " -loglevel quiet"
+    ffmpeg_transcode_args = {
+        "*": " -ss {} -i {} -f {} -vcodec {} -acodec {} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1",
+        "mp3": ["-f", "mp3", "-codec", "copy", "pipe:1"],
+    }
+    """Transcode in ffmpeg subprocess."""
+    args = ffmpeg_transcode_args["*"]
+    cmdline = ffmpeg + args.format(int(start), path, format, vcodec, acodec)
+    print(cmdline)
+    # ffmpeg_parameters = f""" -ss {start} -i "{path}" -f {format} -vcodec {vcodec} -acodec {acodec} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1"""
+    # cmdline = ffmpeg + ffmpeg_parameters  # + " -loglevel quiet"
     proc = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
     try:
         f = proc.stdout
