@@ -55,6 +55,7 @@ $(document).ready(function () {
         player.duration = function () {
             return player.video_duration;
         };
+
         player.src({
             type: 'video/mp4',
             src: '/player/' + session_id + "?transcoding=" + transcode + "&time=0"
