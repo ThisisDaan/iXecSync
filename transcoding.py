@@ -23,10 +23,12 @@ else:
 
 
 def ffmpeg_getduration(path):
-    cmdline = list()
-    cmdline.append(ffmpeg)
-    cmdline.append("-i")
-    cmdline.append(path)
+    # cmdline = list()
+    # cmdline.append(ffmpeg)
+    # cmdline.append("-i")
+    # cmdline.append(path)
+    ffmpeg_parameters = f""" -i "{path}" """
+    cmdline = ffmpeg + ffmpeg_parameters  # + " -loglevel quiet"
     duration = -1
     FNULL = open(os.devnull, "w")
     proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=FNULL)
