@@ -296,16 +296,18 @@ def create_new_session(session_id, directory, filename):
     srtToVtt_directory(directory)
     lang = get_subtitles(filename)
     path = os.path.join(directory, filename)
+
+    try:
+        duration = acid_transcode.ffmpeg_getduration(path)
+    except PermissionError:
+        print("permission error")
+
     session_storage[session_id] = {
         "directory": directory,
         "filename": filename,
         "path": path,
         "time": None,
-        "meta": {
-            "title": filename,
-            "duration": acid_transcode.ffmpeg_getduration(path),
-            "lang": lang,
-        },
+        "meta": {"title": filename, "duration": duration, "lang": lang,},
     }
     print(session_storage[session_id]["meta"])
 

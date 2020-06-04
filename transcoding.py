@@ -28,7 +28,7 @@ def ffmpeg_getduration(path):
     cmdline.append("-i")
     cmdline.append(path)
     duration = -1
-    FNULL = open(os.devnull, "w")
+    FNULL = open(os.devnull, "r")
     proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=FNULL)
     try:
 
