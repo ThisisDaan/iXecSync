@@ -52,14 +52,35 @@ $(document).ready(function () {
         session_id = url_parameters.get('session')
         transcode = url_parameters.get('transcoding')
 
-        player.duration = function () {
-            return player.video_duration;
-        };
+        time = 0;
+
+        if (transcode == "1") {
+            player.duration = function () {
+                return player.video_duration;
+            };
+            player.start = 0;
+            player.oldCurrentTime = player.currentTime;
+            player.currentTime = function (time) {
+                if (time == undefined) {
+                    return player.oldCurrentTime() + player.start;
+                }
+                console.log(Math.floor(time))
+                player.start = time;
+                player.oldCurrentTime(0);
+                player.src({
+                    src: '/player/' + session_id + "?transcoding=" + transcode + "&time=" + Math.floor(time),
+                    type: 'video/mp4'
+                });
+                //  player.play();
+                return time;
+            };
+        }
 
         player.src({
             type: 'video/mp4',
-            src: '/player/' + session_id + "?transcoding=" + transcode + "&time=0"
+            src: '/player/' + session_id + "?transcoding=" + transcode + "&time=" + time
         });
+
         player_metadata()
     } else if (url_parameters.get('v') != null) {
         session_id = url_parameters.get('v')

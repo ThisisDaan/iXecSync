@@ -63,6 +63,8 @@ def transcode(path, start, format, vcodec, acodec):
     cmdline.append(ffmpeg)
     cmdline.append("-ss")
     cmdline.append(str(start))
+    cmdline.append("-itsoffset")
+    cmdline.append("00:00:04.00")
     cmdline.append("-i")
     cmdline.append(path)
     cmdline.append("-f")
