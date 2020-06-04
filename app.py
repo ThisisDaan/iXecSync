@@ -19,6 +19,8 @@ from iso639 import languages
 import io
 import subprocess
 import sys
+import re
+from flask.json import jsonify
 
 
 app = Flask(__name__)
@@ -30,6 +32,23 @@ folder_location = os.path.join(
 subtitle_folder_location = os.path.join(
     os.path.dirname(os.path.realpath(__file__)) + os.sep + "subtitles" + os.sep
 )
+
+if sys.platform == "win32":
+    ffmpeg = (
+        os.path.dirname(os.path.realpath(__file__))
+        + os.sep
+        + "Libs"
+        + os.sep
+        + "ffmpeg.exe"
+    )
+else:
+    ffmpeg = (
+        os.path.dirname(os.path.realpath(__file__))
+        + os.sep
+        + "Libs"
+        + os.sep
+        + "ffmpeg"
+    )
 
 session_storage = {}
 
@@ -354,8 +373,13 @@ def video(session_id):
         video_directory = session_storage[session_id]["directory"]
         video_filename = session_storage[session_id]["filename"]
         video_path = video_directory + video_filename
+        ffmpeg_getduration(video_path)
         if transcode == "1":
+<<<<<<< HEAD
             return media_content_tc(video_path, start=int(transcode_time))
+=======
+            return ffmpeg_transcode(video_path)
+>>>>>>> 153282b1ae9a478e755c10a0b0c04cfc920ebf79
         else:
             return send_from_directory(
                 directory=session_storage[session_id]["directory"],
@@ -413,6 +437,37 @@ def subtitle(session_id, language_code):
         )
     except KeyError:
         return abort(404)
+
+
+def ffmpeg_getduration(path):
+    cmdline = list()
+    cmdline.append(ffmpeg)
+    cmdline.append("-i")
+    cmdline.append(path)
+    duration = -1
+    FNULL = open(os.devnull, "w")
+    proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=FNULL)
+    try:
+
+        class LocalBreak(Exception):
+            pass
+
+        for line in iter(proc.stderr.readline, ""):
+            line = line.rstrip()
+            # Duration: 00:00:45.13, start: 0.000000, bitrate: 302 kb/s
+            m = re.search("Duration: (..):(..):(..)\...", line.decode("utf-8"))
+            if m is not None:
+                print(m)
+                duration = (
+                    int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)) + 1
+                )
+                print("Video duration= " + str(duration))
+                return jsonify(duration=duration)
+                break
+                exit
+                ##wtf waarom komt dit drie keer?!?!
+    finally:
+        proc.kill()
 
 
 def transcodeMime(format):
