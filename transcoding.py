@@ -45,7 +45,7 @@ def ffmpeg_getduration(path):
                     int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)) + 1
                 )
                 print("Video duration= " + str(duration))
-                return jsonify(duration=duration)
+                return int(duration)
                 break
                 exit
                 ##wtf waarom komt dit drie keer?!?!

@@ -60,10 +60,7 @@ $(document).ready(function () {
             type: 'video/mp4',
             src: '/player/' + session_id + "?transcoding=" + transcode + "&time=0"
         });
-
-        $.getJSON('/player/' + session_id + "/duration", function (data) {
-            player.video_duration = data.duration;
-        });
+        player_metadata()
     } else if (url_parameters.get('v') != null) {
         session_id = url_parameters.get('v')
         player.src({
@@ -89,7 +86,7 @@ function create_websocket() {
     socket.on('sync', m => sync_player(m));
     socket.on('out of sync', m => out_of_sync(m));
     socket.on('message', m => message(m));
-    socket.on('meta', m => player_metadata(m));
+    // socket.on('meta', m => player_metadata(m));
     setInterval(function () {
         // if (!player.paused()) {
         sync_data('client update')
@@ -125,22 +122,25 @@ function player_pause() {
     user_sync()
 }
 
-
-
-function player_metadata(metadata) {
-    if (metadata["title"] != null) {
-        title = document.getElementById("video-overlay-title")
-        title.textContent = metadata["title"]
-    }
-    if (metadata["lang"] != null) {
-        for (i = 0; i < metadata["lang"].length; i++) {
-            player.addRemoteTextTrack({
-                kind: 'captions',
-                label: metadata["lang"][i]["name"],
-                src: '/subtitle/' + session_id + "/" + metadata["lang"][i]["code"]
-            })
+function player_metadata() {
+    $.getJSON('/player/meta/' + session_id, function (metadata) {
+        if (metadata["title"] != null) {
+            title = document.getElementById("video-overlay-title")
+            title.textContent = metadata["title"]
         }
-    }
+        if (metadata["duration"] != null) {
+            player.video_duration = metadata["duration"]
+        }
+        if (metadata["lang"] != null) {
+            for (i = 0; i < metadata["lang"].length; i++) {
+                player.addRemoteTextTrack({
+                    kind: 'captions',
+                    label: metadata["lang"][i]["name"],
+                    src: '/subtitle/' + session_id + "/" + metadata["lang"][i]["code"]
+                })
+            }
+        }
+    });
 }
 
 function player_set_volume() {

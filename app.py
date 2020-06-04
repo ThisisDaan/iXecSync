@@ -75,14 +75,14 @@ class iXecSync:
 
     def push(self, json):
         emit("sync", json, room=self.id)
-        self.push_session_meta()
+        # self.push_session_meta()
 
-    def push_session_meta(self):
-        try:
-            metadata = session_storage[self.session]["meta"]
-            emit("meta", metadata, room=self.id)
-        except Exception as e:
-            print(f"invalid session: {e}")
+    # def push_session_meta(self):
+    #     try:
+    #         metadata = session_storage[self.session]["meta"]
+    #         emit("meta", metadata, room=self.id)
+    #     except Exception as e:
+    #         print(f"invalid session: {e}")
 
     def update_client_time(self, client_time):
         self.time = client_time
@@ -307,6 +307,7 @@ def create_new_session(session_id, directory, filename):
             "lang": lang,
         },
     }
+    print(session_storage[session_id]["meta"])
 
 
 def get_subtitles(video_filename):
@@ -349,6 +350,11 @@ def youtube_player():
         return render_template("youtube.html")
     except KeyError:
         return redirect("/", code=303)
+
+
+@app.route("/player/meta/<string:session_id>")
+def session_duration(session_id):
+    return jsonify(session_storage[session_id]["meta"])
 
 
 @app.route("/player/<string:session_id>")
@@ -421,11 +427,6 @@ def subtitle(session_id, language_code):
         )
     except KeyError:
         return abort(404)
-
-
-@app.route("/player/<string:session_id>/duration")
-def session_duration(session_id):
-    return session_storage[session_id]["meta"]["duration"]
 
 
 @socketio.on("client request sync", namespace="/sync")
