@@ -166,7 +166,8 @@
 .video-js .vjs-progress-control .vjs-play-progress,
 .video-js .vjs-progress-control .vjs-progress-holder {
     height: 100%;
-    border-radius: 1em
+    border-radius: 1em;
+    min-width: 5px;
 }
 
 .video-js .vjs-progress-control .vjs-progress-holder {

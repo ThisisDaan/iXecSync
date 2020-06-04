@@ -31,7 +31,7 @@ player.play()
 
 player.on('play', player_play);
 player.on('pause', player_pause);
-player.on('seeking', user_sync);
+player.on('seeking', player_seeking);
 player.on('volumechange', player_save_volume);
 player.on('useractive', player_user_active);
 player.on('userinactive', player_user_inactive);
@@ -50,16 +50,11 @@ player.overlay({
 $(document).ready(function () {
     if (url_parameters.get('session') != null) {
         session_id = url_parameters.get('session')
-        transcode = url_parameters.get('transcode')
-
-        // hack to set duration
-        // player.duration = function () {
-        //     return 1522; // the amount of seconds of video
-        // }
+        transcode = url_parameters.get('transcoding')
 
         player.src({
             type: 'video/mp4',
-            src: '/player/' + session_id + "/" + transcode
+            src: '/player/' + session_id + "?transcoding=" + transcode + "&time=0"
         });
     } else if (url_parameters.get('v') != null) {
         session_id = url_parameters.get('v')
@@ -99,6 +94,10 @@ function player_user_inactive() {
     if (!player.paused()) {
         $(".video-overlay").fadeTo(300, "0")
     }
+}
+
+function player_seeking() {
+    user_sync()
 }
 
 function player_play() {

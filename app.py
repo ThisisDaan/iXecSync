@@ -7,6 +7,7 @@ from flask import (
     redirect,
     abort,
     Response,
+    jsonify,
 )
 from jinja2 import Template
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -345,17 +346,20 @@ def youtube_player():
         return redirect("/", code=303)
 
 
-@app.route("/player/<string:session_id>/<string:transcode>")
-def video(session_id, transcode):
+@app.route("/player/<string:session_id>")
+def video(session_id):
+    transcode = request.args.get("transcoding")
+    transcode_time = request.args.get("time")
     try:
         video_directory = session_storage[session_id]["directory"]
         video_filename = session_storage[session_id]["filename"]
         video_path = video_directory + video_filename
         if transcode == "1":
-            return media_content_tc(video_path)
+            return media_content_tc(video_path, start=int(transcode_time))
         else:
             return send_from_directory(
-                directory=video_directory, filename=video_filename,
+                directory=session_storage[session_id]["directory"],
+                filename=session_storage[session_id]["filename"],
             )
     except KeyError:
         return abort(404)
@@ -435,14 +439,16 @@ def transcode(path, start, format, vcodec, acodec):
             + "ffmpeg"
         )
 
-    ffmpeg_transcode_args = {
-        "*": " -ss {} -i {} -f {} -vcodec {} -acodec {} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1",
-        "mp3": ["-f", "mp3", "-codec", "copy", "pipe:1"],
-    }
-    """Transcode in ffmpeg subprocess."""
-    args = ffmpeg_transcode_args["*"]
-    cmdline = ffmpeg + args.format(str(start), path, format, vcodec, acodec)
-    print(cmdline)
+    # ffmpeg_transcode_args = {
+    #     "*": " -ss {} -i {} -f {} -vcodec {} -acodec {} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1",
+    #     "mp3": ["-f", "mp3", "-codec", "copy", "pipe:1"],
+    # }
+    # """Transcode in ffmpeg subprocess."""
+    # args = ffmpeg_transcode_args["*"]
+    # cmdline = ffmpeg + args.format(int(start), path, format, vcodec, acodec)
+    # print(cmdline)
+    ffmpeg_parameters = f""" -ss {start} -i "{path}" -f {format} -vcodec {vcodec} -acodec {acodec} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1"""
+    cmdline = ffmpeg + ffmpeg_parameters  # + " -loglevel quiet"
     proc = subprocess.Popen(cmdline.split(), stdout=subprocess.PIPE)
     try:
         f = proc.stdout
@@ -455,7 +461,9 @@ def transcode(path, start, format, vcodec, acodec):
 
 
 # @app.route("/transcode.sync")
-def media_content_tc(path="video/video.mkv", format="mp4"):  # Returns media file
+def media_content_tc(
+    path="video/video.mkv", format="mp4", start=0
+):  # Returns media file
     ##todo:
     # Get path from local flask storage
     # get format from the filename mp4 etc
@@ -463,7 +471,7 @@ def media_content_tc(path="video/video.mkv", format="mp4"):  # Returns media fil
     # start = float(request.args.get("start") or 0)
     # vcodec = request.args.get("vcodec")
     # acodec = request.args.get("acodec")
-    start = 0
+    # start = 0
     vcodec = "copy"
     acodec = "mp3"
     try:
