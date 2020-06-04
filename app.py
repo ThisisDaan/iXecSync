@@ -18,6 +18,7 @@ import uuid
 from iso639 import languages
 import io
 import transcoding as acid_transcode
+import sys
 
 
 app = Flask(__name__)
@@ -296,7 +297,7 @@ def create_new_session(session_id, directory, filename):
     srtToVtt_directory(directory)
     lang = get_subtitles(filename)
     path = os.path.join(directory, filename)
-    duration = 0#acid_transcode.ffmpeg_getduration(path)
+    duration = 0  # acid_transcode.ffmpeg_getduration(path)
 
     session_storage[session_id] = {
         "directory": directory,
@@ -449,5 +450,10 @@ def on_disconnect():
     session.client.remove_client()
 
 
+if sys.platform == "win32":
+    debug_socketio = True
+else:
+    debug_socketio = False
+
 if __name__ == "__main__":
-    socketio.run(app, debug=True, host="0.0.0.0")
+    socketio.run(app, debug=debug_socketio, host="0.0.0.0")
