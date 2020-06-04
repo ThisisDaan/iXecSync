@@ -27,10 +27,10 @@ def ffmpeg_getduration(path):
     cmdline.append(ffmpeg)
     cmdline.append("-i")
     cmdline.append(path)
-    # ffmpeg_parameters = f""" -i "{path}" """
-    # cmdline = ffmpeg + ffmpeg_parameters  # + " -loglevel quiet"
+    cmdline.append("-loglevel")
+    cmdline.append("verbose")
     duration = -1
-    FNULL = open(os.devnull, "r")
+    FNULL = open(os.devnull, "w")
     proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=FNULL)
     try:
         for line in iter(proc.stderr.readline, ""):
@@ -59,17 +59,29 @@ def transcodeMime(format):
 
 
 def transcode(path, start, format, vcodec, acodec):
-    ffmpeg_transcode_args = {
-        "*": " -ss {} -i {} -f {} -vcodec {} -acodec {} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1",
-        "mp3": ["-f", "mp3", "-codec", "copy", "pipe:1"],
-    }
-    """Transcode in ffmpeg subprocess."""
-    args = ffmpeg_transcode_args["*"]
-    cmdline = ffmpeg + args.format(int(start), path, format, vcodec, acodec)
+    cmdline = list()
+    cmdline.append(ffmpeg)
+    cmdline.append("-ss")
+    cmdline.append(str(start))
+    cmdline.append("-i")
+    cmdline.append(path)
+    cmdline.append("-f")
+    cmdline.append(format)
+    cmdline.append("-vcodec")
+    cmdline.append(vcodec)
+    cmdline.append("-acodec")
+    cmdline.append(acodec)
+    cmdline.append("-strict")
+    cmdline.append("experimental")
+    cmdline.append("-preset")
+    cmdline.append("ultrafast")
+    cmdline.append("-movflags")
+    cmdline.append("frag_keyframe+empty_moov+faststart")
+    cmdline.append("-loglevel")
+    cmdline.append("verbose")
+    cmdline.append("pipe:1")
     print(cmdline)
-    # ffmpeg_parameters = f""" -ss {start} -i "{path}" -f {format} -vcodec {vcodec} -acodec {acodec} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1"""
-    # cmdline = ffmpeg + ffmpeg_parameters  # + " -loglevel quiet"
-    proc = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
+    proc = subprocess.Popen(cmdline, shell=False, stdout=subprocess.PIPE)
     try:
         f = proc.stdout
         byte = f.read(65536)
@@ -82,7 +94,7 @@ def transcode(path, start, format, vcodec, acodec):
 
 def ffmpeg_transcode(path="video/video.mkv", format="mp4", start=0):
     vcodec = "copy"
-    acodec = "mp3"
+    acodec = "libmp3lame"
     try:
         mime = transcodeMime(format)
         return Response(
