@@ -318,6 +318,7 @@ def create_new_session(session_id, directory, filename):
     session_storage[session_id] = {
         "directory": directory,
         "filename": filename,
+        "path": os.path.join(directory, filename),
         "time": None,
         "meta": {"title": filename, "lang": lang},
     }
@@ -370,12 +371,14 @@ def video(session_id):
     transcode = request.args.get("transcoding")
     transcode_time = request.args.get("time")
     try:
-        video_directory = session_storage[session_id]["directory"]
-        video_filename = session_storage[session_id]["filename"]
-        video_path = os.path.join(video_directory, video_filename)
+        # video_directory = session_storage[session_id]["directory"]
+        # video_filename = session_storage[session_id]["filename"]
+        # video_path = os.path.join(video_directory, video_filename)
         # ffmpeg_getduration(video_path)
         if transcode == "1":
-            return ffmpeg_transcode(video_path, start=int(transcode_time))
+            return ffmpeg_transcode(
+                session_storage[session_id]["path"], start=int(transcode_time)
+            )
         else:
             return send_from_directory(
                 directory=session_storage[session_id]["directory"],
@@ -435,11 +438,12 @@ def subtitle(session_id, language_code):
         return abort(404)
 
 
-def ffmpeg_getduration(path):
+@app.route("/player/<string:session_id>/duration")
+def ffmpeg_getduration(session_id):
     cmdline = list()
     cmdline.append(ffmpeg)
     cmdline.append("-i")
-    cmdline.append(path)
+    cmdline.append(session_storage[session_id]["path"])
     duration = -1
     FNULL = open(os.devnull, "w")
     proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=FNULL)

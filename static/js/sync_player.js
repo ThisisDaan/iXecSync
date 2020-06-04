@@ -52,9 +52,16 @@ $(document).ready(function () {
         session_id = url_parameters.get('session')
         transcode = url_parameters.get('transcoding')
 
+        player.duration = function () {
+            return player.video_duration;
+        };
         player.src({
             type: 'video/mp4',
             src: '/player/' + session_id + "?transcoding=" + transcode + "&time=0"
+        });
+
+        $.getJSON('/player/' + session_id + "/duration", function (data) {
+            player.video_duration = data.duration;
         });
     } else if (url_parameters.get('v') != null) {
         session_id = url_parameters.get('v')
