@@ -372,10 +372,10 @@ def video(session_id):
     try:
         video_directory = session_storage[session_id]["directory"]
         video_filename = session_storage[session_id]["filename"]
-        video_path = video_directory + video_filename
-        ffmpeg_getduration(video_path)
+        video_path = os.path.join(video_directory, video_filename)
+        # ffmpeg_getduration(video_path)
         if transcode == "1":
-            return media_content_tc(video_path, start=int(transcode_time))
+            return ffmpeg_transcode(video_path, start=int(transcode_time))
         else:
             return send_from_directory(
                 directory=session_storage[session_id]["directory"],
@@ -473,23 +473,6 @@ def transcodeMime(format):
 
 
 def transcode(path, start, format, vcodec, acodec):
-    if sys.platform == "win32":
-        ffmpeg = (
-            os.path.dirname(os.path.realpath(__file__))
-            + os.sep
-            + "Libs"
-            + os.sep
-            + "ffmpeg.exe"
-        )
-    else:
-        ffmpeg = (
-            os.path.dirname(os.path.realpath(__file__))
-            + os.sep
-            + "Libs"
-            + os.sep
-            + "ffmpeg"
-        )
-
     # ffmpeg_transcode_args = {
     #     "*": " -ss {} -i {} -f {} -vcodec {} -acodec {} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1",
     #     "mp3": ["-f", "mp3", "-codec", "copy", "pipe:1"],
@@ -500,7 +483,7 @@ def transcode(path, start, format, vcodec, acodec):
     # print(cmdline)
     ffmpeg_parameters = f""" -ss {start} -i "{path}" -f {format} -vcodec {vcodec} -acodec {acodec} -strict experimental -preset ultrafast -movflags frag_keyframe+empty_moov+faststart pipe:1"""
     cmdline = ffmpeg + ffmpeg_parameters  # + " -loglevel quiet"
-    proc = subprocess.Popen(cmdline.split(), stdout=subprocess.PIPE)
+    proc = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
     try:
         f = proc.stdout
         byte = f.read(65536)
@@ -511,18 +494,7 @@ def transcode(path, start, format, vcodec, acodec):
         proc.kill()
 
 
-# @app.route("/transcode.sync")
-def media_content_tc(
-    path="video/video.mkv", format="mp4", start=0
-):  # Returns media file
-    ##todo:
-    # Get path from local flask storage
-    # get format from the filename mp4 etc
-    ###oldcode
-    # start = float(request.args.get("start") or 0)
-    # vcodec = request.args.get("vcodec")
-    # acodec = request.args.get("acodec")
-    # start = 0
+def ffmpeg_transcode(path="video/video.mkv", format="mp4", start=0):
     vcodec = "copy"
     acodec = "mp3"
     try:
