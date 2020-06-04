@@ -375,11 +375,7 @@ def video(session_id):
         video_path = video_directory + video_filename
         ffmpeg_getduration(video_path)
         if transcode == "1":
-<<<<<<< HEAD
             return media_content_tc(video_path, start=int(transcode_time))
-=======
-            return ffmpeg_transcode(video_path)
->>>>>>> 153282b1ae9a478e755c10a0b0c04cfc920ebf79
         else:
             return send_from_directory(
                 directory=session_storage[session_id]["directory"],
