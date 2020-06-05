@@ -88,7 +88,8 @@ def transcode(path, start, format, vcodec, acodec):
     # cmdline.append("-async")
     # cmdline.append("1")
     cmdline.append("-loglevel")
-    cmdline.append("debug")
+    cmdline.append("warning")
+    cmdline.append("-hide_banner")
     ##putting the timestamp logic to the output instead of the input creates magic!
     cmdline.append("-ss")
     cmdline.append(str(start))
