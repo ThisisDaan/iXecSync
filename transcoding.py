@@ -24,6 +24,23 @@ else:
         + "ffmpeg"
     )
 
+if sys.platform == "win32":
+    ffprobe = (
+        os.path.dirname(os.path.realpath(__file__))
+        + os.sep
+        + "Libs"
+        + os.sep
+        + "ffprobe.exe"
+    )
+else:
+    ffprobe = (
+        os.path.dirname(os.path.realpath(__file__))
+        + os.sep
+        + "Libs"
+        + os.sep
+        + "ffprobe"
+    )
+
 
 def ffmpeg_getduration(path):
     cmdline = list()
@@ -32,6 +49,37 @@ def ffmpeg_getduration(path):
     cmdline.append(path)
     cmdline.append("-loglevel")
     cmdline.append("verbose")
+    duration = -1
+    FNULL = open(os.devnull, "w")
+    proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=FNULL)
+    try:
+        for line in iter(proc.stderr.readline, ""):
+            line = line.rstrip()
+            # Duration: 00:00:45.13, start: 0.000000, bitrate: 302 kb/s
+            m = re.search("Duration: (..):(..):(..)\...", line.decode("utf-8"))
+            if m is not None:
+                print(m)
+                duration = (
+                    int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)) + 1
+                )
+                print("*" * 80)
+                print("Video duration= " + str(duration))
+                print("*" * 80)
+                return int(duration)
+                break
+                ##wtf waarom komt dit drie keer?!?!
+    finally:
+        proc.kill()
+
+
+def ffprobe_getduration(path):
+    cmdline = list()
+    cmdline.append(ffprobe)
+    cmdline.append("-i")
+    cmdline.append(path)
+    cmdline.append("-show_entries")
+    cmdline.append("format=duration")
+    cmdline.extend(["-v", "quiet"])
     duration = -1
     FNULL = open(os.devnull, "w")
     proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=FNULL)
@@ -134,25 +182,40 @@ def transcode(path, start, vformat, vcodec, acodec):
     t = threading.Thread(target=_watch_output, args=(process, q,))
     t.daemon = True
     t.start()
-    while returned is None:
+    # while returned is None:
+    #     returned = process.poll()
+    #     delay = last_output - time.time()
+    #     if returned is None:
+    #         # print(f"{last_output-time.time()} waited")
+    #         try:
+    #             bytefromqueue = q.get_nowait()
+    #         except queue.Empty:
+    #             time.sleep(1)
+    #         else:
+    #             yield bytefromqueue
+    #             last_output = time.time()
+
+    #     if delay > wait_limit:
+    #         print("Waited 15 seconds, breaking")
+    #         break
+
+    # run_time = time.time() - start_time
+    # print("subprocess ran for this amount of time: " + str(run_time))
+
+    while returned is None or not q.empty():
         returned = process.poll()
-        delay = last_output - time.time()
-        if returned is None:
-            # print(f"{last_output-time.time()} waited")
-            try:
-                bytefromqueue = q.get_nowait()
-            except queue.Empty:
-                time.sleep(1)
-            else:
-                yield bytefromqueue
-                last_output = time.time()
+        try:
+            # output = queue.get(timeout=.5)
+            bytefromqueue = q.get_nowait()
 
-        if delay > wait_limit:
-            print("Waited 15 seconds, breaking")
-            break
+        except queue.Empty:
+            continue
 
-    run_time = time.time() - start_time
-    print("subprocess ran for this amount of time: " + str(run_time))
+        if not bytefromqueue:
+            continue
+
+        yield bytefromqueue
+    t.join()
 
 
 def ffmpeg_transcode(path="video/video.mkv", vformat="mp4", start=0):
