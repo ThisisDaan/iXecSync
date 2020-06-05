@@ -314,13 +314,15 @@
     width: 95%;
     margin-left: auto;
     margin-right: auto;
-    margin-bottom: 1em;
+    margin-bottom: 0.5em;
     border-radius: .3em
 }
 
 .vjs-progress-control {
-    height: 1em !important;
-    top: -1.5em !important;
+    height: 3em !important;
+    top: -3.0em !important;
+    padding-bottom: 0.5em !important;
+    padding-top: 1.5em !important;
 }
 
 .video-js .vjs-play-progress,

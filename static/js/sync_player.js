@@ -27,6 +27,7 @@ var player = videojs('player', {
     },
     nativeControlsForTouch: false,
 });
+
 player.play()
 
 player.on('play', player_play);
