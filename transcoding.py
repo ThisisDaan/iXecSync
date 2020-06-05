@@ -50,8 +50,7 @@ def ffmpeg_getduration(path):
     cmdline.append("-loglevel")
     cmdline.append("verbose")
     duration = -1
-    FNULL = open(os.devnull, "w")
-    proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=FNULL)
+    proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=subprocess.DEVNULL)
     try:
         for line in iter(proc.stderr.readline, ""):
             line = line.rstrip()
@@ -77,45 +76,34 @@ def ffprobe_getduration(path):
     cmdline.append(ffprobe)
     cmdline.append("-i")
     cmdline.append(path)
-    cmdline.append("-show_entries")
-    cmdline.append("format=duration")
+    cmdline.extend(["-show_entries", "format=duration"])
     cmdline.extend(["-v", "quiet"])
-    duration = -1
-    FNULL = open(os.devnull, "w")
-    proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=FNULL)
+    cmdline.extend(["-of", 'csv="p=0"'])
+    proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     try:
-        for line in iter(proc.stderr.readline, ""):
-            line = line.rstrip()
-            # Duration: 00:00:45.13, start: 0.000000, bitrate: 302 kb/s
-            m = re.search("Duration: (..):(..):(..)\...", line.decode("utf-8"))
-            if m is not None:
-                print(m)
-                duration = (
-                    int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)) + 1
-                )
-                print("*" * 80)
-                print("Video duration= " + str(duration))
-                print("*" * 80)
-                return int(duration)
-                break
-                ##wtf waarom komt dit drie keer?!?!
+        out, err = proc.communicate()
+        print("==========output==========")
+        print(out)
+        if err:
+            print("========= error ========")
+            print(err)
     finally:
         proc.kill()
 
 
-def _watch_output(process: subprocess.Popen, queue):
-    # for line in iter(process.stderr.readline, ""):
-    #     queue.put(line)
-    #     if process.poll() is not None:
-    #         return
-    f = process.stdout
-    byte = f.read(65536)
-    while byte:
-        # yield byte
-        queue.put(byte)
-        byte = f.read(65536)
-        if process.poll() is not None:
-            return
+# def _watch_output(process: subprocess.Popen, queue):
+#     for line in iter(process.stdout.readline, ""):
+#         queue.put(line)
+#     if process.poll() is not None:
+#         return
+# f = process.stdout
+# byte = f.read(65536)
+# while byte:
+#     yield byte
+#     # queue.put(byte)
+#     byte = f.read(65536)
+#     if process.poll() is not None:
+#         return
 
 
 # @property
@@ -129,6 +117,7 @@ def _watch_output(process: subprocess.Popen, queue):
 
 
 def transcode(path, start, vformat, vcodec, acodec):
+    # ffprobe_getduration(path)
     start_time = time.time()
     wait_limit = 15
     return_code = None
@@ -176,46 +165,34 @@ def transcode(path, start, vformat, vcodec, acodec):
     cmdline.append("pipe:1")
     print(cmdline)
     process = subprocess.Popen(cmdline, shell=False, stdout=subprocess.PIPE)
-    returned = None
-    last_output = time.time()
-    q = queue.Queue()
-    t = threading.Thread(target=_watch_output, args=(process, q,))
-    t.daemon = True
-    t.start()
-    # while returned is None:
+    try:
+        f = process.stdout
+        byte = f.read(65536)
+        while byte:
+            yield byte
+            byte = f.read(65536)
+    finally:
+        process.kill()
+    # returned = None
+    # last_output = time.time()
+    # q = queue.Queue()
+    # t = threading.Thread(target=_watch_output, args=(process, q,))
+    # t.daemon = True
+    # t.start()
+    # while returned is None or not q.empty():
     #     returned = process.poll()
-    #     delay = last_output - time.time()
-    #     if returned is None:
-    #         # print(f"{last_output-time.time()} waited")
-    #         try:
-    #             bytefromqueue = q.get_nowait()
-    #         except queue.Empty:
-    #             time.sleep(1)
-    #         else:
-    #             yield bytefromqueue
-    #             last_output = time.time()
+    #     try:
+    #         bytefromqueue = q.get(timeout=0.5)
+    #         # bytefromqueue = q.get_nowait()
 
-    #     if delay > wait_limit:
-    #         print("Waited 15 seconds, breaking")
-    #         break
+    #     except queue.Empty:
+    #         continue
 
-    # run_time = time.time() - start_time
-    # print("subprocess ran for this amount of time: " + str(run_time))
+    #     if not bytefromqueue:
+    #         continue
 
-    while returned is None or not q.empty():
-        returned = process.poll()
-        try:
-            # output = queue.get(timeout=.5)
-            bytefromqueue = q.get_nowait()
-
-        except queue.Empty:
-            continue
-
-        if not bytefromqueue:
-            continue
-
-        yield bytefromqueue
-    t.join()
+    #     yield bytefromqueue
+    # t.join()
 
 
 def ffmpeg_transcode(path="video/video.mkv", vformat="mp4", start=0):
