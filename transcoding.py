@@ -52,7 +52,7 @@ def ffmpeg_getduration(path):
         proc.kill()
 
 
-def transcode(path, start, format, vcodec, acodec):
+def transcode(path, start, vformat, vcodec, acodec):
     cmdline = []
     cmdline.append(ffmpeg)
     cmdline.append("-nostdin")
@@ -65,7 +65,7 @@ def transcode(path, start, format, vcodec, acodec):
     # -g 52 forces (at least) every 52nd frame to be a keyframe
     # cmdline.append("-g")
     # cmdline.append("52")
-    cmdline.extend(["-f", format])
+    cmdline.extend(["-f", vformat])
     cmdline.extend(["-vcodec", vcodec])
     cmdline.extend(["-acodec", acodec])
     cmdline.extend(["-strict", "experimental"])
@@ -98,13 +98,13 @@ def transcode(path, start, format, vcodec, acodec):
         proc.kill()
 
 
-def ffmpeg_transcode(path="video/video.mkv", format="mp4", start=0):
+def ffmpeg_transcode(path="video/video.mkv", vformat="mp4", start=0):
     vcodec = "copy"
     acodec = "libmp3lame"
     try:
         mime = "video/mp4"
         return Response(
-            response=transcode(path, start, format, vcodec, acodec),
+            response=transcode(path, start, vformat, vcodec, acodec),
             status=200,
             mimetype=mime,
             headers={
