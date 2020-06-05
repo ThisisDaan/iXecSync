@@ -3,6 +3,9 @@ import sys
 import re
 import os
 from flask import Response, abort, jsonify
+import time
+import queue
+import threading
 
 if sys.platform == "win32":
     ffmpeg = (
@@ -52,7 +55,38 @@ def ffmpeg_getduration(path):
         proc.kill()
 
 
+def _watch_output(process: subprocess.Popen, queue):
+    # for line in iter(process.stderr.readline, ""):
+    #     queue.put(line)
+    #     if process.poll() is not None:
+    #         return
+    f = process.stdout
+    byte = f.read(65536)
+    while byte:
+        # yield byte
+        queue.put(byte)
+        byte = f.read(65536)
+        if process.poll() is not None:
+            return
+
+
+# @property
+# def stdout(self):
+#     return self.process.stdout
+
+
+# @property
+# def stderr(self):
+#     return self.process.stderr
+
+
 def transcode(path, start, vformat, vcodec, acodec):
+    start_time = time.time()
+    wait_limit = 15
+    return_code = None
+    process = None  # type: subprocess.Popen
+    run_time = 0
+
     cmdline = []
     cmdline.append(ffmpeg)
     cmdline.append("-nostdin")
@@ -88,20 +122,37 @@ def transcode(path, start, vformat, vcodec, acodec):
     # cmdline.append("1")
     cmdline.append("-hide_banner")
     cmdline.append("-nostats")
-    cmdline.extend(["-loglevel", "info"])
+    cmdline.extend(["-loglevel", "warning"])
     ##putting the timestamp logic to the output instead of the input creates magic!
     cmdline.extend(["-ss", str(start)])
     cmdline.append("pipe:1")
     print(cmdline)
-    proc = subprocess.Popen(cmdline, shell=False, stdout=subprocess.PIPE)
-    try:
-        f = proc.stdout
-        byte = f.read(65536)
-        while byte:
-            yield byte
-            byte = f.read(65536)
-    finally:
-        proc.kill()
+    process = subprocess.Popen(cmdline, shell=False, stdout=subprocess.PIPE)
+    returned = None
+    last_output = time.time()
+    q = queue.Queue()
+    t = threading.Thread(target=_watch_output, args=(process, q,))
+    t.daemon = True
+    t.start()
+    while returned is None:
+        returned = process.poll()
+        delay = last_output - time.time()
+        if returned is None:
+            # print(f"{last_output-time.time()} waited")
+            try:
+                bytefromqueue = q.get_nowait()
+            except queue.Empty:
+                time.sleep(1)
+            else:
+                yield bytefromqueue
+                last_output = time.time()
+
+        if delay > wait_limit:
+            print("Waited 15 seconds, breaking")
+            break
+
+    run_time = time.time() - start_time
+    print("subprocess ran for this amount of time: " + str(run_time))
 
 
 def ffmpeg_transcode(path="video/video.mkv", vformat="mp4", start=0):
