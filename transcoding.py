@@ -52,21 +52,21 @@ def ffmpeg_getduration(path):
         proc.kill()
 
 
-def transcodeMime(format):
-    transcode_mime = {"*": "video/mp4", "mp3": "audio/mp3", "jpg": "image/jpg"}
-    """Translate file format to Mime type."""
-    return transcode_mime.get(format) or transcode_mime["*"]
-
-
 def transcode(path, start, format, vcodec, acodec):
     cmdline = list()
     cmdline.append(ffmpeg)
+    # -re is useful when live streaming (use input media frame rate), do not use it if you are creating a file,
+    cmdline.append("-re")
     cmdline.append("-ss")
     cmdline.append(str(start))
+    # cmdline.append("00:08:00")
     cmdline.append("-itsoffset")
     cmdline.append("00:00:04.00")
     cmdline.append("-i")
     cmdline.append(path)
+    # -g 52 forces (at least) every 52nd frame to be a keyframe
+    cmdline.append("-g")
+    cmdline.append("52")
     cmdline.append("-f")
     cmdline.append(format)
     cmdline.append("-vcodec")
@@ -77,13 +77,19 @@ def transcode(path, start, format, vcodec, acodec):
     cmdline.append("experimental")
     cmdline.append("-preset")
     cmdline.append("ultrafast")
+    # frag_keyframe causes fragmented output,
+    # empty_moov will cause output to be 100% fragmented; without this the first fragment will be muxed as a short movie (using moov) followed by the rest of the media in fragments,
     cmdline.append("-movflags")
     cmdline.append("frag_keyframe+empty_moov+faststart")
     ##audiosyncfix
-    cmdline.append("-filter:a")
-    cmdline.append("aresample=async=1000")
+    # cmdline.append("-af")
+    # cmdline.append("aresample=async=1:first_pts=0")
+    # cmdline.append("-vf")
+    # cmdline.append("setpts='if(eq(N\,0),0,PTS)'")
+    # cmdline.append("-async")
+    # cmdline.append("1")
     cmdline.append("-loglevel")
-    cmdline.append("verbose")
+    cmdline.append("debug")
     cmdline.append("pipe:1")
     print(cmdline)
     proc = subprocess.Popen(cmdline, shell=False, stdout=subprocess.PIPE)
@@ -101,7 +107,7 @@ def ffmpeg_transcode(path="video/video.mkv", format="mp4", start=0):
     vcodec = "copy"
     acodec = "libmp3lame"
     try:
-        mime = transcodeMime(format)
+        mime = "video/mp4"
         return Response(
             response=transcode(path, start, format, vcodec, acodec),
             status=200,
