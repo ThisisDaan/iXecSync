@@ -15,7 +15,6 @@ var player = videojs('player', {
     autoplay: true,
     userActions: {
         hotkeys: function (event) {
-            console.log(event.which)
             if (event.which === 32) {
                 if (this.paused()) {
                     player.play()
@@ -28,7 +27,23 @@ var player = videojs('player', {
     nativeControlsForTouch: false,
 });
 
-player.play()
+var sync_player_control = function (player) {
+    return {
+        duration: function () {
+            return player.video_duration;
+        },
+        callPlay: function () {
+            //return videojs.middleware.TERMINATOR;
+        },
+        callPause: function () {
+            //return videojs.middleware.TERMINATOR;
+        }
+    };
+};
+
+videojs.use('*', sync_player_control);
+
+//player.play()
 
 player.on('play', player_play);
 player.on('pause', player_pause);
@@ -56,23 +71,27 @@ $(document).ready(function () {
         time = 0;
 
         if (transcode == "1") {
-            player.duration = function () {
-                return player.video_duration;
-            };
+            // player.duration = function () {
+            //     return player.video_duration;
+            // };
             player.start = 0;
             player.oldCurrentTime = player.currentTime;
             player.currentTime = function (time) {
                 if (time == undefined) {
+                    if (player.readyState() == 0) {
+                        var percentage = player.start * 100 / player.video_duration
+                        $(".vjs-play-progress").css("width", percentage + "%")
+                    }
                     return player.oldCurrentTime() + player.start;
                 }
                 console.log(Math.floor(time))
+
                 player.start = time;
                 player.oldCurrentTime(0);
                 player.src({
                     src: '/player/' + session_id + "?transcoding=" + transcode + "&time=" + Math.floor(time),
                     type: 'video/mp4'
                 });
-                //  player.play();
                 return time;
             };
         }
