@@ -42,51 +42,26 @@ else:
     )
 
 
-def ffmpeg_getduration(path):
-    cmdline = list()
-    cmdline.append(ffmpeg)
-    cmdline.append("-i")
-    cmdline.append(path)
-    cmdline.append("-loglevel")
-    cmdline.append("verbose")
-    duration = -1
-    proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=subprocess.DEVNULL)
-    try:
-        for line in iter(proc.stderr.readline, ""):
-            line = line.rstrip()
-            # Duration: 00:00:45.13, start: 0.000000, bitrate: 302 kb/s
-            m = re.search("Duration: (..):(..):(..)\...", line.decode("utf-8"))
-            if m is not None:
-                print(m)
-                duration = (
-                    int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)) + 1
-                )
-                print("*" * 80)
-                print("Video duration= " + str(duration))
-                print("*" * 80)
-                return int(duration)
-                break
-                ##wtf waarom komt dit drie keer?!?!
-    finally:
-        proc.kill()
-
-
 def ffprobe_getduration(path):
     cmdline = list()
     cmdline.append(ffprobe)
-    cmdline.append("-i")
-    cmdline.append(path)
     cmdline.extend(["-show_entries", "format=duration"])
     cmdline.extend(["-v", "quiet"])
-    cmdline.extend(["-of", 'csv="p=0"'])
+    cmdline.extend(["-of", "csv=%s" % ("p=0")])
+    cmdline.append(path)
+    print(cmdline)
     proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     try:
-        out, err = proc.communicate()
-        print("==========output==========")
-        print(out)
+        duration, err = proc.communicate()
+        # print("==========ffprobe_getduration output==========")
+        # print(duration.decode("utf-8"))
+        # print("".join(chr(x) for x in bytearray(duration)))
         if err:
-            print("========= error ========")
+            print("========= ffprobe_getduration error ========")
             print(err)
+        return int(
+            ("".join(chr(x) for x in bytearray(duration))).rstrip("\r\n").split(".")[0]
+        )
     finally:
         proc.kill()
 
@@ -117,7 +92,7 @@ def ffprobe_getduration(path):
 
 
 def transcode(path, start, vformat, vcodec, acodec):
-    # ffprobe_getduration(path)
+    ffprobe_getduration(path)
     start_time = time.time()
     wait_limit = 15
     return_code = None
