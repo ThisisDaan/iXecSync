@@ -7,39 +7,46 @@ import time
 import queue
 import threading
 
+libs_path = f"{os.path.dirname(os.path.realpath(__file__))}{os.sep}Libs{os.sep}"
+ffmpeg = f"{libs_path}ffmpeg"
+ffprobe = f"{libs_path}ffprobe"
 if sys.platform == "win32":
-    ffmpeg = (
-        os.path.dirname(os.path.realpath(__file__))
-        + os.sep
-        + "Libs"
-        + os.sep
-        + "ffmpeg.exe"
-    )
-else:
-    ffmpeg = (
-        os.path.dirname(os.path.realpath(__file__))
-        + os.sep
-        + "Libs"
-        + os.sep
-        + "ffmpeg"
-    )
+    ffmpeg += ".exe"
+    ffprobe += ".exe"
 
-if sys.platform == "win32":
-    ffprobe = (
-        os.path.dirname(os.path.realpath(__file__))
-        + os.sep
-        + "Libs"
-        + os.sep
-        + "ffprobe.exe"
-    )
-else:
-    ffprobe = (
-        os.path.dirname(os.path.realpath(__file__))
-        + os.sep
-        + "Libs"
-        + os.sep
-        + "ffprobe"
-    )
+# if sys.platform == "win32":
+#     ffmpeg = (
+#         os.path.dirname(os.path.realpath(__file__))
+#         + os.sep
+#         + "Libs"
+#         + os.sep
+#         + "ffmpeg.exe"
+#     )
+# else:
+#     ffmpeg = (
+#         os.path.dirname(os.path.realpath(__file__))
+#         + os.sep
+#         + "Libs"
+#         + os.sep
+#         + "ffmpeg"
+#     )
+
+# if sys.platform == "win32":
+#     ffprobe = (
+#         os.path.dirname(os.path.realpath(__file__))
+#         + os.sep
+#         + "Libs"
+#         + os.sep
+#         + "ffprobe.exe"
+#     )
+# else:
+#     ffprobe = (
+#         os.path.dirname(os.path.realpath(__file__))
+#         + os.sep
+#         + "Libs"
+#         + os.sep
+#         + "ffprobe"
+#     )
 
 
 def ffprobe_getduration(path):

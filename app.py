@@ -330,9 +330,10 @@ def get_subtitles(video_filename):
 
 @app.route("/video.sync")
 def player():
-    try:
+    session_id = request.args.get("session")
+    if session_id in session_storage:
         return render_template("sync_player.html")
-    except KeyError:
+    else:
         return redirect("/", code=303)
 
 
