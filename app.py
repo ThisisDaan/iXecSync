@@ -76,14 +76,6 @@ class iXecSync:
 
     def push(self, json):
         emit("sync", json, room=self.id)
-        # self.push_session_meta()
-
-    # def push_session_meta(self):
-    #     try:
-    #         metadata = session_storage[self.session]["meta"]
-    #         emit("meta", metadata, room=self.id)
-    #     except Exception as e:
-    #         print(f"invalid session: {e}")
 
     def update_client_time(self, client_time):
         self.time = client_time
@@ -95,8 +87,10 @@ class iXecSync:
             session_storage[self.session]["paused"] = self.paused
 
     def update_client(self, client_data):
-        self.update_client_time(client_data["time"])
-        self.paused = client_data["paused"]
+        if "time" in client_data:
+            self.update_client_time(client_data["time"])
+        if "paused" in client_data:
+            self.paused = client_data["paused"]
         self.update_session()
 
     def sync_other_clients(self, client_data):
@@ -363,10 +357,6 @@ def video(session_id):
     transcode = request.args.get("transcoding")
     transcode_time = request.args.get("time")
     try:
-        # video_directory = session_storage[session_id]["directory"]
-        # video_filename = session_storage[session_id]["filename"]
-        # video_path = os.path.join(video_directory, video_filename)
-        # ffmpeg_getduration(video_path)
         if transcode == "1":
             return acid_transcode.ffmpeg_transcode(
                 session_storage[session_id]["path"], start=int(transcode_time)
