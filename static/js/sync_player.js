@@ -66,7 +66,7 @@ player.overlay({
 $(document).ready(function () {
     if (url_parameters.get('session') != null) {
         session_id = url_parameters.get('session')
-        transcode = 1; //url_parameters.get('transcoding')
+        transcode = url_parameters.get('transcoding')
 
         time = 0;
 
