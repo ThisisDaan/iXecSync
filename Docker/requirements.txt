@@ -2,3 +2,4 @@ Flask
 Flask-SocketIO
 gevent-websocket
 iso-639
+tmdbv3api

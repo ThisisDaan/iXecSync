@@ -35,7 +35,7 @@ body {
 
 .file_browser {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(25vw, 1fr));
+    grid-template-columns: repeat(auto-fit, 250px);
     grid-column-gap: 10px;
     grid-row-gap: 10px;
     justify-items: stretch;
@@ -63,13 +63,26 @@ li {
     font-weight: 500;
 }
 
+.thumbnail {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    text-align: center;
+    overflow: hidden;
+}
+
+.thumbnail img {
+    border-radius: inherit;
+    width: 100%;
+}
+
 .item {
     cursor: pointer;
     border: 2px solid #000;
     border-radius: 10px;
-    padding: 10px 10px 10px 15px;
+    padding: 10px 10px 10px 10px;
     margin-bottom: 5px;
-    height: 25px;
     background-color: #000;
     border-radius: 10px;
     min-width: 0;
@@ -104,7 +117,7 @@ li.folder {
     cursor: default;
 }
 
-.folder:before {
+/* .folder:before {
     content: " ";
     display: block;
     min-width: 25px;
@@ -123,7 +136,7 @@ li.folder {
 
     -webkit-mask-position: center center;
     mask-position: center center;
-}
+} */
 
 .file-video:before {
     content: " ";

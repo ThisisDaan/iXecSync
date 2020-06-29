@@ -36,7 +36,9 @@
          <span>Folders</span>
          <ul id='folders' class="file_browser">
             {% for item in folders %}
-            <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
+            <li class="folder item thumbnail" onclick='navigate(this.id)' id='{{ item.path }}'
+               data-type='{{ item.type }}'>
+               <img src="{{ item.thumbnail }}">
                <span>{{ item.name }}</span>
             </li>
             {% endfor %}

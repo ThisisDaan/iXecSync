@@ -19,6 +19,7 @@ from iso639 import languages
 import io
 import transcoding as acid_transcode
 import sys
+import tmdb as tmdb
 
 
 app = Flask(__name__)
@@ -29,6 +30,9 @@ folder_location = os.path.join(
 )
 subtitle_folder_location = os.path.join(
     os.path.dirname(os.path.realpath(__file__)) + os.sep + "subtitles" + os.sep
+)
+thumbnail_location = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)) + os.sep + "thumbnail" + os.sep
 )
 
 session_storage = {}
@@ -235,9 +239,12 @@ def getContent(folder, search_string=None):
 
         for directory in dirs:
             if search_string is None or search_string.lower() in directory.lower():
-
+                tmdb.download_movie_poster(
+                    directory, thumbnail_location + directory + ".jpg"
+                )
                 json = {
                     "name": f"{directory}",
+                    "thumbnail": f"/thumbnail/{directory}.jpg",
                     "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
                     "type": "folder",
                 }
@@ -370,6 +377,11 @@ def video(session_id):
         return abort(404)
 
 
+@app.route("/thumbnail/<string:title>")
+def get_thumbnail(title):
+    return send_from_directory(directory=thumbnail_location, filename=title,)
+
+
 def srtToVtt(srt_path):
     srt_filename = os.path.basename(srt_path)
     name = srt_filename.replace(".srt", "")
@@ -425,10 +437,10 @@ def sync_time(client_data):
     session.client.sync_other_clients(client_data)
 
 
-@socketio.on("client update", namespace="/sync")
-def sync_time(client_data):
-    session.client.update_client(client_data)
-    session.client.check_client_in_sync()
+# @socketio.on("client update", namespace="/sync")
+# def sync_time(client_data):
+#     session.client.update_client(client_data)
+#     session.client.check_client_in_sync()
 
 
 @socketio.on("connect", namespace="/sync")
