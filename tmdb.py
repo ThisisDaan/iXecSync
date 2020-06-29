@@ -3,7 +3,7 @@ import urllib.request
 import pathlib
 
 tmdb = TMDb()
-tmdb.api_key = "8330115f9230acfdbe0e5470649f6602"
+tmdb.api_key = ""
 tmdb.language = "en"
 tmdb.debug = True
 
