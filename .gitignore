@@ -6,6 +6,12 @@ video/
 subtitles/*
 !subtitles/.subtitles
 
+thumbnail/*
+!thumbnail/-=Movies=-.jpg
+!thumbnail/-=Movies3D=-.jpg
+!thumbnail/-=MoviesNL=-.jpg
+!thumbnail/-=Series=-.jpg
+
 ### Flask ###
 instance/*
 !instance/.gitignore

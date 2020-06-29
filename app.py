@@ -235,20 +235,24 @@ def file_browsing_search(search):
 def getContent(folder, search_string=None):
     content = defaultdict(list)
 
-    for (root, dirs, files) in os.walk(folder):
+    max_items_per_page = 50
+    count = 0
 
+    for (root, dirs, files) in os.walk(folder):
         for directory in dirs:
             if search_string is None or search_string.lower() in directory.lower():
-                tmdb.download_movie_poster(
-                    directory, thumbnail_location + directory + ".jpg"
-                )
-                json = {
-                    "name": f"{directory}",
-                    "thumbnail": f"/thumbnail/{directory}.jpg",
-                    "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
-                    "type": "folder",
-                }
-                content["folders"].append(json)
+                if count < max_items_per_page:
+                    tmdb.download_movie_poster(
+                        directory, thumbnail_location + directory + ".jpg"
+                    )
+                    json = {
+                        "name": f"{directory}",
+                        "thumbnail": f"/thumbnail/{directory}.jpg",
+                        "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
+                        "type": "folder",
+                    }
+                    content["folders"].append(json)
+                    count += 1
 
         for filename in files:
             if search_string is None or search_string.lower() in filename.lower():
