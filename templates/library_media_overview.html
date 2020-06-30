@@ -1,0 +1,16 @@
+{% extends "library_base.html" %}
+
+
+{% block content_section %}
+<section>
+    <img class="backdrop" src="{{ meta.backdrop_path }}">
+</section>
+<span>{{ meta.title }}</span>
+<span>{{ meta.release_date }}</span>
+<span>{{ meta.overview }}</span>
+<span>{{ meta.vote_average }}</span>
+<span>{{ meta.popularity }}</span>
+<span>{{ meta.genre_ids }}</span>
+
+<img src="{{ meta.poster_path }}">
+{% endblock %}

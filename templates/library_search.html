@@ -1,0 +1,27 @@
+{% extends "library_base.html" %}
+
+
+{% block content_section %}
+
+<section id='search'>
+    <section class="item ">
+        <form action="{{ url_for('search_query') }}" method="post" class="search">
+            <input id='search-input' type="search" name="search" placeholder="search">
+        </form>
+    </section>
+</section>
+
+{% if media %}
+<ul class="media">
+    {% for item in media %}
+    <a href="{% filter lower %}{{ item.name }}{% endfilter %}">
+        <li class="item">
+            <div class="thumbnail"><img src="{{ item.thumbnail }}"></div>
+            <span>{{ item.name }}</span>
+        </li>
+    </a>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}

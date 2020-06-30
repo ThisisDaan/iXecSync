@@ -21,6 +21,7 @@ import transcoding as acid_transcode
 import sys
 import tmdb as tmdb
 import json
+import pathlib
 
 
 app = Flask(__name__)
@@ -32,10 +33,6 @@ folder_location = os.path.join(
 
 subtitle_folder_location = os.path.join(
     os.path.dirname(os.path.realpath(__file__)) + os.sep + "subtitles" + os.sep
-)
-
-thumbnail_location = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)) + os.sep + "thumbnail" + os.sep
 )
 
 session_storage = {}
@@ -195,7 +192,6 @@ class iXecSync:
             )
 
 
-@app.route("/search")
 @app.route("/")
 def index():
     return redirect("/file", code=303)
@@ -213,21 +209,66 @@ def file_browsing_root(path):
     )
 
 
+@app.route("/search/", methods=["GET"])
+def library_search():
+    library_items = get_library_items()
+    return render_template(
+        "library_search.html", selected="Search", library=library_items,
+    )
+
+
+@app.route("/search/", methods=["POST"])
+def search_query():
+    library_items = get_library_items()
+
+    if request.method == "POST":
+        search = request.form.get("search")
+        search_results = []
+        for (root, dirs, files) in os.walk(folder_location):
+            for directory in dirs:
+                if search is None or search.lower() in directory.lower():
+                    json = {
+                        "name": f"{directory}",
+                        "thumbnail": f"/thumbnail/{directory}.jpg",
+                    }
+                    search_results.append(json)
+
+        return render_template(
+            "library_search.html",
+            selected="Search",
+            library=library_items,
+            media=search_results,
+        )
+    else:
+        return render_template(
+            "library_search.html", selected="Search", library=library_items,
+        )
+
+
 @app.route("/library/")
 def library_home():
     library_items = get_library_items()
-    return render_template("library_home.html", library=library_items, files="")
+    return render_template(
+        "library_media.html",
+        selected="Home",
+        library=library_items,
+        # media=tmdb.popular(),
+    )
 
 
 @app.route("/library/<string:library>/")
 def library_content(library):
     library_items = get_library_items()
+
     for item in library_items:
         if library == item["name"].lower():
             files = get_content(item["path"])
-            print(files["folders"])
+
     return render_template(
-        "library_home.html", library=library_items, media=files["folders"]
+        "library_media.html",
+        selected=library,
+        library=library_items,
+        media=files["folders"],
     )
 
 
@@ -236,6 +277,17 @@ def get_library_items():
         config = json.load(file)
 
     return config["library"]
+
+
+@app.route("/library/<string:library>/<string:media>")
+def library_play_overview(media, library):
+    library_items = get_library_items()
+    return render_template(
+        "library_media_overview.html",
+        selected=library,
+        library=library_items,
+        meta=tmdb.meta(media, library),
+    )
 
 
 @app.route("/search/<string:search>")
@@ -401,7 +453,20 @@ def video(session_id):
 
 @app.route("/thumbnail/<string:title>")
 def get_thumbnail(title):
-    return send_from_directory(directory=thumbnail_location, filename=title,)
+    file = pathlib.Path(tmdb.get_thumbnail_path() + title)
+    if file.exists():
+        return send_from_directory(directory=tmdb.get_thumbnail_path(), filename=title,)
+    else:
+        default_icon = os.path.join(
+            os.path.dirname(os.path.realpath(__file__))
+            + os.sep
+            + "static"
+            + os.sep
+            + "icons"
+        )
+        return send_from_directory(
+            directory=default_icon, filename="movie_creation-24px.svg",
+        )
 
 
 def srtToVtt(srt_path):

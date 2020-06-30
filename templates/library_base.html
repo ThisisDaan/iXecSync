@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}{{selected.capitalize()}}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/library.css') }}" />
+{% endblock %}
+
+
+{% block content %}
+<main>
+
+
+    <section id="menu-section">
+        <span class="logo">iXecSync</span>
+        <ul class="library">
+            <a href="/library/">
+                <li class="item icon-home {% if selected == 'Home' %}selected{% endif %}">
+                    <span>Home</span>
+                </li>
+            </a>
+            <a href="/search/">
+                <li class="item icon-search {% if selected == 'Search' %}selected{% endif %}">
+                    <span>Search</span>
+                </li>
+            </a>
+        </ul>
+
+        {% if library %}
+        <ul class="library">
+            {% for item in library %}
+            <a href="/library/{% filter lower %}{{ item.name }}{% endfilter %}/">
+                <li
+                    class="item {% filter lower %}icon-{{ item.type }}{% endfilter %} {% if selected == item.name.lower() %}selected{% endif %}">
+                    <span>{{ item.name }}</span>
+                </li>
+            </a>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+
+
+    <section id="content-section">
+        {% block content_section %}
+        {% endblock %}
+    </section>
+</main>
+{% endblock %}
