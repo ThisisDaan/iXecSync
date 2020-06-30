@@ -305,24 +305,19 @@ def file_browsing_search(search):
 def get_content(folder, search_string=None):
     content = defaultdict(list)
 
-    max_items_per_page = 50
-    count = 0
-
     for (root, dirs, files) in os.walk(folder):
         for directory in dirs:
             if search_string is None or search_string.lower() in directory.lower():
-                if count < max_items_per_page:
-                    json = {
-                        "name": f"{directory}",
-                        "thumbnail": f"/thumbnail/{directory}.jpg",
-                        "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
-                        "type": "folder",
-                    }
-                    # tmdb.download_movie_poster(
-                    #     directory, thumbnail_location + directory + ".jpg", json["path"]
-                    # )
-                    content["folders"].append(json)
-                    count += 1
+                json = {
+                    "name": f"{directory}",
+                    "thumbnail": f"/thumbnail/{directory}.jpg",
+                    "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
+                    "type": "folder",
+                }
+                # tmdb.download_movie_poster(
+                #     directory, thumbnail_location + directory + ".jpg", json["path"]
+                # )
+                content["folders"].append(json)
 
         for filename in files:
             if search_string is None or search_string.lower() in filename.lower():
@@ -410,6 +405,12 @@ def player():
         return render_template("sync_player.html")
     else:
         return redirect("/", code=303)
+
+
+@app.route("/scan_library")
+def scanning_tmdb():
+    tmdb.scan_library()
+    return redirect("/", code=303)
 
 
 @app.route("/watch")

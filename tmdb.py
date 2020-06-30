@@ -14,11 +14,14 @@ tmdb.language = "en"
 
 
 def scan_library():
-    for item in config["library"]:
-        for (root, dirs, files) in os.walk(item["path"]):
-            for directory in dirs:
-                download_thumbnail_poster(directory, item["type"])
-            break
+    try:
+        for item in config["library"]:
+            for (root, dirs, files) in os.walk(item["path"]):
+                for directory in dirs:
+                    download_thumbnail_poster(directory, item["type"])
+                break
+    except Exception as e:
+        print(f"ERROR: {e}")
 
 
 def search_by_name(name, media_type):
@@ -49,16 +52,18 @@ def search_by_name(name, media_type):
 
 
 def download_thumbnail_poster(name, media_type):
-    thumbnail = get_thumbnail_path() + name
+    print(f"thumbnail poster: {name}")
+    thumbnail = get_thumbnail_path() + name + ".jpg"
     file = pathlib.Path(thumbnail)
-
     if file.exists() is False:
-
         search = search_by_name(name, media_type)
         if search:
-            url = f"https://image.tmdb.org/t/p/w500/{search.poster_path}"
-            urllib.request.urlretrieve(url, f"{get_thumbnail_path()}{name}.jpg")
+            url = f"https://image.tmdb.org/t/p/w500{search.poster_path}"
             print(f"Downloading: {name} - {url}")
+            if search.poster_path:
+                urllib.request.urlretrieve(url, f"{get_thumbnail_path()}{name}.jpg")
+    else:
+        print(f"Skipped: {name}")
 
 
 def get_thumbnail_path():
@@ -101,6 +106,5 @@ def meta(name, library):
     return json
 
 
-scan_library()
-# if __name__ == "__main__":
-#     scan_library()
+if __name__ == "__main__":
+    scan_library()
