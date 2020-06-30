@@ -6,7 +6,7 @@
 <section id='search'>
     <section class="item ">
         <form action="{{ url_for('search_query') }}" method="post" class="search">
-            <input id='search-input' type="search" name="search" placeholder="search">
+            <input id='search-input' type="search" name="search" placeholder="search" value="{{ search }}">
         </form>
     </section>
 </section>
@@ -21,7 +21,10 @@
         </li>
     </a>
     {% endfor %}
+
 </ul>
+{% elif search %}
+<span class="center-span">No items match your search</span>
 {% endif %}
 
 {% endblock %}

@@ -2,15 +2,20 @@
 
 
 {% block content_section %}
-<section>
-    <img class="backdrop" src="{{ meta.backdrop_path }}">
-</section>
-<span>{{ meta.title }}</span>
-<span>{{ meta.release_date }}</span>
-<span>{{ meta.overview }}</span>
-<span>{{ meta.vote_average }}</span>
-<span>{{ meta.popularity }}</span>
-<span>{{ meta.genre_ids }}</span>
+<img class="backdrop" src="{{ meta.backdrop_path }}">
+<section class="overview">
+    <img class="poster" src="{{ meta.thumbnail }}">
+    <div class="overview-side">
+        <h1>{{ meta.title }}</h1>
+        <div class="subtext">
+            <a href="#">{{ meta.release_date }}</a>
+            <a href="#" class="rating">{{ meta.vote_average }}</a>
+        </div>
+        <span>{{ meta.overview }}</span>
+        <a href="play">
+            <button class="button">Play</button>
+        </a>
+    </div>
 
-<img src="{{ meta.poster_path }}">
+</section>
 {% endblock %}

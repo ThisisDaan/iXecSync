@@ -10,21 +10,22 @@
 
 main {
     display: grid;
-    grid-template-columns: 350px 1fr;
-    grid-column-gap: 10px;
-    grid-row-gap: 10px;
+    grid-template-columns: 300px 1fr;
     justify-items: stretch;
     align-items: stretch;
     min-height: 100vh;
 }
 
 #menu-section {
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    background-color: #000;
+    background-color: rgba(0, 0, 0, 1)
 }
 
 #content-section {
+    display: flex;
+    flex-direction: column;
     overflow-y: scroll;
     min-height: 0;
     max-height: 100vh;
@@ -34,7 +35,6 @@ main {
     display: block;
     padding: 25px;
     font-size: 45px;
-    font-family: 'Roboto';
     font-weight: 600;
     color: #fff;
     text-transform: uppercase;
@@ -45,7 +45,6 @@ main {
 .library {
     display: flex;
     flex-direction: column;
-    font-family: 'Roboto';
     padding: 0px 15px 0px 15px;
 }
 
@@ -57,8 +56,8 @@ main {
     display: inline-flex;
     align-items: center;
     width: 100%;
-    padding: 20px 25px 20px 25px;
-    font-size: 30px;
+    padding: 10px 15px 10px 15px;
+    font-size: 20px;
     font-weight: 500;
     cursor: pointer;
     border-radius: 5px;
@@ -79,16 +78,16 @@ main {
 .library .item::before {
     content: " ";
     display: block;
-    min-width: 45px;
-    min-height: 45px;
-    margin-right: 45px;
+    min-width: 35px;
+    min-height: 35px;
+    margin-right: 35px;
     background-color: #fff;
 
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
 
-    -webkit-mask-size: 45px;
-    mask-size: 45px;
+    -webkit-mask-size: 35px;
+    mask-size: 35px;
 
     -webkit-mask-position: center center;
     mask-position: center center;
@@ -119,10 +118,15 @@ main {
     mask-image: url(../icons/search-24px.svg);
 }
 
+.icon-back::before {
+    -webkit-mask-image: url(../icons/arrow_back_ios-24px.svg);
+    mask-image: url(../icons/arrow_back_ios-24px.svg);
+}
+
 .media {
     display: grid;
     /* grid-template-columns: 1fr 1fr 1fr 1fr; */
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     grid-column-gap: 40px;
     grid-row-gap: 20px;
     padding: 40px;
@@ -160,13 +164,12 @@ main {
     overflow: hidden;
     white-space: nowrap;
     color: #fff;
-    font-family: 'Roboto';
     font-weight: 500;
 }
 
 .media .item .thumbnail {
     border-radius: 15px;
-    height: 375px;
+    height: 325px;
     background-color: #000;
     overflow: hidden;
 }
@@ -194,6 +197,94 @@ main {
     width: 100%;
     color: #fff;
     font-size: 30px;
-    font-family: "Roboto";
+    font-weight: 500;
+}
+
+.overview {
+    display: flex;
+    position: relative;
+    flex-direction: row;
+    padding: 25px;
+}
+
+.overview .poster {
+    height: 375px;
+    width: 250px;
+    border-radius: 25px;
+}
+
+.overview-side {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 25px;
+}
+
+.overview-side a {
+    margin-top: auto;
+    color: #fff;
+}
+
+.overview-side button {
+    height: 50px;
+    width: 100%;
+    background-color: var(--theme-color);
+    border: var(--theme-color) 2px solid;
+    border-radius: 10px;
+    color: #fefefe;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+}
+
+.overview-side h1 {
+    font-size: 35px;
+    font-weight: 500;
+}
+
+.overview-side .subtext {
+    display: inline-flex;
+    margin-bottom: 25px;
+}
+
+.subtext a {
+    margin-right: 15px;
+}
+
+.rating::before {
+    content: " ";
+    display: inline-block;
+    min-width: 12px;
+    min-height: 12px;
+    background-color: #fff;
+
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+
+    -webkit-mask-size: 12px;
+    mask-size: 12px;
+
+    -webkit-mask-position: center center;
+    mask-position: center center;
+
+    -webkit-mask-image: url(../icons/grade-24px.svg);
+    mask-image: url(../icons/grade-24px.svg);
+}
+
+.backdrop {
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    filter: blur(15px) opacity(0.5);
+    -webkit-mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 1)), to(rgba(0, 0, 0, 0)));
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+}
+
+.center-span {
+    text-align: center;
+    font-size: 25px;
     font-weight: 500;
 }

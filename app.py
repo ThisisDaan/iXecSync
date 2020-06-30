@@ -238,6 +238,7 @@ def search_query():
             selected="Search",
             library=library_items,
             media=search_results,
+            search=search,
         )
     else:
         return render_template(
@@ -279,8 +280,8 @@ def get_library_items():
     return config["library"]
 
 
-@app.route("/library/<string:library>/<string:media>")
-def library_play_overview(media, library):
+@app.route("/library/<string:library>/<string:media>/")
+def library_media_overview(media, library):
     library_items = get_library_items()
     return render_template(
         "library_media_overview.html",
@@ -288,6 +289,28 @@ def library_play_overview(media, library):
         library=library_items,
         meta=tmdb.meta(media, library),
     )
+
+
+@app.route("/library/<string:library>/<string:media>/play")
+def library_media_overview_play(library, media):
+    session_id = f"{uuid.uuid4()}"
+
+    directory = folder_location
+
+    for (root, dirs, files) in os.walk(directory):
+        for file in files:
+            if media.lower() in root.lower():
+                if file[-4:] == ".mkv":
+                    filename = file
+                    directory = root
+                    break
+                elif file[-4:] == ".mp4":
+                    filename = file
+                    directory = root
+                    break
+
+    create_new_session(session_id, directory, filename)
+    return redirect(f"/video.sync?session={session_id}", code=303)
 
 
 @app.route("/search/<string:search>")
