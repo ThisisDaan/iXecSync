@@ -20,6 +20,7 @@ import io
 import transcoding as acid_transcode
 import sys
 import tmdb as tmdb
+import json
 
 
 app = Flask(__name__)
@@ -28,9 +29,11 @@ socketio = SocketIO(app)
 folder_location = os.path.join(
     os.path.dirname(os.path.realpath(__file__)) + os.sep + "video" + os.sep
 )
+
 subtitle_folder_location = os.path.join(
     os.path.dirname(os.path.realpath(__file__)) + os.sep + "subtitles" + os.sep
 )
+
 thumbnail_location = os.path.join(
     os.path.dirname(os.path.realpath(__file__)) + os.sep + "thumbnail" + os.sep
 )
@@ -192,16 +195,6 @@ class iXecSync:
             )
 
 
-@app.after_request
-def add_header(r):
-    r.cache_control.max_age = 0
-    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    r.headers["Pragma"] = "no-cache"
-    r.headers["Expires"] = "0"
-    r.headers["Cache-Control"] = "public, max-age=0"
-    return r
-
-
 @app.route("/search")
 @app.route("/")
 def index():
@@ -211,7 +204,7 @@ def index():
 @app.route("/file/", defaults={"path": ""})
 @app.route("/file/<path:path>")
 def file_browsing_root(path):
-    content = getContent(folder_location + path)
+    content = get_content(folder_location + path)
     return render_template(
         "file_browser.html",
         folders=content["folders"],
@@ -220,9 +213,34 @@ def file_browsing_root(path):
     )
 
 
+@app.route("/library/")
+def library_home():
+    library_items = get_library_items()
+    return render_template("library_home.html", library=library_items, files="")
+
+
+@app.route("/library/<string:library>/")
+def library_content(library):
+    library_items = get_library_items()
+    for item in library_items:
+        if library == item["name"].lower():
+            files = get_content(item["path"])
+            print(files["folders"])
+    return render_template(
+        "library_home.html", library=library_items, media=files["folders"]
+    )
+
+
+def get_library_items():
+    with open(os.path.join(os.path.dirname(__file__), "config.json")) as file:
+        config = json.load(file)
+
+    return config["library"]
+
+
 @app.route("/search/<string:search>")
 def file_browsing_search(search):
-    content = getContent(folder_location, search)
+    content = get_content(folder_location, search)
     return render_template(
         "file_browser.html",
         folders=content["folders"],
@@ -232,7 +250,7 @@ def file_browsing_search(search):
     )
 
 
-def getContent(folder, search_string=None):
+def get_content(folder, search_string=None):
     content = defaultdict(list)
 
     max_items_per_page = 50
@@ -242,15 +260,15 @@ def getContent(folder, search_string=None):
         for directory in dirs:
             if search_string is None or search_string.lower() in directory.lower():
                 if count < max_items_per_page:
-                    tmdb.download_movie_poster(
-                        directory, thumbnail_location + directory + ".jpg"
-                    )
                     json = {
                         "name": f"{directory}",
                         "thumbnail": f"/thumbnail/{directory}.jpg",
                         "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
                         "type": "folder",
                     }
+                    # tmdb.download_movie_poster(
+                    #     directory, thumbnail_location + directory + ".jpg", json["path"]
+                    # )
                     content["folders"].append(json)
                     count += 1
 

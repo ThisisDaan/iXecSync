@@ -12,6 +12,8 @@ thumbnail/*
 !thumbnail/-=MoviesNL=-.jpg
 !thumbnail/-=Series=-.jpg
 
+config.json
+
 ### Flask ###
 instance/*
 !instance/.gitignore

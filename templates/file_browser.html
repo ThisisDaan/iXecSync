@@ -36,9 +36,7 @@
          <span>Folders</span>
          <ul id='folders' class="file_browser">
             {% for item in folders %}
-            <li class="folder item thumbnail" onclick='navigate(this.id)' id='{{ item.path }}'
-               data-type='{{ item.type }}'>
-               <img src="{{ item.thumbnail }}">
+            <li class="folder item" onclick='navigate(this.id)' id='{{ item.path }}' data-type='{{ item.type }}'>
                <span>{{ item.name }}</span>
             </li>
             {% endfor %}
@@ -74,13 +72,13 @@
    }
 
    function toggle_search() {
-      $("#search").toggle();
+      $("#search").slideToggle(300);
 
       setTimeout(function () {
          $("#search-input").val("");
          $("#search-input").focus();
          searchpage();
-      }, 100);
+      }, 300);
    }
 
    function goBack() {
