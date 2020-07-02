@@ -13,6 +13,7 @@ thumbnail/*
 !thumbnail/-=Series=-.jpg
 
 config.json
+fsociety00.db
 
 ### Flask ###
 instance/*

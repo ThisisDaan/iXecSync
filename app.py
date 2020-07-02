@@ -296,6 +296,7 @@ def library_media_overview_play(library, media):
     session_id = f"{uuid.uuid4()}"
 
     directory = folder_location
+    filename = False
 
     for (root, dirs, files) in os.walk(directory):
         for file in files:
@@ -308,9 +309,12 @@ def library_media_overview_play(library, media):
                     filename = file
                     directory = root
                     break
-
-    create_new_session(session_id, directory, filename)
-    return redirect(f"/video.sync?session={session_id}", code=303)
+    if filename:
+        session_id = f"{uuid.uuid4()}"
+        create_new_session(session_id, directory, filename)
+        return redirect(f"/video.sync?session={session_id}", code=303)
+    else:
+        return abort(404)
 
 
 @app.route("/search/<string:search>")

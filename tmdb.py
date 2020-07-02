@@ -4,6 +4,8 @@ import pathlib
 import json
 import os
 from collections import defaultdict
+import database_manager as dbm
+import base64
 
 with open(os.path.join(os.path.dirname(__file__), "config.json")) as file:
     config = json.load(file)
@@ -15,13 +17,44 @@ tmdb.language = "en"
 
 def scan_library():
     try:
-        for item in config["library"]:
-            for (root, dirs, files) in os.walk(item["path"]):
-                for directory in dirs:
-                    download_thumbnail_poster(directory, item["type"])
-                break
+        db = dbm.database_manager()
+        for library in config["library"]:
+            if library["type"] == "movie":
+                for (root, dirs, files) in os.walk(library["path"]):
+                    for directory in dirs:
+                        name = directory[:-5]
+                        release_date = directory[-4:]
+
+                        if db.not_exists(directory, library["type"]):
+
+                            movie = Movie()
+                            search = movie.search(name)
+
+                            if search:
+                                tmdb_movie = search[0]
+
+                                for item in search:
+                                    try:
+                                        if item.release_date[-4:] == release_date:
+                                            tmdb_movie = item
+                                            break
+                                    except Exception:
+                                        print("Has no release date")
+
+                                db.sql_update_movie(
+                                    tmdb_movie, library["path"], directory
+                                )
+                                if tmdb_movie.poster_path:
+                                    url = f"https://image.tmdb.org/t/p/w500{tmdb_movie.poster_path}"
+                                    urllib.request.urlretrieve(
+                                        url, f"{get_thumbnail_path()}{directory}.jpg"
+                                    )
+                                print(f"downloaded and saved database: {directory}")
+                    break
     except Exception as e:
         print(f"ERROR: {e}")
+    finally:
+        db.connection.close()
 
 
 def search_by_name(name, media_type):
@@ -72,36 +105,23 @@ def get_thumbnail_path():
     )
 
 
-def popular():
-    popular_list = []
-
-    movie = Movie()
-    popular = movie.popular()
-
-    for item in popular:
-        json = {
-            "name": item.title,
-            "thumbnail": f"https://image.tmdb.org/t/p/w500/{item.poster_path}",
-        }
-        popular_list.append(json)
-
-    return popular_list
-
-
-def meta(name, library):
-    search = search_by_name(name, "movie")
-
-    if search:
-        json = {
-            "title": search.title,
-            "overview": search.overview,
-            "thumbnail": f"https://image.tmdb.org/t/p/w500/{search.poster_path}",
-            "backdrop_path": f"https://image.tmdb.org/t/p/w500/{search.backdrop_path}",
-            "release_date": search.release_date,
-            "genre_ids": search.genre_ids,
-            "vote_average": search.vote_average,
-            "popularity": search.popularity,
-        }
+def meta(media_name, library):
+    db = dbm.database_manager()
+    sql_data = db.get_movie(media_name)[0]
+    json = {
+        "title": sql_data[4],
+        "original_title": sql_data[5],
+        "overview": sql_data[6],
+        "release_date": sql_data[7],
+        "genre_ids": sql_data[8],
+        "thumbnail": f"/thumbnail/{media_name}.jpg",
+        "backdrop_path": f"/thumbnail/{media_name}.jpg",
+        "popularity": sql_data[12],
+        "video": sql_data[13],
+        "vote_average": sql_data[14],
+        "vote_count": sql_data[15],
+    }
+    db.connection.close()
 
     return json
 
