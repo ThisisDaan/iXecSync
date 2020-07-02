@@ -220,25 +220,16 @@ def library_search():
 @app.route("/search/", methods=["POST"])
 def search_query():
     library_items = get_library_items()
-
     if request.method == "POST":
         search = request.form.get("search")
-        search_results = []
-        for (root, dirs, files) in os.walk(folder_location):
-            for directory in dirs:
-                if search is None or search.lower() in directory.lower():
-                    json = {
-                        "name": f"{directory}",
-                        "thumbnail": f"/thumbnail/{directory.lower()}.jpg",
-                    }
-                    search_results.append(json)
+
+        files = tmdb.get_media_by_keyword(search)
 
         return render_template(
             "library_search.html",
             selected="Search",
             library=library_items,
-            media=search_results,
-            search=search,
+            media=files,
         )
     else:
         return render_template(
@@ -271,7 +262,10 @@ def library_content(library_name):
     files = tmdb.get_library(library_name)
 
     return render_template(
-        "library_media.html", selected=library_name, library=library_items, media=files,
+        "library_media.html",
+        selected=library_name,
+        library=library_items,
+        media=files["media"],
     )
 
 
@@ -467,11 +461,9 @@ def video(session_id):
 
 @app.route("/thumbnail/<string:title>")
 def get_thumbnail(title):
-    file = pathlib.Path(tmdb.get_thumbnail_path() + title.lower())
+    file = pathlib.Path(tmdb.get_thumbnail_path() + title)
     if file.exists():
-        return send_from_directory(
-            directory=tmdb.get_thumbnail_path(), filename=title.lower(),
-        )
+        return send_from_directory(directory=tmdb.get_thumbnail_path(), filename=title,)
     else:
         default_icon = os.path.join(
             os.path.dirname(os.path.realpath(__file__))

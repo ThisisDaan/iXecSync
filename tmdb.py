@@ -113,8 +113,29 @@ def scan_library_tvshow(library):
 
 
 def get_library(library_name):
+    items = defaultdict(list)
+
     db = dbm.database_manager()
     library = db.get_library(library_name)
+    items["pages"] = db.get_library_count(library_name)[0]
+    db.connection.close()
+
+    for item in library:
+        json = {
+            "content_dir": item[0],
+            "title": item[1],
+            "release_date": item[2][:4],
+        }
+        items["media"].append(json)
+    items["pages"] = round(int(items["pages"][0]) / 100)
+    print(items["pages"])
+
+    return items
+
+
+def get_media_by_keyword(keyword):
+    db = dbm.database_manager()
+    library = db.get_media_by_keyword(keyword)
     db.connection.close()
 
     items = []
@@ -123,6 +144,7 @@ def get_library(library_name):
             "content_dir": item[0],
             "title": item[1],
             "release_date": item[2][:4],
+            "library_name": item[3],
         }
         items.append(json)
 

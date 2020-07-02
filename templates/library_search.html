@@ -6,7 +6,8 @@
 <section id='search'>
     <section class="item ">
         <form action="{{ url_for('search_query') }}" method="post" class="search">
-            <input id='search-input' type="search" name="search" placeholder="search" value="{{ search }}">
+            <input id='search-input' type="search" name="search" placeholder="search (title, release date)"
+                value="{{ search }}">
         </form>
     </section>
 </section>
@@ -14,10 +15,11 @@
 {% if media %}
 <ul class="media">
     {% for item in media %}
-    <a href="{% filter lower %}{{ item.name }}{% endfilter %}">
+    <a href="{% filter lower %}/library/{{ item.library_name }}/{{ item.content_dir }}{% endfilter %}/">
         <li class="item">
-            <div class="thumbnail"><img src="{{ item.thumbnail }}"></div>
-            <span>{{ item.name }}</span>
+            <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
+            <span>{{ item.title }}</span>
+            <span>({{ item.release_date }})</span>
         </li>
     </a>
     {% endfor %}

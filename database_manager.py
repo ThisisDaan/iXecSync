@@ -109,8 +109,30 @@ class database_manager:
         cur.close()
         return sql_json
 
+    def get_library_count(self, library_name):
+        sql_query = f"""SELECT COUNT(*) FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE"""
+        cur = self.connection.cursor()
+
+        cur.execute(sql_query)
+        sql_result = cur.fetchall()
+        sql_json = json.loads(json.dumps(sql_result))
+        cur.close()
+        return sql_json
+
+    def get_media_by_keyword(self, keyword):
+        # LIMIT 100,200
+        sql_query = f"""SELECT content_dir,title,release_date,library_name FROM movie WHERE title LIKE "%{keyword}%" COLLATE NOCASE OR release_date LIKE "%{keyword}%" COLLATE NOCASE"""
+        cur = self.connection.cursor()
+
+        cur.execute(sql_query)
+        sql_result = cur.fetchall()
+        sql_json = json.loads(json.dumps(sql_result))
+        cur.close()
+        return sql_json
+
     def get_library(self, library_name):
-        sql_query = f"""SELECT content_dir,title,release_date FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE """
+        # LIMIT 100,200
+        sql_query = f"""SELECT content_dir,title,release_date FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE"""
         cur = self.connection.cursor()
 
         cur.execute(sql_query)
