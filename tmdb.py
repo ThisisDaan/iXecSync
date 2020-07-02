@@ -82,8 +82,14 @@ def scan_library_movie(library):
                     except Exception:
                         print(f"Unable download poster for {name}")
 
+    supported_files = []
     for file in library_path.rglob("*.mkv"):
+        supported_files.append(file)
 
+    for file in library_path.rglob("*.mp4"):
+        supported_files.append(file)
+
+    for file in supported_files:
         file_info = {}
         file_info["content_type"] = "movie"
         file_info["content_dir"] = file.parent.name
@@ -119,7 +125,7 @@ def get_library(library_name):
             "release_date": item[2][:4],
         }
         items.append(json)
-    print(items)
+
     return items
 
 
@@ -138,7 +144,7 @@ def get_meta(content_dir):
             "vote_average": item[4],
         }
         items.append(json)
-    print(items)
+
     return items[0]
 
 
@@ -155,9 +161,7 @@ def get_filename(library_name, content_dir):
             "content_file": item[2],
         }
         items.append(json)
-    print(library_name)
-    print(content_dir)
-    print(items)
+
     if items:
         return items[0]
     else:

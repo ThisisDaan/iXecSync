@@ -120,7 +120,7 @@ class database_manager:
         return sql_json
 
     def get_filename(self, library_name, content_dir):
-        sql_query = f"""SELECT library_path,content_dir,content_file from file WHERE library_name="{library_name}" AND content_dir="{content_dir}" COLLATE NOCASE;"""
+        sql_query = f"""SELECT library_path,content_dir,content_file from file WHERE library_name="{library_name}" COLLATE NOCASE AND content_dir="{content_dir}" COLLATE NOCASE;"""
         cur = self.connection.cursor()
 
         cur.execute(sql_query)
