@@ -1,11 +1,13 @@
 from tmdbv3api import TMDb, Movie, TV
 import urllib.request
 import pathlib
+from pathlib import Path
 import json
 import os
 from collections import defaultdict
 import database_manager as dbm
 import base64
+import glob
 
 with open(os.path.join(os.path.dirname(__file__), "config.json")) as file:
     config = json.load(file)
@@ -16,45 +18,150 @@ tmdb.language = "en"
 
 
 def scan_library():
-    try:
-        db = dbm.database_manager()
-        for library in config["library"]:
-            if library["type"] == "movie":
-                for (root, dirs, files) in os.walk(library["path"]):
-                    for directory in dirs:
-                        name = directory[:-5]
-                        release_date = directory[-4:]
+    db = dbm.database_manager()
 
-                        if db.not_exists(directory, library["type"]):
+    for library in config["library"]:
 
-                            movie = Movie()
-                            search = movie.search(name)
+        if library["type"] == "movie":
+            scan_library_movie(library)
+        elif library["type"] == "tvshow":
+            scan_library_tvshow(library)
+        else:
+            print("Invalid library type")
 
-                            if search:
-                                tmdb_movie = search[0]
+    db.connection.close()
 
-                                for item in search:
-                                    try:
-                                        if item.release_date[-4:] == release_date:
-                                            tmdb_movie = item
-                                            break
-                                    except Exception:
-                                        print("Has no release date")
 
-                                db.sql_update_movie(
-                                    tmdb_movie, library["path"], directory
-                                )
-                                if tmdb_movie.poster_path:
-                                    url = f"https://image.tmdb.org/t/p/w500{tmdb_movie.poster_path}"
-                                    urllib.request.urlretrieve(
-                                        url, f"{get_thumbnail_path()}{directory}.jpg"
-                                    )
-                                print(f"downloaded and saved database: {directory}")
-                    break
-    except Exception as e:
-        print(f"ERROR: {e}")
-    finally:
-        db.connection.close()
+def scan_library_movie(library):
+    library_path = Path(library["path"])
+    library_name = library["name"]
+
+    # opening database connection
+    db = dbm.database_manager()
+
+    for directory in library_path.iterdir():
+        # each directory is a movie
+        # format of movie "title (release_date)"
+        name = directory.name
+
+        # We slice away the release date including parenthesis and space
+        title = name[:-7]
+
+        # We slice away the ) then we take the release date
+        release_date = name[:-1][:-4]
+
+        if db.not_exists(name, library["type"]):
+            movie = Movie()
+            search = movie.search(title)
+            if search:
+                # Setting the first entry as default
+                tmdb_movie = search[0]
+
+                # Checking for specific release date
+                for movie in search:
+                    if hasattr(movie, "release_date"):
+                        if movie.release_date[-4:] == release_date:
+                            tmdb_movie = movie
+
+                # Writing data to database
+                try:
+                    db.sql_update_movie(name, library_name, tmdb_movie)
+                    print(f"Saving data to DB for {name}")
+                except Exception:
+                    print(f"Unable to write to database for {name}")
+
+                # Checking if the movie has a poster
+                if tmdb_movie.poster_path:
+                    url = f"https://image.tmdb.org/t/p/w500{tmdb_movie.poster_path}"
+
+                    try:
+                        urllib.request.urlretrieve(
+                            url, f"{get_thumbnail_path()}{directory.name}.jpg",
+                        )
+                        print(f"Downloaded poster for: {name}")
+                    except Exception:
+                        print(f"Unable download poster for {name}")
+
+    for file in library_path.rglob("*.mkv"):
+
+        file_info = {}
+        file_info["content_type"] = "movie"
+        file_info["content_dir"] = file.parent.name
+        file_info["content_file"] = file.name
+        file_info["library_path"] = library_path
+        file_info["library_name"] = library_name
+
+        # Writing data to database
+        try:
+            db.sql_update_file(file_info)
+            print(f"Saving data to DB for {file.name}")
+        except Exception:
+            print(f"Unable to write to database for {file.name}")
+
+    # closing database connection
+    db.connection.close()
+
+
+def scan_library_tvshow(library):
+    print("TV SHOWS")
+
+
+def get_library(library_name):
+    db = dbm.database_manager()
+    library = db.get_library(library_name)
+    db.connection.close()
+
+    items = []
+    for item in library:
+        json = {
+            "content_dir": item[0],
+            "title": item[1],
+            "release_date": item[2][:4],
+        }
+        items.append(json)
+    print(items)
+    return items
+
+
+def get_meta(content_dir):
+    db = dbm.database_manager()
+    library = db.get_meta(content_dir)
+    db.connection.close()
+
+    items = []
+    for item in library:
+        json = {
+            "content_dir": item[0],
+            "title": item[1],
+            "release_date": item[2][:4],
+            "overview": item[3],
+            "vote_average": item[4],
+        }
+        items.append(json)
+    print(items)
+    return items[0]
+
+
+def get_filename(library_name, content_dir):
+    db = dbm.database_manager()
+    file = db.get_filename(library_name, content_dir)
+    db.connection.close()
+
+    items = []
+    for item in file:
+        json = {
+            "library_path": item[0],
+            "content_dir": item[1],
+            "content_file": item[2],
+        }
+        items.append(json)
+    print(library_name)
+    print(content_dir)
+    print(items)
+    if items:
+        return items[0]
+    else:
+        return False
 
 
 def search_by_name(name, media_type):

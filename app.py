@@ -229,7 +229,7 @@ def search_query():
                 if search is None or search.lower() in directory.lower():
                     json = {
                         "name": f"{directory}",
-                        "thumbnail": f"/thumbnail/{directory}.jpg",
+                        "thumbnail": f"/thumbnail/{directory.lower()}.jpg",
                     }
                     search_results.append(json)
 
@@ -246,6 +246,13 @@ def search_query():
         )
 
 
+def get_library_items():
+    with open(os.path.join(os.path.dirname(__file__), "config.json")) as file:
+        config = json.load(file)
+
+    return config["library"]
+
+
 @app.route("/library/")
 def library_home():
     library_items = get_library_items()
@@ -257,61 +264,40 @@ def library_home():
     )
 
 
-@app.route("/library/<string:library>/")
-def library_content(library):
+@app.route("/library/<string:library_name>/")
+def library_content(library_name):
     library_items = get_library_items()
 
-    for item in library_items:
-        if library == item["name"].lower():
-            files = get_content(item["path"])
+    files = tmdb.get_library(library_name)
 
     return render_template(
-        "library_media.html",
-        selected=library,
-        library=library_items,
-        media=files["folders"],
+        "library_media.html", selected=library_name, library=library_items, media=files,
     )
 
 
-def get_library_items():
-    with open(os.path.join(os.path.dirname(__file__), "config.json")) as file:
-        config = json.load(file)
-
-    return config["library"]
-
-
-@app.route("/library/<string:library>/<string:media>/")
-def library_media_overview(media, library):
+@app.route("/library/<string:library_name>/<string:content_dir>/")
+def library_media_overview(library_name, content_dir):
     library_items = get_library_items()
+
+    meta = tmdb.get_meta(content_dir)
+
     return render_template(
         "library_media_overview.html",
-        selected=library,
+        selected=library_name,
         library=library_items,
-        meta=tmdb.meta(media, library),
+        meta=meta,
     )
 
 
-@app.route("/library/<string:library>/<string:media>/play")
-def library_media_overview_play(library, media):
-    session_id = f"{uuid.uuid4()}"
+@app.route("/library/<string:library_name>/<string:content_dir>/play")
+def library_media_overview_play(library_name, content_dir):
 
-    directory = folder_location
-    filename = False
+    filename = tmdb.get_filename(library_name, content_dir)
 
-    for (root, dirs, files) in os.walk(directory):
-        for file in files:
-            if media.lower() in root.lower():
-                if file[-4:] == ".mkv":
-                    filename = file
-                    directory = root
-                    break
-                elif file[-4:] == ".mp4":
-                    filename = file
-                    directory = root
-                    break
     if filename:
+        directory = os.path.join(filename["library_path"], filename["content_dir"])
         session_id = f"{uuid.uuid4()}"
-        create_new_session(session_id, directory, filename)
+        create_new_session(session_id, directory, filename["content_file"])
         return redirect(f"/video.sync?session={session_id}", code=303)
     else:
         return abort(404)
@@ -337,7 +323,7 @@ def get_content(folder, search_string=None):
             if search_string is None or search_string.lower() in directory.lower():
                 json = {
                     "name": f"{directory}",
-                    "thumbnail": f"/thumbnail/{directory}.jpg",
+                    "thumbnail": f"/thumbnail/{directory.lower()}.jpg",
                     "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
                     "type": "folder",
                 }
@@ -481,9 +467,11 @@ def video(session_id):
 
 @app.route("/thumbnail/<string:title>")
 def get_thumbnail(title):
-    file = pathlib.Path(tmdb.get_thumbnail_path() + title)
+    file = pathlib.Path(tmdb.get_thumbnail_path() + title.lower())
     if file.exists():
-        return send_from_directory(directory=tmdb.get_thumbnail_path(), filename=title,)
+        return send_from_directory(
+            directory=tmdb.get_thumbnail_path(), filename=title.lower(),
+        )
     else:
         default_icon = os.path.join(
             os.path.dirname(os.path.realpath(__file__))

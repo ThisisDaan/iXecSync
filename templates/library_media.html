@@ -5,10 +5,11 @@
 {% if media %}
 <ul class="media">
     {% for item in media %}
-    <a href="{% filter lower %}{{ item.name }}{% endfilter %}">
+    <a href="{% filter lower %}{{ item.content_dir }}{% endfilter %}">
         <li class="item">
-            <div class="thumbnail"><img src="{{ item.thumbnail }}"></div>
-            <span>{{ item.name }}</span>
+            <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
+            <span>{{ item.title }}</span>
+            <span>({{ item.release_date }})</span>
         </li>
     </a>
     {% endfor %}
