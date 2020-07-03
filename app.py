@@ -251,7 +251,7 @@ def library_home():
 def library_files(path):
     library_items = get_library_items()
 
-    directory = Path(folder_location + path)
+    directory = Path(os.path.join(folder_location, path))
 
     files = []
     for item in directory.iterdir():
