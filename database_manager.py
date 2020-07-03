@@ -11,6 +11,7 @@ class database_manager:
 
         db = os.path.dirname(os.path.realpath(__file__)) + os.sep + "fsociety00.db"
         self.connection = sqlite3.connect(db)
+        self.connection.row_factory = sqlite3.Row
 
         self.sql_create_table(
             """CREATE TABLE IF NOT EXISTS file (
@@ -37,7 +38,7 @@ class database_manager:
                 original_language TEXT,
                 poster_path TEXT,
                 backdrop_path TEXT,
-                popularity TEXT,
+                popularity INTEGER,
                 video TEXT,
                 vote_average TEXT,
                 vote_count TEXT
@@ -59,8 +60,7 @@ class database_manager:
                 origin_country TEXT,
                 poster_path TEXT,
                 backdrop_path TEXT,
-                popularity TEXT,
-                video TEXT,
+                popularity INTEGER,
                 vote_average TEXT,
                 vote_count TEXT
                 );"""
@@ -119,57 +119,17 @@ class database_manager:
         cur.close()
         return sql_json
 
-    def get_media_by_keyword(self, keyword):
-        # LIMIT 100,200
-        sql_query = f"""SELECT content_dir,title,release_date,library_name FROM movie WHERE title LIKE "%{keyword}%" COLLATE NOCASE OR release_date LIKE "%{keyword}%" COLLATE NOCASE"""
+    def sql_execute(self, sql_query):
         cur = self.connection.cursor()
-
         cur.execute(sql_query)
         sql_result = cur.fetchall()
-        sql_json = json.loads(json.dumps(sql_result))
+
+        sql_list = []
+        for item in sql_result:
+            sql_list.append(dict(item))
+
         cur.close()
-        return sql_json
-
-    def get_library(self, library_name):
-        # LIMIT 100,200
-        sql_query = f"""SELECT content_dir,title,release_date FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE"""
-        cur = self.connection.cursor()
-
-        cur.execute(sql_query)
-        sql_result = cur.fetchall()
-        sql_json = json.loads(json.dumps(sql_result))
-        cur.close()
-        return sql_json
-
-    def get_filename(self, library_name, content_dir):
-        sql_query = f"""SELECT library_path,content_dir,content_file from file WHERE library_name="{library_name}" COLLATE NOCASE AND content_dir="{content_dir}" COLLATE NOCASE;"""
-        cur = self.connection.cursor()
-
-        cur.execute(sql_query)
-        sql_result = cur.fetchall()
-        sql_json = json.loads(json.dumps(sql_result))
-        cur.close()
-        return sql_json
-
-    def get_meta(self, content_dir):
-        sql_query = f"""SELECT content_dir,title,release_date,overview,vote_average FROM movie WHERE content_dir="{content_dir}" COLLATE NOCASE """
-        cur = self.connection.cursor()
-
-        cur.execute(sql_query)
-        sql_result = cur.fetchall()
-        sql_json = json.loads(json.dumps(sql_result))
-        cur.close()
-        return sql_json
-
-    def get_path(self, content_dir):
-        sql_query = f"""SELECT content_dir FROM movie WHERE content_dir ="{content_dir}" COLLATE NOCASE """
-        cur = self.connection.cursor()
-
-        cur.execute(sql_query)
-        sql_result = cur.fetchall()
-        sql_json = json.loads(json.dumps(sql_result))
-        cur.close()
-        return sql_json
+        return sql_list
 
     def sql_update_file(self, file_info):
         sql_input = [
@@ -206,7 +166,7 @@ class database_manager:
             movie.original_language,
             movie.poster_path,
             movie.backdrop_path,
-            movie.popularity,
+            int(movie.popularity),
             movie.video,
             movie.vote_average,
             movie.vote_count,
@@ -226,6 +186,48 @@ class database_manager:
                 backdrop_path,
                 popularity,
                 video,
+                vote_average,
+                vote_count
+                )
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+            cur = self.connection.cursor()
+            cur.execute(sql_query, (sql_input))
+            self.connection.commit()
+            cur.close()
+
+    def sql_update_tvshow(self, content_dir, library_name, tvshow):
+        sql_input = [
+            library_name,
+            content_dir,
+            tvshow.id,
+            tvshow.name,
+            tvshow.original_name,
+            tvshow.overview,
+            tvshow.first_air_date,
+            str(tvshow.genre_ids),
+            tvshow.original_language,
+            str(tvshow.origin_country),
+            tvshow.poster_path,
+            tvshow.backdrop_path,
+            int(tvshow.popularity),
+            tvshow.vote_average,
+            tvshow.vote_count,
+        ]
+        if self.connection:
+            sql_query = """INSERT OR REPLACE INTO tvshow(
+                library_name,
+                content_dir,
+                tmdb_id,
+                name,
+                original_name,
+                overview,
+                first_air_date,
+                genre_ids,
+                original_language,
+                origin_country,
+                poster_path,
+                backdrop_path,
+                popularity,
                 vote_average,
                 vote_count
                 )

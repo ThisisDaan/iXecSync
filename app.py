@@ -21,7 +21,8 @@ import transcoding as acid_transcode
 import sys
 import tmdb as tmdb
 import json
-import pathlib
+from pathlib import Path
+import random
 
 
 app = Flask(__name__)
@@ -194,7 +195,7 @@ class iXecSync:
 
 @app.route("/")
 def index():
-    return redirect("/file", code=303)
+    return redirect("/library", code=303)
 
 
 @app.route("/file/", defaults={"path": ""})
@@ -209,15 +210,7 @@ def file_browsing_root(path):
     )
 
 
-@app.route("/search/", methods=["GET"])
-def library_search():
-    library_items = get_library_items()
-    return render_template(
-        "library_search.html", selected="Search", library=library_items,
-    )
-
-
-@app.route("/search/", methods=["POST"])
+@app.route("/search/", methods=["POST", "GET"])
 def search_query():
     library_items = get_library_items()
     if request.method == "POST":
@@ -247,11 +240,28 @@ def get_library_items():
 @app.route("/library/")
 def library_home():
     library_items = get_library_items()
+
     return render_template(
-        "library_media.html",
-        selected="Home",
-        library=library_items,
-        # media=tmdb.popular(),
+        "library_media.html", selected="Home", library=library_items,
+    )
+
+
+@app.route("/files/", defaults={"path": ""})
+@app.route("/files/<path:path>")
+def library_files(path):
+    library_items = get_library_items()
+
+    directory = Path(folder_location + path)
+
+    files = []
+    for item in directory.iterdir():
+        json = {"title": item.name, "content_dir": item.name, "release_date": "Folder"}
+        if item.is_file():
+            json["release_date"] = "File"
+        files.append(json)
+
+    return render_template(
+        "library_media.html", selected="Files", library=library_items, media=files
     )
 
 
@@ -262,10 +272,7 @@ def library_content(library_name):
     files = tmdb.get_library(library_name)
 
     return render_template(
-        "library_media.html",
-        selected=library_name,
-        library=library_items,
-        media=files["media"],
+        "library_media.html", selected=library_name, library=library_items, media=files,
     )
 
 
@@ -273,7 +280,7 @@ def library_content(library_name):
 def library_media_overview(library_name, content_dir):
     library_items = get_library_items()
 
-    meta = tmdb.get_meta(content_dir)
+    meta = tmdb.get_meta(library_name, content_dir)
 
     return render_template(
         "library_media_overview.html",
@@ -361,6 +368,7 @@ def get_content(folder, search_string=None):
 
 @app.route("/file/<string:name>.<string:extension>", defaults={"path": ""})
 @app.route("/file/<path:path>/<string:name>.<string:extension>")
+@app.route("/files/<path:path>/<string:name>.<string:extension>/")
 def file_browser_video(path, name, extension):
     if extension.startswith(("mp4", "mkv")):
         session_id = f"{uuid.uuid4()}"
@@ -461,7 +469,8 @@ def video(session_id):
 
 @app.route("/thumbnail/<string:title>")
 def get_thumbnail(title):
-    file = pathlib.Path(tmdb.get_thumbnail_path() + title)
+    file = Path(tmdb.get_thumbnail_path() + title)
+
     if file.exists():
         return send_from_directory(directory=tmdb.get_thumbnail_path(), filename=title,)
     else:

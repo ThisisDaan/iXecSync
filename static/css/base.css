@@ -4,11 +4,11 @@
 }
 
 ::-webkit-scrollbar {
-    width: 5px;
+    width: auto;
 }
 
 body {
-    scrollbar-width: thin;
+    scrollbar-width: auto;
     scrollbar-color: var(--theme-color) transparent;
 }
 

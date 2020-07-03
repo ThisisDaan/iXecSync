@@ -5,7 +5,7 @@
 {% if media %}
 <ul class="media">
     {% for item in media %}
-    <a href="{% filter lower %}{{ item.content_dir }}{% endfilter %}">
+    <a href="{% filter lower %}{{ item.content_dir }}/{% endfilter %}">
         <li class="item">
             <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
             <span>{{ item.title }}</span>

@@ -98,6 +98,11 @@ main {
     mask-image: url(../icons/movie_creation-24px.svg);
 }
 
+.icon-files::before {
+    -webkit-mask-image: url(../icons/folder-24px.svg);
+    mask-image: url(../icons/folder-24px.svg);
+}
+
 .icon-popular::before {
     -webkit-mask-image: url(../icons/grade-24px.svg);
     mask-image: url(../icons/grade-24px.svg);
