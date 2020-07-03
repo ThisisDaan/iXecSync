@@ -251,7 +251,7 @@ def library_home():
 def library_files(path):
     library_items = get_library_items()
 
-    directory = os.path.join(folder_location, path)
+    directory = folder_location + path
 
     file_browser = []
     for (root, dirs, files) in os.walk(directory):
