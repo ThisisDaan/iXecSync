@@ -251,17 +251,32 @@ def library_home():
 def library_files(path):
     library_items = get_library_items()
 
-    directory = Path(os.path.join(folder_location, path))
+    directory = os.path.join(folder_location, path)
 
-    files = []
-    for item in directory.iterdir():
-        json = {"title": item.name, "content_dir": item.name, "release_date": "Folder"}
-        if item.is_file():
-            json["release_date"] = "File"
-        files.append(json)
+    file_browser = []
+    for (root, dirs, files) in os.walk(directory):
+        for item in dirs:
+            json = {
+                "title": item,
+                "content_dir": item,
+                "release_date": "Folder",
+            }
+            file_browser.append(json)
+
+        for item in files:
+            json = {
+                "title": item,
+                "content_dir": item,
+                "release_date": "File",
+            }
+            file_browser.append(json)
+        break
 
     return render_template(
-        "library_media.html", selected="Files", library=library_items, media=files
+        "library_media.html",
+        selected="Files",
+        library=library_items,
+        media=file_browser,
     )
 
 
