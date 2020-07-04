@@ -13,17 +13,17 @@
         <span class="logo">iXecSync</span>
         <ul class="library">
             <a href="/library/">
-                <li class="item icon-home {% if selected == 'Home' %}selected{% endif %}">
+                <li class="item icon-home {% if selected.lower() == 'home' %}selected{% endif %}">
                     <span>Home</span>
                 </li>
             </a>
             <a href="/files/">
-                <li class="item icon-files {% if selected == 'Files' %}selected{% endif %}">
+                <li class="item icon-files {% if selected.lower() == 'files' %}selected{% endif %}">
                     <span>Files</span>
                 </li>
             </a>
             <a href="/search/">
-                <li class="item icon-search {% if selected == 'Search' %}selected{% endif %}">
+                <li class="item icon-search {% if selected.lower() == 'search' %}selected{% endif %}">
                     <span>Search</span>
                 </li>
             </a>
@@ -32,9 +32,9 @@
         {% if library %}
         <ul class="library">
             {% for item in library %}
-            <a href="/library/{% filter lower %}{{ item.name }}{% endfilter %}/">
+            <a href="/library/{{ item.name }}/">
                 <li
-                    class="item {% filter lower %}icon-{{ item.type }}{% endfilter %} {% if selected == item.name.lower() %}selected{% endif %}">
+                    class="item icon-{{ item.type.lower() }} {% if selected.lower() == item.name.lower() %}selected{% endif %}">
                     <span>{{ item.name }}</span>
                 </li>
             </a>

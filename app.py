@@ -252,6 +252,7 @@ def library_files(path):
     library_items = get_library_items()
 
     directory = folder_location + path
+    print(directory)
 
     file_browser = []
     for (root, dirs, files) in os.walk(directory):

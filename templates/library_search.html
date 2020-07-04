@@ -14,7 +14,7 @@
 {% if media %}
 <ul class="media">
     {% for item in media %}
-    <a href="{% filter lower %}/library/{{ item.library_name }}/{{ item.content_dir }}{% endfilter %}/">
+    <a href="/library/{{ item.library_name }}/{{ item.content_dir }}/">
         <li class="item">
             <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
             <span>{{ item.title }}</span>
