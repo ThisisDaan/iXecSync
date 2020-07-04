@@ -257,20 +257,23 @@ def library_files(path):
     for (root, dirs, files) in os.walk(directory):
         for item in dirs:
             json = {
-                "title": item,
-                "content_dir": item,
+                "title": str(item),
+                "content_dir": str(item),
                 "release_date": "Folder",
             }
             file_browser.append(json)
 
         for item in files:
             json = {
-                "title": item,
-                "content_dir": item,
+                "title": str(item),
+                "content_dir": str(item),
                 "release_date": "File",
             }
             file_browser.append(json)
         break
+
+    print("FILE BROWSER")
+    print(file_browser)
 
     return render_template(
         "library_media.html",
