@@ -198,38 +198,6 @@ def index():
     return redirect("/library", code=303)
 
 
-@app.route("/file/", defaults={"path": ""})
-@app.route("/file/<path:path>")
-def file_browsing_root(path):
-    content = get_content(folder_location + path)
-    return render_template(
-        "file_browser.html",
-        folders=content["folders"],
-        files=content["files"],
-        empty=content["empty"],
-    )
-
-
-@app.route("/search/", methods=["POST", "GET"])
-def search_query():
-    library_items = get_library_items()
-    if request.method == "POST":
-        search = request.form.get("search")
-
-        files = tmdb.get_media_by_keyword(search)
-
-        return render_template(
-            "library_search.html",
-            selected="Search",
-            library=library_items,
-            media=files,
-        )
-    else:
-        return render_template(
-            "library_search.html", selected="Search", library=library_items,
-        )
-
-
 def get_library_items():
     with open(os.path.join(os.path.dirname(__file__), "config.json")) as file:
         config = json.load(file)
@@ -241,46 +209,10 @@ def get_library_items():
 def library_home():
     library_items = get_library_items()
 
-    return render_template(
-        "library_media.html", selected="Home", library=library_items,
-    )
-
-
-@app.route("/files/", defaults={"path": ""})
-@app.route("/files/<path:path>")
-def library_files(path):
-    library_items = get_library_items()
-
-    directory = folder_location + path
-    print(directory)
-
-    file_browser = []
-    for (root, dirs, files) in os.walk(directory):
-        for item in dirs:
-            json = {
-                "title": str(item),
-                "content_dir": str(item),
-                "release_date": "Folder",
-            }
-            file_browser.append(json)
-
-        for item in files:
-            json = {
-                "title": str(item),
-                "content_dir": str(item),
-                "release_date": "File",
-            }
-            file_browser.append(json)
-        break
-
-    print("FILE BROWSER")
-    print(file_browser)
+    files = tmdb.get_popular_movies()
 
     return render_template(
-        "library_media.html",
-        selected="Files",
-        library=library_items,
-        media=file_browser,
+        "library_media.html", selected="Home", library=library_items, media=files,
     )
 
 
@@ -323,70 +255,134 @@ def library_media_overview_play(library_name, content_dir):
         return abort(404)
 
 
-@app.route("/search/<string:search>")
-def file_browsing_search(search):
-    content = get_content(folder_location, search)
-    return render_template(
-        "file_browser.html",
-        folders=content["folders"],
-        files=content["files"],
-        empty=content["empty"],
-        search=True,
-    )
+@app.route("/search/", methods=["POST", "GET"])
+def search_query():
+    library_items = get_library_items()
+    if request.method == "POST":
+        search = request.form.get("search")
+
+        files = tmdb.get_media_by_keyword(search)
+
+        return render_template(
+            "library_search.html",
+            selected="Search",
+            library=library_items,
+            media=files,
+            search=search,
+        )
+    else:
+        return render_template(
+            "library_search.html", selected="Search", library=library_items,
+        )
 
 
-def get_content(folder, search_string=None):
-    content = defaultdict(list)
+@app.route("/files/", defaults={"path": ""})
+@app.route("/files/<path:path>")
+def library_files(path):
+    library_items = get_library_items()
 
-    for (root, dirs, files) in os.walk(folder):
-        for directory in dirs:
-            if search_string is None or search_string.lower() in directory.lower():
-                json = {
-                    "name": f"{directory}",
-                    "thumbnail": f"/thumbnail/{directory.lower()}.jpg",
-                    "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
-                    "type": "folder",
-                }
-                # tmdb.download_movie_poster(
-                #     directory, thumbnail_location + directory + ".jpg", json["path"]
-                # )
-                content["folders"].append(json)
+    directory = Path(folder_location + path)
 
-        for filename in files:
-            if search_string is None or search_string.lower() in filename.lower():
-                if filename:  # )
-                    json = {
-                        "name": f"{filename}",
-                        "path": f"{os.path.join(root.replace(folder_location, ''), filename)}",
-                        "type": "file",
-                    }
-                    if filename.endswith((".mp4", ".mkv")):
-                        json["format"] = "video"
-                        json["order"] = 0
-                        content["files"].insert(0, json)
-                    else:
-                        json["format"] = "other"
-                        json["order"] = 1
-                        content["files"].append(json)
+    file_browser = []
+    for item in directory.iterdir():
+        if item.is_file():
+            json = {
+                "title": item.name,
+                "content_dir": item.name,
+                "release_date": "File",
+            }
+            file_browser.append(json)
 
-        if search_string is None:
-            break
-
-    if len(content) == 0:
-        if search_string:
-            content["empty"].append({"name": "No items match your search."})
         else:
-            content["empty"].append({"name": "This folder is empty."})
+            json = {
+                "title": item.name,
+                "content_dir": item.name,
+                "release_date": "Folder",
+            }
+            file_browser.append(json)
 
-    content["folders"] = sorted(content["folders"], key=lambda k: (k["name"].lower()))
-    content["files"] = sorted(
-        content["files"], key=lambda k: (k["order"], k["name"].lower())
+    return render_template(
+        "library_media.html",
+        selected="Files",
+        library=library_items,
+        media=file_browser,
     )
-    return content
 
 
-@app.route("/file/<string:name>.<string:extension>", defaults={"path": ""})
-@app.route("/file/<path:path>/<string:name>.<string:extension>")
+# @app.route("/file/", defaults={"path": ""})
+# @app.route("/file/<path:path>")
+# def file_browsing_root(path):
+#     content = get_content(folder_location + path)
+#     return render_template(
+#         "file_browser.html",
+#         folders=content["folders"],
+#         files=content["files"],
+#         empty=content["empty"],
+#     )
+
+
+# @app.route("/search/<string:search>")
+# def file_browsing_search(search):
+#     content = get_content(folder_location, search)
+#     return render_template(
+#         "file_browser.html",
+#         folders=content["folders"],
+#         files=content["files"],
+#         empty=content["empty"],
+#         search=True,
+#     )
+
+
+# def get_content(folder, search_string=None):
+#     content = defaultdict(list)
+
+#     for (root, dirs, files) in os.walk(folder):
+#         for directory in dirs:
+#             if search_string is None or search_string.lower() in directory.lower():
+#                 json = {
+#                     "name": f"{directory}",
+#                     "thumbnail": f"/thumbnail/{directory.lower()}.jpg",
+#                     "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
+#                     "type": "folder",
+#                 }
+#                 # tmdb.download_movie_poster(
+#                 #     directory, thumbnail_location + directory + ".jpg", json["path"]
+#                 # )
+#                 content["folders"].append(json)
+
+#         for filename in files:
+#             if search_string is None or search_string.lower() in filename.lower():
+#                 if filename:  # )
+#                     json = {
+#                         "name": f"{filename}",
+#                         "path": f"{os.path.join(root.replace(folder_location, ''), filename)}",
+#                         "type": "file",
+#                     }
+#                     if filename.endswith((".mp4", ".mkv")):
+#                         json["format"] = "video"
+#                         json["order"] = 0
+#                         content["files"].insert(0, json)
+#                     else:
+#                         json["format"] = "other"
+#                         json["order"] = 1
+#                         content["files"].append(json)
+
+#         if search_string is None:
+#             break
+
+#     if len(content) == 0:
+#         if search_string:
+#             content["empty"].append({"name": "No items match your search."})
+#         else:
+#             content["empty"].append({"name": "This folder is empty."})
+
+#     content["folders"] = sorted(content["folders"], key=lambda k: (k["name"].lower()))
+#     content["files"] = sorted(
+#         content["files"], key=lambda k: (k["order"], k["name"].lower())
+#     )
+#     return content
+
+
 @app.route("/files/<path:path>/<string:name>.<string:extension>/")
 def file_browser_video(path, name, extension):
     if extension.startswith(("mp4", "mkv")):
@@ -417,19 +413,32 @@ def create_new_session(session_id, directory, filename):
 def get_subtitles(video_filename):
     video_filename = video_filename.split(".")
     subtitles_list = []
-    for (root, dirs, files) in os.walk(subtitle_folder_location):
-        for filename in files:
-            if video_filename[0] in filename:
-                try:
-                    filename = filename.split(".")
-                    lang_code = str(filename[-2])
-                    lang_name = languages.get(alpha2=lang_code).name
-                    subtitles_list.append({"name": lang_name, "code": lang_code})
-                except Exception as e:
-                    print(f"Error get_subtitles: {e}")
 
-        break
+    directory = Path(subtitle_folder_location)
+    for item in directory.iterdir():
+        if item.is_file() and str(video_filename) in str(item.name):
+            try:
+                filename = filename.split(".")
+                lang_code = str(filename[-2])
+                lang_name = languages.get(alpha2=lang_code).name
+                subtitles_list.append({"name": lang_name, "code": lang_code})
+            except Exception as e:
+                print(f"Error get_subtitles: {e}")
     return subtitles_list
+
+    # for (root, dirs, files) in os.walk(subtitle_folder_location):
+    #     for filename in files:
+    #         if video_filename[0] in filename:
+    #             try:
+    #                 filename = filename.split(".")
+    #                 lang_code = str(filename[-2])
+    #                 lang_name = languages.get(alpha2=lang_code).name
+    #                 subtitles_list.append({"name": lang_name, "code": lang_code})
+    #             except Exception as e:
+    #                 print(f"Error get_subtitles: {e}")
+
+    #     break
+    # return subtitles_list
 
 
 @app.route("/video.sync")
@@ -536,12 +545,18 @@ def srtToVtt(srt_path):
 
 
 def srtToVtt_directory(directory):
-    for (root, dirs, files) in os.walk(directory):
-        for filename in files:
-            if filename.endswith(".srt"):
-                srt_path = os.path.join(root, filename)
-                srtToVtt(srt_path)
-        break
+    directory = Path(directory)
+
+    for item in directory.iterdir():
+        if item.is_file() and (item.name).endswith(".srt"):
+            srtToVtt(item)
+
+    # for (root, dirs, files) in os.walk(directory):
+    #     for filename in files:
+    #         if filename.endswith(".srt"):
+    #             srt_path = os.path.join(root, filename)
+    #             srtToVtt(srt_path)
+    #     break
 
 
 @app.route("/subtitle/<string:session_id>/<string:language_code>")

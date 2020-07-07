@@ -5,14 +5,25 @@
 {% if media %}
 <ul class="media">
     {% for item in media %}
-    <a href="{{ item.content_dir }}/">
-        <li class="item">
-            <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
-            <span>{{ item.title }}</span>
-            <span>({{ item.release_date }})</span>
-        </li>
-    </a>
-    {% endfor %}
+    {% if item.library_name %}
+    <a href="{{item.library_name}}/{{ item.content_dir }}/">
+        {% elif item.content_dir %}
+        <a href="{{ item.content_dir }}/">
+            {% else %}
+            <a href="https://www.themoviedb.org/movie/{{item.id}}">
+                {% endif %}
+                <li class="item {% if item.content_dir == '' %}not-available{% endif %}">
+                    {% if item.content_dir %}
+                    <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
+                    {% else %}
+                    <div class="thumbnail"><img src="https://image.tmdb.org/t/p/w500{{item.poster_path}}">
+                    </div>
+                    {% endif %}
+                    <span>{{ item.title }}</span>
+                    <span>({{ item.release_date }})</span>
+                </li>
+            </a>
+            {% endfor %}
 </ul>
 {% endif %}
 {% endblock %}

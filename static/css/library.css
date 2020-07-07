@@ -191,7 +191,16 @@ main {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: 50% 50%;
     transition: transform .5s;
+}
+
+.item.not-available {
+    opacity: 0.2;
+}
+
+.item.not-available:hover {
+    opacity: 1;
 }
 
 .search {
