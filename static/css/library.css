@@ -322,6 +322,10 @@ main {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
+.media.season {
+    grid-template-columns: repeat(auto-fit, 200px);
+}
+
 .media.hd .item .thumbnail {
     height: 169px;
 }

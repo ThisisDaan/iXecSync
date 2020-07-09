@@ -24,8 +24,8 @@ def scan_library():
 
     for library in config["library"]:
 
-        # if library["type"] == "movie":
-        #     scan_library_movie(library)
+        if library["type"] == "movie":
+            scan_library_movie(library)
         if library["type"] == "tvshow":
             scan_library_tvshow(library)
         else:
@@ -169,7 +169,10 @@ def scan_library_tvshow(library):
                     tvshow_season = dict(json_response)
 
                     # Adding season to database
-                    del tvshow_season["_id"]
+                    try:
+                        del tvshow_season["_id"]
+                    except Exception:
+                        print("no _id found")
                     del tvshow_season["episodes"]
                     tvshow_season["content_dir"] = name
                     print(f"Adding {name} Season {tvshow_season['season_number']}")
