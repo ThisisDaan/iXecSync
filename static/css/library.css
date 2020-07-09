@@ -29,6 +29,7 @@ main {
     overflow-y: scroll;
     min-height: 0;
     max-height: 100vh;
+    padding: 40px;
 }
 
 .logo {
@@ -81,7 +82,7 @@ main {
     min-width: 35px;
     min-height: 35px;
     margin-right: 35px;
-    background-color: #fff;
+    background-color: #ffffff;
 
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
@@ -92,6 +93,7 @@ main {
     -webkit-mask-position: center center;
     mask-position: center center;
 }
+
 
 .icon-movie::before {
     -webkit-mask-image: url(../icons/movie_creation-24px.svg);
@@ -134,7 +136,6 @@ main {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     grid-column-gap: 40px;
     grid-row-gap: 20px;
-    padding: 40px;
     justify-items: stretch;
     align-items: stretch;
 }
@@ -145,7 +146,6 @@ main {
     flex-direction: column;
     text-align: center;
     font-size: 20px;
-    cursor: pointer;
     overflow: hidden;
 }
 
@@ -153,7 +153,7 @@ main {
     box-sizing: border-box;
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
-    border: 5px solid transparent;
+    border: 5px solid rgba(0, 0, 0, 0.4);
     overflow: none;
     border-radius: inherit;
 }
@@ -182,8 +182,7 @@ main {
 
 .media .item .thumbnail {
     border-radius: 15px;
-    height: 325px;
-    background-color: #000;
+    height: 300px;
     overflow: hidden;
 }
 
@@ -226,20 +225,21 @@ main {
     display: flex;
     position: relative;
     flex-direction: row;
-    padding: 25px;
+    margin-bottom: 40px;
 }
 
 .overview .poster {
     height: 375px;
     width: 250px;
     border-radius: 25px;
+    border: 5px solid transparent;
 }
 
 .overview-side {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    padding: 25px;
+    padding: 0px 40px 0px 40px;
 }
 
 .overview-side a {
@@ -247,7 +247,7 @@ main {
     color: #fff;
 }
 
-.overview-side button {
+.play-button {
     height: 50px;
     width: 100%;
     background-color: var(--theme-color);
@@ -258,7 +258,13 @@ main {
     font-weight: 600;
     cursor: pointer;
     outline: none;
+    /* border: 5px solid #000; */
 }
+
+/* 
+.overview-side button:hover {
+    border: 5px solid var(--theme-color);
+} */
 
 .overview-side h1 {
     font-size: 35px;
@@ -310,4 +316,12 @@ main {
     text-align: center;
     font-size: 25px;
     font-weight: 500;
+}
+
+.media.hd {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.media.hd .item .thumbnail {
+    height: 169px;
 }

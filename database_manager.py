@@ -20,7 +20,7 @@ class database_manager:
                 library_path TEXT,
                 content_type TEXT,
                 content_dir TEXT,
-                content_file TEXT
+                content_file TEXT UNIQUE
                 );"""
         )
 
@@ -29,7 +29,7 @@ class database_manager:
                 c_id INTEGER PRIMARY KEY,
                 library_name TEXT,
                 content_dir TEXT UNIQUE,
-                poster_path TEXT UNIQUE,
+                poster_path TEXT,
                 adult TEXT,
                 overview TEXT,
                 release_date TEXT,
@@ -64,6 +64,19 @@ class database_manager:
                 vote_count INTEGER,
                 name TEXT,
                 original_name TEXT
+                );"""
+        )
+
+        self.sql_create_table(
+            """CREATE TABLE IF NOT EXISTS tvshow_season (
+                c_id INTEGER PRIMARY KEY,
+                content_dir TEXT,
+                air_date TEXT,
+                name TEXT,
+                overview TEXT,
+                id TEXT,
+                poster_path TEXT,
+                season_number TEXT
                 );"""
         )
 
@@ -108,26 +121,6 @@ class database_manager:
         else:
             return True
 
-    # def get_movie(self, content_dir):
-    #     sql_query = f"""SELECT * FROM movie WHERE content_dir COLLATE NOCASE = "{content_dir}" COLLATE NOCASE """
-    #     cur = self.connection.cursor()
-
-    #     cur.execute(sql_query)
-    #     sql_result = cur.fetchall()
-    #     sql_json = json.loads(json.dumps(sql_result))
-    #     cur.close()
-    #     return sql_json
-
-    # def get_library_count(self, library_name):
-    #     sql_query = f"""SELECT COUNT(*) FROM movie WHERE library_name COLLATE NOCASE = "{library_name}" COLLATE NOCASE"""
-    #     cur = self.connection.cursor()
-
-    #     cur.execute(sql_query)
-    #     sql_result = cur.fetchall()
-    #     sql_json = json.loads(json.dumps(sql_result))
-    #     cur.close()
-    #     return sql_json
-
     def sql_execute(self, sql_query):
         cur = self.connection.cursor()
         cur.execute(sql_query)
@@ -139,36 +132,6 @@ class database_manager:
 
         cur.close()
         return sql_list
-
-    # def sql_update_file(self, file_info):
-    #     sql_input = [
-    #         str(file_info["library_name"]),
-    #         str(file_info["library_path"]),
-    #         str(file_info["content_type"]),
-    #         str(file_info["content_dir"]),
-    #         str(file_info["content_file"]),
-    #     ]
-    #     if self.connection:
-    #         sql_query = """INSERT OR REPLACE INTO file(
-    #             library_name,
-    #             library_path,
-    #             content_type,
-    #             content_dir,
-    #             content_file
-    #             )
-    #             VALUES(?,?,?,?,?)"""
-    #         cur = self.connection.cursor()
-    #         cur.execute(sql_query, (sql_input))
-    #         self.connection.commit()
-    #         cur.close()
-
-    #         # id INTEGER PRIMARY KEY,
-    #         # tmdb_id TEXT,
-    #         # name TEXT,
-    #         # overview TEXT,
-    #         # thumbnail_path TEXT,
-    #         # season_number TEXT,
-    #         # episode_number TEXT
 
     def sql_update_by_json(self, table, json):
         json_columns = []
@@ -184,120 +147,13 @@ class database_manager:
                 {",".join(json_columns)}
                 )
                 VALUES({sql_values})"""
+            # print(sql_query)
             cur = self.connection.cursor()
             cur.execute(sql_query, (json_values))
             self.connection.commit()
             cur.close()
         else:
             print("no connection")
-
-    # def sql_update_episode(self, episode_info):
-    #     sql_input = [
-    #         str(episode_info["id"]),
-    #         str(episode_info["name"]),
-    #         str(episode_info["overview"]),
-    #         str(episode_info["thumbnail_path"]),
-    #         str(episode_info["season_number"]),
-    #         str(episode_info["episode_number"]),
-    #     ]
-    #     if self.connection:
-    #         sql_query = """INSERT OR REPLACE INTO tvshow_episode(
-    #             tmdb_id,
-    #             name,
-    #             overview,
-    #             thumbnail_path,
-    #             season_number,
-    #             episode_number
-    #             )
-    #             VALUES(?,?,?,?,?,?)"""
-    #         cur = self.connection.cursor()
-    #         cur.execute(sql_query, (sql_input))
-    #         self.connection.commit()
-    #         cur.close()
-
-    # def sql_update_movie(self, content_dir, library_name, movie):
-    #     sql_input = [
-    #         library_name,
-    #         content_dir,
-    #         movie.id,
-    #         movie.title,
-    #         movie.original_title,
-    #         movie.overview,
-    #         movie.release_date,
-    #         str(movie.genre_ids),
-    #         movie.original_language,
-    #         movie.poster_path,
-    #         movie.backdrop_path,
-    #         int(movie.popularity),
-    #         movie.video,
-    #         movie.vote_average,
-    #         movie.vote_count,
-    #     ]
-    #     if self.connection:
-    #         sql_query = """INSERT OR REPLACE INTO movie(
-    #             library_name,
-    #             content_dir,
-    #             tmdb_id,
-    #             title,
-    #             original_title,
-    #             overview,
-    #             release_date,
-    #             genre_ids,
-    #             original_language,
-    #             poster_path,
-    #             backdrop_path,
-    #             popularity,
-    #             video,
-    #             vote_average,
-    #             vote_count
-    #             )
-    #             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
-    #         cur = self.connection.cursor()
-    #         cur.execute(sql_query, (sql_input))
-    #         self.connection.commit()
-    #         cur.close()
-
-    # def sql_update_tvshow(self, content_dir, library_name, tvshow):
-    #     sql_input = [
-    #         library_name,
-    #         content_dir,
-    #         tvshow.id,
-    #         tvshow.name,
-    #         tvshow.original_name,
-    #         tvshow.overview,
-    #         tvshow.first_air_date,
-    #         str(tvshow.genre_ids),
-    #         tvshow.original_language,
-    #         str(tvshow.origin_country),
-    #         tvshow.poster_path,
-    #         tvshow.backdrop_path,
-    #         int(tvshow.popularity),
-    #         tvshow.vote_average,
-    #         tvshow.vote_count,
-    #     ]
-    #     if self.connection:
-    #         sql_query = """INSERT OR REPLACE INTO tvshow(
-    #             library_name,
-    #             content_dir,
-    #             tmdb_id,
-    #             name,
-    #             original_name,
-    #             overview,
-    #             first_air_date,
-    #             genre_ids,
-    #             original_language,
-    #             origin_country,
-    #             poster_path,
-    #             backdrop_path,
-    #             popularity,
-    #             vote_average,
-    #             vote_count
-    #             )
-    #             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
-    #         cur = self.connection.cursor()
-    #         cur.execute(sql_query, (sql_input))
-    #         self.connection.commit()
-    #         cur.close()
 
     def close(self):
         self.connection.close()

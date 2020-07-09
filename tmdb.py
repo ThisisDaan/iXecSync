@@ -8,6 +8,8 @@ from collections import defaultdict
 import database_manager as dbm
 import base64
 import glob
+import requests
+from difflib import SequenceMatcher
 
 with open(os.path.join(os.path.dirname(__file__), "config.json")) as file:
     config = json.load(file)
@@ -22,9 +24,9 @@ def scan_library():
 
     for library in config["library"]:
 
-        if library["type"] == "movie":
-            scan_library_movie(library)
-        elif library["type"] == "tvshow":
+        # if library["type"] == "movie":
+        #     scan_library_movie(library)
+        if library["type"] == "tvshow":
             scan_library_tvshow(library)
         else:
             print("Invalid library type")
@@ -45,62 +47,37 @@ def scan_library_movie(library):
         name = directory.name
 
         # We slice away the release date including parenthesis and space
-        title = name[:-7]
+        # title = name[:-7]
+        title = name.split(" (")[0]
 
         # We slice away the ) then we take the release date
-        release_date = name[:-1][-4:]
+        # release_date = name[:-1][-4:]
+        release_date = name.split(" (")[1].replace(")", "")
 
         if db.not_exists(name, library["type"]):
-            movie = Movie()
-            search = movie.search(title)
-            if search:
-                # Setting the first entry as default
-                tmdb_movie = search[0]
+            tmdb_data = search("movie", title, release_date)
 
-                # Checking for specific release date
-                for movie in search:
-                    if hasattr(movie, "release_date"):
-                        # print(f"{release_date} - {movie.release_date[:4]}")
-                        if (
-                            movie.release_date[:4] == release_date
-                            and title in movie.title
-                        ):
-                            tmdb_movie = movie
-
-                # Writing data to database
-                movie_data = {
-                    "library_name": library_name,
-                    "content_dir": name,
-                    "poster_path": tmdb_movie.poster_path,
-                    "adult": tmdb_movie.adult,
-                    "overview": tmdb_movie.overview,
-                    "release_date": tmdb_movie.release_date,
-                    "genre_ids": tmdb_movie.genre_ids,
-                    "id": tmdb_movie.id,
-                    "original_title": tmdb_movie.original_title,
-                    "original_language": tmdb_movie.original_language,
-                    "title": tmdb_movie.title,
-                    "backdrop_path": tmdb_movie.backdrop_path,
-                    "popularity": tmdb_movie.popularity,
-                    "vote_count": tmdb_movie.vote_count,
-                    "video": tmdb_movie.video,
-                    "vote_average": tmdb_movie.vote_average,
-                }
-
-                db.sql_update_by_json("movie", movie_data)
+            if tmdb_data:
+                tmdb_data["content_dir"] = name
+                tmdb_data["library_name"] = library_name
+                db.sql_update_by_json("movie", tmdb_data)
                 print(f"Saving data to DB for {name}")
+            else:
+                print(f"Nothing found on TMDB for {name}")
 
-                # Checking if the movie has a poster
-                if tmdb_movie.poster_path:
-                    url = f"https://image.tmdb.org/t/p/w500{tmdb_movie.poster_path}"
+            print("=" * 100)
 
-                    try:
-                        urllib.request.urlretrieve(
-                            url, f"{get_thumbnail_path()}{directory.name}.jpg",
-                        )
-                        print(f"Downloaded poster for: {name}")
-                    except Exception:
-                        print(f"Unable download poster for {name}")
+            # Checking if the movie has a poster
+            if "poster_path" in tmdb_data:
+                url = f"https://image.tmdb.org/t/p/w500{tmdb_data['poster_path']}"
+
+                try:
+                    urllib.request.urlretrieve(
+                        url, f"{get_thumbnail_path()}{name}.jpg",
+                    )
+                    print(f"Downloaded poster for: {name}")
+                except Exception:
+                    print(f"Unable download poster for {name}")
 
     supported_files = []
     for file in library_path.rglob("*.mkv"):
@@ -150,72 +127,97 @@ def scan_library_tvshow(library):
             release_date = None
 
         if db.not_exists(name, library["type"]):
-            tvshow = TV()
-            search = tvshow.search(title)
-            if search:
-                # print(search)
-                tmdb_tvshow = search[0]
-
-                if release_date:
-                    for tvshow in search:
-                        if hasattr(tvshow, "release_date"):
-                            if (
-                                tvshow.release_date[-4:] == release_date
-                                and title in tvshow.name
-                            ):
-                                print(tvshow.name)
-                                tmdb_tvshow = tvshow
-
-                                # Writing data to database
-                                # try:
-                tvshow_data = {
-                    "library_name": library_name,
-                    "content_dir": name,
-                    "poster_path": tmdb_tvshow.poster_path,
-                    "popularity": tmdb_tvshow.popularity,
-                    "id": tmdb_tvshow.id,
-                    "backdrop_path": tmdb_tvshow.backdrop_path,
-                    "vote_average": tmdb_tvshow.vote_average,
-                    "overview": tmdb_tvshow.overview,
-                    "first_air_date": tmdb_tvshow.first_air_date,
-                    "origin_country": tmdb_tvshow.origin_country,
-                    "genre_ids": tmdb_tvshow.genre_ids,
-                    "original_language": tmdb_tvshow.original_language,
-                    "vote_count": tmdb_tvshow.vote_count,
-                    "name": tmdb_tvshow.name,
-                    "original_name": tmdb_tvshow.original_name,
-                }
-                db.sql_update_by_json("tvshow", tvshow_data)
+            tmdb_data = search("tvshow", title, release_date)
+            if tmdb_data:
+                tmdb_data["content_dir"] = name
+                tmdb_data["library_name"] = library_name
+                db.sql_update_by_json("tvshow", tmdb_data)
                 print(f"Saving data to DB for {name}")
-                # except Exception:
-                #     print(f"Unable to write to database for {name}")
+            else:
+                print(f"Nothing found on TMDB for {name}")
 
-                # Checking if the movie has a poster
-                if tmdb_tvshow.poster_path:
-                    url = f"https://image.tmdb.org/t/p/w500{tmdb_tvshow.poster_path}"
-
+            print("=" * 100)
+            # Checking if the movie has a poster
+            if "poster_path" in str(tmdb_data):
+                if tmdb_data["poster_path"]:
+                    url = f"https://image.tmdb.org/t/p/w500{tmdb_data['poster_path']}"
                     try:
                         urllib.request.urlretrieve(
-                            url, f"{get_thumbnail_path()}{directory.name}.jpg",
+                            url, f"{get_thumbnail_path()}{name}.jpg",
                         )
                         print(f"Downloaded poster for: {name}")
                     except Exception:
                         print(f"Unable download poster for {name}")
+                else:
+                    print(f"no poster found on TMDB: {name}")
 
+            if tmdb_data:
                 season = Path(os.path.join(library["path"], directory))
                 for file in season.iterdir():
-                    season = Season()
+                    tv_id = tmdb_data["id"]
                     season_number = file.name.split(" ")[-1]
-                    show_season = season.details(tmdb_tvshow.id, season_number)
-                    # pylint: disable=no-member
-                    if hasattr(show_season, "episodes"):
-                        season_episodes = show_season.episodes
-                    else:
-                        print(f"DOES NOT HAVE EPISODES {file.name}")
 
-                    for episode in season_episodes:
+                    api_url = f"https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}?api_key={config['TMDB_API_KEY']}"
+
+                    headers = {"Accept": "application/json"}
+                    response = requests.get(api_url, headers=headers)
+                    print(f"THE URL: {response.url}")
+                    decoded_response = response.content.decode("utf-8")
+                    json_response = json.loads(decoded_response)
+
+                    tvshow_episodes = dict(json_response)
+                    tvshow_season = dict(json_response)
+
+                    # Adding season to database
+                    del tvshow_season["_id"]
+                    del tvshow_season["episodes"]
+                    tvshow_season["content_dir"] = name
+                    print(f"Adding {name} Season {tvshow_season['season_number']}")
+                    db.sql_update_by_json("tvshow_season", tvshow_season)
+
+                    # Adding episodes to database
+                    for episode in tvshow_episodes["episodes"]:
                         episode["content_dir"] = name
+                        print(
+                            f"Adding s{episode['season_number']}e{episode['episode_number']}"
+                        )
                         db.sql_update_by_json("tvshow_episode", episode)
+
+                # season = Season()
+                # season_number = file.name.split(" ")[-1]
+                # show_season = season.details(tmdb_tvshow.id, season_number)
+                # # pylint: disable=no-member
+                # if hasattr(show_season, "episodes"):
+                #     season_episodes = show_season.episodes
+                # else:
+                #     print(f"DOES NOT HAVE EPISODES {file.name}")
+
+                # for episode in season_episodes:
+                #     episode["content_dir"] = name
+                #     db.sql_update_by_json("tvshow_episode", episode)
+
+    supported_files = []
+    for file in library_path.rglob("*.mkv"):
+        supported_files.append(file)
+
+    for file in library_path.rglob("*.mp4"):
+        supported_files.append(file)
+
+    for file in supported_files:
+        file_data = {
+            "library_name": library_name,
+            "library_path": library_path,
+            "content_type": "tvshow",
+            "content_dir": file.parent.parent.name,
+            "content_file": file.name,
+        }
+
+        # Writing data to database
+        try:
+            db.sql_update_by_json("file", file_data)
+            print(f"Saving data to DB for {file.name}")
+        except Exception:
+            print(f"Unable to write to database for {file.name}")
 
     db.connection.close()
 
@@ -293,6 +295,50 @@ def get_popular_movies():
     return sql_data_sorted
 
 
+def get_seasons(content_dir):
+    db = dbm.database_manager()
+
+    sql_query = f"""SELECT cast(season_number as integer) as season_number,poster_path FROM tvshow_season WHERE content_dir = "{content_dir}" COLLATE nocase GROUP BY season_number"""
+    sql_data = db.sql_execute(sql_query)
+
+    db.connection.close()
+
+    return sorted(sql_data, key=lambda i: i["season_number"])
+
+
+def get_meta_season_episode(content_dir, season_number, episode_number):
+    db = dbm.database_manager()
+
+    sql_query = f"""SELECT content_dir,name as title,substr(air_date, 1, 4) as release_date,overview,vote_average,still_path FROM tvshow_episode WHERE content_dir="{content_dir}" COLLATE NOCASE AND season_number="{season_number}" AND episode_number = "{episode_number}" """
+
+    sql_data = db.sql_execute(sql_query)
+    db.connection.close()
+
+    return sql_data[0]
+
+
+def get_episodes(content_dir, season_number):
+    db = dbm.database_manager()
+
+    sql_query = f"""SELECT name,overview,episode_number,still_path FROM tvshow_episode WHERE content_dir = "{content_dir}" COLLATE nocase AND season_number = "{season_number}" COLLATE nocase"""
+    sql_data = db.sql_execute(sql_query)
+
+    db.connection.close()
+
+    return sql_data
+
+
+def get_episodes_info(content_dir, season_number, episode_number):
+    db = dbm.database_manager()
+
+    sql_query = f"""SELECT name,overview,episode_number,still_path FROM tvshow_episode WHERE content_dir = "{content_dir}" COLLATE nocase AND season_number = "{season_number}" COLLATE nocase"""
+    sql_data = db.sql_execute(sql_query)
+
+    db.connection.close()
+
+    return sql_data
+
+
 def get_meta(library_name, content_dir):
     db = dbm.database_manager()
 
@@ -319,6 +365,16 @@ def get_filename(library_name, content_dir):
     return sql_data[0]
 
 
+def get_filename_episode(library_name, content_dir, season_number, episode_number):
+    db = dbm.database_manager()
+    sql_query = f"""SELECT library_path,content_dir,content_file from file WHERE library_name="{library_name}" COLLATE NOCASE AND content_dir="{content_dir}" COLLATE NOCASE AND content_file LIKE "%S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}%" COLLATE NOCASE;"""
+    print(sql_query)
+    sql_data = db.sql_execute(sql_query)
+    db.connection.close()
+
+    return sql_data[0]
+
+
 def get_thumbnail_path():
     return os.path.join(
         os.path.dirname(os.path.realpath(__file__)) + os.sep + "thumbnail" + os.sep
@@ -336,7 +392,115 @@ def meta(content_dir, library_name):
     return sql_data
 
 
+class bcolors:
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
+
+def format_this(string):
+    if ", " in string and "&" not in string and "and" not in string:
+        string = string.split(", ")
+        string = f"{string[1]} {string[0]}"
+
+    return string
+
+
+def search(content_type, keyword, release_date=None):
+    if content_type == "movie":
+        year = "release_date"
+        title = "title"
+        api_search = "movie"
+    elif content_type == "tvshow":
+        year = "first_air_date"
+        title = "name"
+        api_search = "tv"
+
+    api_url = f"https://api.themoviedb.org/3/search/{api_search}"
+    keyword = format_this(keyword)
+
+    parameters = {}
+
+    # Adding api key
+    parameters["api_key"] = config["TMDB_API_KEY"]
+
+    # Adding keyword
+    parameters["query"] = keyword
+
+    # Adding language
+    # parameters["language"] = "en-US"
+
+    # Adding the year
+    # if release_date:
+    #     if content_type == "movie":
+    #         parameters["year"] = release_date
+    #     elif content_type == "tvshow":
+    #         parameters["first_air_date_year"] = release_date
+
+    headers = {"Accept": "application/json"}
+    response = requests.get(api_url, params=parameters, headers=headers)
+    print(f"THE URL: {response.url}")
+    decoded_response = response.content.decode("utf-8")
+    json_response = json.loads(decoded_response)
+    # print(json_response)
+    json_results = json_response["results"]
+    # print(f"Total results: {json_response['total_results']}")
+    # print(f"keyword: {keyword}")
+
+    # first check release date else match with just name
+    matching_percentage = 0
+    matching_item = None
+
+    if json_results:
+        for item in json_results:
+            if release_date and "release_date" in str(item):
+                if release_date == item[year][:4]:
+                    item_percentage = similar(item[title].lower(), keyword.lower())
+                    if item_percentage == 1.0:
+                        return item
+                    elif item_percentage > 0.7:
+                        if item_percentage > matching_percentage:
+                            matching_percentage = item_percentage
+                            matching_item = item
+                        print(
+                            f"{bcolors.OKGREEN}Round #1 - {keyword} / {item[title]} - Matching with {item_percentage}{bcolors.ENDC}"
+                        )
+                    else:
+                        print(
+                            f"{bcolors.WARNING}Round #1 - {keyword} / {item[title]} - Not matched with {item_percentage}{bcolors.ENDC}"
+                        )
+        if matching_item:
+            return matching_item
+        else:
+            for item in json_results:
+                item_percentage = similar(item[title].lower(), keyword.lower())
+                if item_percentage > 0.5:
+                    if item_percentage > matching_percentage:
+                        matching_percentage = item_percentage
+                        matching_item = item
+                        print(
+                            f"{bcolors.OKGREEN}Round #2 - {keyword} / {item[title]} - Matching with {item_percentage}{bcolors.ENDC}"
+                        )
+                    else:
+                        print(
+                            f"{bcolors.WARNING}Round #2 - {keyword} / {item[title]} - Not matched with {item_percentage}{bcolors.ENDC}"
+                        )
+
+    return matching_item
+
+
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
+
 if __name__ == "__main__":
     # get_popular_movies()
     scan_library()
+    # movie = search("movie", "Interstellar", "2014")
+    # print(movie)
 

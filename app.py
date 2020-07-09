@@ -233,12 +233,77 @@ def library_media_overview(library_name, content_dir):
 
     meta = tmdb.get_meta(library_name, content_dir)
 
+    if tmdb.library_content_type(library_name) == "movie":
+        return render_template(
+            "library_media_overview.html",
+            selected=library_name,
+            library=library_items,
+            meta=meta,
+            movie=True,
+        )
+    elif tmdb.library_content_type(library_name) == "tvshow":
+        extra = tmdb.get_seasons(content_dir)
+        return render_template(
+            "library_media_overview.html",
+            selected=library_name,
+            library=library_items,
+            meta=meta,
+            season=extra,
+        )
+
+
+@app.route("/library/<string:library_name>/<string:content_dir>/<int:season_number>/")
+def library_media_overview_season(library_name, content_dir, season_number):
+    library_items = get_library_items()
+
+    meta = tmdb.get_meta(library_name, content_dir)
+    extra = tmdb.get_episodes(content_dir, season_number)
+
+    return render_template(
+        "library_media_overview.html",
+        selected=library_name,
+        library=library_items,
+        meta=meta,
+        episode=extra,
+    )
+
+
+@app.route(
+    "/library/<string:library_name>/<string:content_dir>/<int:season_number>/<int:episode_number>/"
+)
+def library_media_overview_season_episode(
+    library_name, content_dir, season_number, episode_number
+):
+    library_items = get_library_items()
+
+    meta = tmdb.get_meta_season_episode(content_dir, season_number, episode_number)
+
     return render_template(
         "library_media_overview.html",
         selected=library_name,
         library=library_items,
         meta=meta,
     )
+
+
+@app.route(
+    "/library/<string:library_name>/<string:content_dir>/<int:season_number>/<int:episode_number>/play"
+)
+def library_media_overview_season_episode_play(
+    library_name, content_dir, season_number, episode_number
+):
+
+    filename = tmdb.get_filename_episode(
+        library_name, content_dir, season_number, episode_number
+    )
+
+    if filename:
+        directory = os.path.join(filename["library_path"], filename["content_dir"])
+        session_id = f"{uuid.uuid4()}"
+        create_new_session(session_id, directory, filename["content_file"])
+        return redirect(f"/video.sync?session={session_id}", code=303)
+    else:
+        return abort(404)
 
 
 @app.route("/library/<string:library_name>/<string:content_dir>/play")
@@ -270,6 +335,7 @@ def search_query():
             media=files,
             search=search,
         )
+
     else:
         return render_template(
             "library_search.html", selected="Search", library=library_items,
