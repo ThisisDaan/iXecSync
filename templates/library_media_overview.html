@@ -21,9 +21,14 @@
 <section class="overview-extra">
     {% if movie %}
     <ul class="media">
-        <a href="play">
+        <a href="play?transcoding=0">
             <li class="item">
                 <button class="play-button">Play</button>
+            </li>
+        </a>
+        <a href="play?transcoding=1">
+            <li class="item">
+                <button class="play-button">Play (Transcoding)</button>
             </li>
         </a>
     </ul>

@@ -225,7 +225,7 @@ def library_content(library_name):
     library_items = get_library_items()
 
     sortby = request.form.get("sortby")
-    print(sortby)
+
     if sortby is None:
         sortby = "popularity DESC"
 
@@ -323,7 +323,10 @@ def library_media_overview_season_episode_play(
         )
         session_id = f"{uuid.uuid4()}"
         create_new_session(session_id, directory, filename["content_file"])
-        return redirect(f"/video.sync?session={session_id}", code=303)
+        return redirect(
+            f"/video.sync?session={session_id}&transcoding={request.args.get('transcoding')}",
+            code=303,
+        )
     else:
         return abort(404)
 
@@ -337,7 +340,10 @@ def library_media_overview_play(library_name, content_dir):
         directory = os.path.join(filename["library_path"], filename["content_dir"])
         session_id = f"{uuid.uuid4()}"
         create_new_session(session_id, directory, filename["content_file"])
-        return redirect(f"/video.sync?session={session_id}", code=303)
+        return redirect(
+            f"/video.sync?session={session_id}&transcoding={request.args.get('transcoding')}",
+            code=303,
+        )
     else:
         return abort(404)
 

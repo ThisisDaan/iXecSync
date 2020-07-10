@@ -3,9 +3,9 @@
 
 {% block navigation_content %}
 {% if library_overview %}
-<li>
+<li id="sortby">
     <form method="post">
-        <select id="sortby" name="sortby" onchange="this.form.submit()">
+        <select name="sortby" onchange="this.form.submit()">
             <option value="popularity DESC" {% if sortby_selection=='popularity DESC' %} selected="selected"
                 {% endif %}>Popularity (High - Low)</option>
             <option value="popularity ASC" {% if sortby_selection=='popularity ASC' %} selected="selected" {% endif %}>
@@ -28,9 +28,9 @@
     </form>
 </li>
 {% endif %}
-<section id="filter">
+<li id="filter">
     <input id='search' type=search onkeyup="search()" placeholder="Search...">
-</section>
+</li>
 <script>
     function search() {
         var input, filter, ul, li, a, i, txtValue;

@@ -29,7 +29,6 @@ def scan_library():
         elif library["type"] == "tvshow":
             scan_library_tvshow(library)
         else:
-            print(library)
             print("Invalid library type")
 
     db.connection.close()
@@ -400,7 +399,6 @@ def get_filename(library_name, content_dir):
 def get_filename_episode(library_name, content_dir, season_number, episode_number):
     db = dbm.database_manager()
     sql_query = f"""SELECT library_path,content_dir,content_file from file WHERE library_name="{library_name}" COLLATE NOCASE AND content_dir="{content_dir}" COLLATE NOCASE AND content_file LIKE "%S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}%" COLLATE NOCASE;"""
-    print(sql_query)
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
 
