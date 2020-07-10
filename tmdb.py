@@ -26,9 +26,10 @@ def scan_library():
 
         if library["type"] == "movie":
             scan_library_movie(library)
-        if library["type"] == "tvshow":
+        elif library["type"] == "tvshow":
             scan_library_tvshow(library)
         else:
+            print(library)
             print("Invalid library type")
 
     db.connection.close()
@@ -55,6 +56,7 @@ def scan_library_movie(library):
         release_date = name.split(" (")[1].replace(")", "")
 
         if db.not_exists(name, library["type"]):
+
             tmdb_data = search("movie", title, release_date)
 
             if tmdb_data:
@@ -62,45 +64,45 @@ def scan_library_movie(library):
                 tmdb_data["library_name"] = library_name
                 db.sql_update_by_json("movie", tmdb_data)
                 print(f"Saving data to DB for {name}")
+
+                # Checking if the movie has a poster
+                if "poster_path" in tmdb_data:
+                    url = f"https://image.tmdb.org/t/p/w500{tmdb_data['poster_path']}"
+
+                    try:
+                        urllib.request.urlretrieve(
+                            url, f"{get_thumbnail_path()}{name}.jpg",
+                        )
+                        print(f"Downloaded poster for: {name}")
+                    except Exception:
+                        print(f"Unable download poster for {name}")
+
             else:
                 print(f"Nothing found on TMDB for {name}")
 
-            print("=" * 100)
+            # Scanning directory for files
+            supported_files = []
+            for file in directory.rglob("*.mkv"):
+                supported_files.append(file)
 
-            # Checking if the movie has a poster
-            if "poster_path" in tmdb_data:
-                url = f"https://image.tmdb.org/t/p/w500{tmdb_data['poster_path']}"
+            for file in directory.rglob("*.mp4"):
+                supported_files.append(file)
 
+            for file in supported_files:
+                file_data = {
+                    "library_name": library_name,
+                    "library_path": library_path,
+                    "content_type": "movie",
+                    "content_dir": file.parent.name,
+                    "content_file": file.name,
+                }
+
+                # Writing data to database
                 try:
-                    urllib.request.urlretrieve(
-                        url, f"{get_thumbnail_path()}{name}.jpg",
-                    )
-                    print(f"Downloaded poster for: {name}")
+                    db.sql_update_by_json("file", file_data)
+                    print(f"Saving data to DB for {file.name}")
                 except Exception:
-                    print(f"Unable download poster for {name}")
-
-    supported_files = []
-    for file in library_path.rglob("*.mkv"):
-        supported_files.append(file)
-
-    for file in library_path.rglob("*.mp4"):
-        supported_files.append(file)
-
-    for file in supported_files:
-        file_data = {
-            "library_name": library_name,
-            "library_path": library_path,
-            "content_type": "movie",
-            "content_dir": file.parent.name,
-            "content_file": file.name,
-        }
-
-        # Writing data to database
-        try:
-            db.sql_update_by_json("file", file_data)
-            print(f"Saving data to DB for {file.name}")
-        except Exception:
-            print(f"Unable to write to database for {file.name}")
+                    print(f"Unable to write to database for {file.name}")
 
     # closing database connection
     db.connection.close()
@@ -133,94 +135,87 @@ def scan_library_tvshow(library):
                 tmdb_data["library_name"] = library_name
                 db.sql_update_by_json("tvshow", tmdb_data)
                 print(f"Saving data to DB for {name}")
+
+                # Checking if the movie has a poster
+                if "poster_path" in tmdb_data:
+                    if tmdb_data["poster_path"]:
+                        url = (
+                            f"https://image.tmdb.org/t/p/w500{tmdb_data['poster_path']}"
+                        )
+                        try:
+                            urllib.request.urlretrieve(
+                                url, f"{get_thumbnail_path()}{name}.jpg",
+                            )
+                            print(f"Downloaded poster for: {name}")
+                        except Exception:
+                            print(f"Unable download poster for {name}")
+                    else:
+                        print(f"no poster found on TMDB: {name}")
+
+                    season = Path(os.path.join(library["path"], directory))
+                    for file in season.iterdir():
+                        tv_id = tmdb_data["id"]
+                        season_number = file.name.split(" ")[-1]
+
+                        api_url = f"https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}?api_key={config['TMDB_API_KEY']}"
+
+                        headers = {"Accept": "application/json"}
+                        response = requests.get(api_url, headers=headers)
+                        print(f"THE URL: {response.url}")
+                        decoded_response = response.content.decode("utf-8")
+                        json_response = json.loads(decoded_response)
+
+                        if response.status_code == 200:
+                            tvshow_episodes = dict(json_response)
+                            tvshow_season = dict(json_response)
+
+                            # Adding season to database
+                            try:
+                                del tvshow_season["_id"]
+                            except Exception:
+                                print("no _id found")
+                            del tvshow_season["episodes"]
+                            tvshow_season["content_dir"] = name
+                            print(
+                                f"Adding {name} Season {tvshow_season['season_number']}"
+                            )
+                            db.sql_update_by_json("tvshow_season", tvshow_season)
+
+                            # Adding episodes to database
+                            for episode in tvshow_episodes["episodes"]:
+                                episode["content_dir"] = name
+                                print(
+                                    f"Adding s{episode['season_number']}e{episode['episode_number']}"
+                                )
+                                db.sql_update_by_json("tvshow_episode", episode)
+                        else:
+                            print(f"Error status code: {response.status_code}")
+
             else:
                 print(f"Nothing found on TMDB for {name}")
 
-            print("=" * 100)
-            # Checking if the movie has a poster
-            if "poster_path" in str(tmdb_data):
-                if tmdb_data["poster_path"]:
-                    url = f"https://image.tmdb.org/t/p/w500{tmdb_data['poster_path']}"
-                    try:
-                        urllib.request.urlretrieve(
-                            url, f"{get_thumbnail_path()}{name}.jpg",
-                        )
-                        print(f"Downloaded poster for: {name}")
-                    except Exception:
-                        print(f"Unable download poster for {name}")
-                else:
-                    print(f"no poster found on TMDB: {name}")
+            supported_files = []
+            for file in directory.rglob("*.mkv"):
+                supported_files.append(file)
 
-            if tmdb_data:
-                season = Path(os.path.join(library["path"], directory))
-                for file in season.iterdir():
-                    tv_id = tmdb_data["id"]
-                    season_number = file.name.split(" ")[-1]
+            for file in directory.rglob("*.mp4"):
+                supported_files.append(file)
 
-                    api_url = f"https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}?api_key={config['TMDB_API_KEY']}"
+            for file in supported_files:
+                file_data = {
+                    "library_name": library_name,
+                    "library_path": library_path,
+                    "content_type": "tvshow",
+                    "content_dir": file.parent.parent.name,
+                    "content_file": file.name,
+                }
 
-                    headers = {"Accept": "application/json"}
-                    response = requests.get(api_url, headers=headers)
-                    print(f"THE URL: {response.url}")
-                    decoded_response = response.content.decode("utf-8")
-                    json_response = json.loads(decoded_response)
-
-                    tvshow_episodes = dict(json_response)
-                    tvshow_season = dict(json_response)
-
-                    # Adding season to database
-                    try:
-                        del tvshow_season["_id"]
-                    except Exception:
-                        print("no _id found")
-                    del tvshow_season["episodes"]
-                    tvshow_season["content_dir"] = name
-                    print(f"Adding {name} Season {tvshow_season['season_number']}")
-                    db.sql_update_by_json("tvshow_season", tvshow_season)
-
-                    # Adding episodes to database
-                    for episode in tvshow_episodes["episodes"]:
-                        episode["content_dir"] = name
-                        print(
-                            f"Adding s{episode['season_number']}e{episode['episode_number']}"
-                        )
-                        db.sql_update_by_json("tvshow_episode", episode)
-
-                # season = Season()
-                # season_number = file.name.split(" ")[-1]
-                # show_season = season.details(tmdb_tvshow.id, season_number)
-                # # pylint: disable=no-member
-                # if hasattr(show_season, "episodes"):
-                #     season_episodes = show_season.episodes
-                # else:
-                #     print(f"DOES NOT HAVE EPISODES {file.name}")
-
-                # for episode in season_episodes:
-                #     episode["content_dir"] = name
-                #     db.sql_update_by_json("tvshow_episode", episode)
-
-    supported_files = []
-    for file in library_path.rglob("*.mkv"):
-        supported_files.append(file)
-
-    for file in library_path.rglob("*.mp4"):
-        supported_files.append(file)
-
-    for file in supported_files:
-        file_data = {
-            "library_name": library_name,
-            "library_path": library_path,
-            "content_type": "tvshow",
-            "content_dir": file.parent.parent.name,
-            "content_file": file.name,
-        }
-
-        # Writing data to database
-        try:
-            db.sql_update_by_json("file", file_data)
-            print(f"Saving data to DB for {file.name}")
-        except Exception:
-            print(f"Unable to write to database for {file.name}")
+                # Writing data to database
+                try:
+                    db.sql_update_by_json("file", file_data)
+                    print(f"Saving data to DB for {file.name}")
+                except Exception:
+                    print(f"Unable to write to database for {file.name}")
 
     db.connection.close()
 
@@ -482,7 +477,9 @@ def search(content_type, keyword, release_date=None):
         else:
             for item in json_results:
                 item_percentage = similar(item[title].lower(), keyword.lower())
-                if item_percentage > 0.5:
+                if item_percentage == 1.0:
+                    return item
+                elif item_percentage > 0.5:
                     if item_percentage > matching_percentage:
                         matching_percentage = item_percentage
                         matching_item = item
