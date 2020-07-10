@@ -298,7 +298,9 @@ def library_media_overview_season_episode_play(
     )
 
     if filename:
-        directory = os.path.join(filename["library_path"], filename["content_dir"])
+        directory = os.path.join(
+            filename["library_path"], filename["content_dir"], f"Season {season_number}"
+        )
         session_id = f"{uuid.uuid4()}"
         create_new_session(session_id, directory, filename["content_file"])
         return redirect(f"/video.sync?session={session_id}", code=303)
