@@ -255,12 +255,14 @@ def get_tmdb_genres():
 def get_library(library_name, orderby):
     db = dbm.database_manager()
 
+    orderby = orderby.split(" ")
+
     content_type = library_content_type(library_name)
 
     if content_type == "movie":
-        sql_query = f"""SELECT content_dir,title,substr(release_date, 1, 4) as release_date FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby}"""
+        sql_query = f"""SELECT content_dir,title,release_date as release_date FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
     elif content_type == "tvshow":
-        sql_query = f"""SELECT content_dir,name as title,substr(first_air_date, 1, 4) as release_date FROM tvshow WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby}"""
+        sql_query = f"""SELECT content_dir,name as title,first_air_date as release_date FROM tvshow WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
     else:
         return None
 
@@ -312,7 +314,7 @@ def get_popular_movies():
                 "title": movie.title,
                 "release_date": movie.release_date[:4],
                 "overview": movie.overview,
-                "vote_average": str(movie.vote_average),
+                "vote_average": movie.vote_average,
                 "poster_path": movie.poster_path,
                 "id": movie.id,
             }

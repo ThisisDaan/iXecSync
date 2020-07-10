@@ -7,20 +7,22 @@
     <form method="post">
         <select id="sortby" name="sortby" onchange="this.form.submit()">
             <option value="popularity DESC" {% if sortby_selection=='popularity DESC' %} selected="selected"
-                {% endif %}>Popularity Descending</option>
+                {% endif %}>Popularity (High - Low)</option>
             <option value="popularity ASC" {% if sortby_selection=='popularity ASC' %} selected="selected" {% endif %}>
-                Popularity Ascending</option>
+                Popularity (Low - High)</option>
             <option value="vote_average DESC" {% if sortby_selection=='vote_average DESC' %} selected="selected"
-                {% endif %}>Rating Descending</option>
+                {% endif %}>Rating (High - Low)</option>
             <option value="vote_average ASC" {% if sortby_selection=='vote_average ASC' %} selected="selected"
-                {% endif %}>Rating Ascending</option>
+                {% endif %}>Rating (Low - High)</option>
             <option value="release_date DESC" {% if sortby_selection=='release_date DESC' %} selected="selected"
-                {% endif %}>Release Date Descending</option>
+                {% endif %}>Release Date (New - Old)</option>
             <option value="release_date ASC" {% if sortby_selection=='release_date ASC' %} selected="selected"
-                {% endif %}>Release Date Ascending</option>
-            <option value="title ASC" {% if sortby_selection=='title ASC' %} selected="selected" {% endif %}>Title (A-Z)
+                {% endif %}>Release Date (Old - New)</option>
+            <option value="title ASC" {% if sortby_selection=='title ASC' %} selected="selected" {% endif %}>
+                Title (A-Z)
             </option>
-            <option value="title DESC" {% if sortby_selection=='title DESC' %} selected="selected" {% endif %}>Title
+            <option value="title DESC" {% if sortby_selection=='title DESC' %} selected="selected" {% endif %}>
+                Title
                 (Z-A)</option>
         </select>
     </form>
@@ -55,23 +57,27 @@
 {% if media %}
 <ul id="media_list" class="media poster-size">
     {% for item in media %}
+
+    {% if item.library_name %}
+    {% set media_url = item.library_name + "/" + item.content_dir + "/" %}
+    {% elif item.content_dir %}
+    {% set media_url = item.content_dir + "/" %}
+    {% else %}
+    {% set media_url = "https://www.themoviedb.org/movie/" + item.id|string %}
+    {% endif %}
+
+
     <li class="item {% if item.content_dir == '' %}not-available{% endif %}">
-        {% if item.library_name %}
-        <a href="{{item.library_name}}/{{ item.content_dir }}/">
-            {% elif item.content_dir %}
-            <a href="{{ item.content_dir }}/">
-                {% else %}
-                <a href="https://www.themoviedb.org/movie/{{item.id}}">
-                    {% endif %}
-                    {% if item.content_dir %}
-                    <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
-                    {% else %}
-                    <div class="thumbnail"><img src="https://image.tmdb.org/t/p/w500{{item.poster_path}}">
-                    </div>
-                    {% endif %}
-                    <span>{{ item.title }}</span>
-                    <span>({{ item.release_date }})</span>
-                </a>
+        <a href="{{media_url}}">
+            {% if item.content_dir %}
+            <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
+            {% else %}
+            <div class="thumbnail"><img src="https://image.tmdb.org/t/p/w500{{item.poster_path}}">
+            </div>
+            {% endif %}
+            <span>{{ item.title }}</span>
+            <span>({{ item.release_date[:4] }})</span>
+        </a>
 
     </li>
     {% endfor %}

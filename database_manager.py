@@ -38,11 +38,11 @@ class database_manager:
                 original_title TEXT,
                 original_language TEXT,
                 title TEXT,
-                backdrop_path INTEGER,
-                popularity TEXT,
-                vote_count TEXT,
+                backdrop_path TEXT,
+                popularity INTEGER,
+                vote_count INTEGER,
                 video TEXT,
-                vote_average TEXT
+                vote_average INTEGER
                 );"""
         )
 
@@ -52,10 +52,10 @@ class database_manager:
                 library_name TEXT,
                 content_dir TEXT UNIQUE,
                 poster_path TEXT,
-                popularity TEXT,
+                popularity INTEGER,
                 id TEXT,
                 backdrop_path TEXT,
-                vote_average TEXT,
+                vote_average INTEGER,
                 overview TEXT,
                 first_air_date TEXT,
                 origin_country TEXT,
@@ -95,8 +95,8 @@ class database_manager:
                 production_code TEXT,
                 season_number TEXT,
                 still_path TEXT,
-                vote_average TEXT,
-                vote_count TEXT
+                vote_average INTEGER,
+                vote_count INTEGER
                 );"""
         )
 
