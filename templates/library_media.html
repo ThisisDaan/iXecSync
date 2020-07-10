@@ -1,18 +1,68 @@
 {% extends "library_base.html" %}
 
 
+{% block navigation_content %}
+{% if library_overview %}
+<li>
+    <form method="post">
+        <select id="sortby" name="sortby" onchange="this.form.submit()">
+            <option value="popularity DESC" {% if sortby_selection=='popularity DESC' %} selected="selected"
+                {% endif %}>Popularity Descending</option>
+            <option value="popularity ASC" {% if sortby_selection=='popularity ASC' %} selected="selected" {% endif %}>
+                Popularity Ascending</option>
+            <option value="vote_average DESC" {% if sortby_selection=='vote_average DESC' %} selected="selected"
+                {% endif %}>Rating Descending</option>
+            <option value="vote_average ASC" {% if sortby_selection=='vote_average ASC' %} selected="selected"
+                {% endif %}>Rating Ascending</option>
+            <option value="release_date DESC" {% if sortby_selection=='release_date DESC' %} selected="selected"
+                {% endif %}>Release Date Descending</option>
+            <option value="release_date ASC" {% if sortby_selection=='release_date ASC' %} selected="selected"
+                {% endif %}>Release Date Ascending</option>
+            <option value="title ASC" {% if sortby_selection=='title ASC' %} selected="selected" {% endif %}>Title (A-Z)
+            </option>
+            <option value="title DESC" {% if sortby_selection=='title DESC' %} selected="selected" {% endif %}>Title
+                (Z-A)</option>
+        </select>
+    </form>
+</li>
+{% endif %}
+<section id="filter">
+    <input id='search' type=search onkeyup="search()" placeholder="Search...">
+</section>
+<script>
+    function search() {
+        var input, filter, ul, li, a, i, txtValue;
+        input = document.getElementById('search');
+        filter = input.value.toUpperCase();
+        ul = document.getElementById("media_list");
+        li = ul.getElementsByTagName('li');
+
+        // Loop through all list items, and hide those who don't match the search query
+        for (i = 0; i < li.length; i++) {
+            a = li[i].getElementsByTagName("span")[0];
+            txtValue = a.textContent || a.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                li[i].style.display = "";
+            } else {
+                li[i].style.display = "none";
+            }
+        }
+    }
+</script>
+{% endblock %}
+
 {% block content_section %}
 {% if media %}
-<ul class="media">
+<ul id="media_list" class="media poster-size">
     {% for item in media %}
-    {% if item.library_name %}
-    <a href="{{item.library_name}}/{{ item.content_dir }}/">
-        {% elif item.content_dir %}
-        <a href="{{ item.content_dir }}/">
-            {% else %}
-            <a href="https://www.themoviedb.org/movie/{{item.id}}">
-                {% endif %}
-                <li class="item {% if item.content_dir == '' %}not-available{% endif %}">
+    <li class="item {% if item.content_dir == '' %}not-available{% endif %}">
+        {% if item.library_name %}
+        <a href="{{item.library_name}}/{{ item.content_dir }}/">
+            {% elif item.content_dir %}
+            <a href="{{ item.content_dir }}/">
+                {% else %}
+                <a href="https://www.themoviedb.org/movie/{{item.id}}">
+                    {% endif %}
                     {% if item.content_dir %}
                     <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
                     {% else %}
@@ -21,9 +71,10 @@
                     {% endif %}
                     <span>{{ item.title }}</span>
                     <span>({{ item.release_date }})</span>
-                </li>
-            </a>
-            {% endfor %}
+                </a>
+
+    </li>
+    {% endfor %}
 </ul>
 {% endif %}
 {% endblock %}

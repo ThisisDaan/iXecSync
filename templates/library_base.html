@@ -43,10 +43,22 @@
         {% endif %}
     </section>
 
-
-    <section id="content-section">
-        {% block content_section %}
-        {% endblock %}
+    <section id="right-side">
+        <nav id="navigation">
+            <ul>
+                <a href="../">
+                    <li class="nav-back {% if not goback %}disabled{% endif %}"
+                        onclick="javascript:window.history.back()">
+                    </li>
+                </a>
+                {% block navigation_content %}
+                {% endblock %}
+            </ul>
+        </nav>
+        <section id="content-section">
+            {% block content_section %}
+            {% endblock %}
+        </section>
     </section>
 </main>
 {% endblock %}

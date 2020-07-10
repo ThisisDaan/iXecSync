@@ -212,18 +212,33 @@ def library_home():
     files = tmdb.get_popular_movies()
 
     return render_template(
-        "library_media.html", selected="Home", library=library_items, media=files,
+        "library_media.html",
+        selected="Home",
+        library=library_items,
+        media=files,
+        goback=False,
     )
 
 
-@app.route("/library/<string:library_name>/")
+@app.route("/library/<string:library_name>/", methods=["POST", "GET"])
 def library_content(library_name):
     library_items = get_library_items()
 
-    files = tmdb.get_library(library_name)
+    sortby = request.form.get("sortby")
+    print(sortby)
+    if sortby is None:
+        sortby = "popularity DESC"
+
+    files = tmdb.get_library(library_name, sortby)
 
     return render_template(
-        "library_media.html", selected=library_name, library=library_items, media=files,
+        "library_media.html",
+        selected=library_name,
+        library=library_items,
+        media=files,
+        goback=False,
+        sortby_selection=sortby,
+        library_overview=True,
     )
 
 
@@ -240,6 +255,7 @@ def library_media_overview(library_name, content_dir):
             library=library_items,
             meta=meta,
             movie=True,
+            goback=True,
         )
     elif tmdb.library_content_type(library_name) == "tvshow":
         extra = tmdb.get_seasons(content_dir)
@@ -249,6 +265,7 @@ def library_media_overview(library_name, content_dir):
             library=library_items,
             meta=meta,
             season=extra,
+            goback=True,
         )
 
 
@@ -265,6 +282,8 @@ def library_media_overview_season(library_name, content_dir, season_number):
         library=library_items,
         meta=meta,
         episode=extra,
+        season_number=season_number,
+        goback=True,
     )
 
 
@@ -283,6 +302,7 @@ def library_media_overview_season_episode(
         selected=library_name,
         library=library_items,
         meta=meta,
+        goback=True,
     )
 
 
@@ -369,11 +389,17 @@ def library_files(path):
             }
             file_browser.append(json)
 
+    if path == "":
+        goback = False
+    else:
+        goback = True
+
     return render_template(
         "library_media.html",
         selected="Files",
         library=library_items,
         media=file_browser,
+        goback=goback,
     )
 
 

@@ -100,6 +100,14 @@ class database_manager:
                 );"""
         )
 
+        self.sql_create_table(
+            """CREATE TABLE IF NOT EXISTS genre (
+                c_id INTEGER PRIMARY KEY,
+                id TEXT UNIQUE,
+                name TEXT
+                );"""
+        )
+
     def sql_create_table(self, sql_query):
         try:
             c = self.connection.cursor()
