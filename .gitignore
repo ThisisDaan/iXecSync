@@ -7,6 +7,7 @@ subtitles/*
 !subtitles/.subtitles
 
 thumbnail/*
+!thumbnail/.thumbnail 
 !thumbnail/-=Movies=-.jpg
 !thumbnail/-=Movies3D=-.jpg
 !thumbnail/-=MoviesNL=-.jpg
