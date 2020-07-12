@@ -1,4 +1,3 @@
-from tmdbv3api import TMDb, Movie, TV, Season
 import urllib.request
 import pathlib
 from pathlib import Path
@@ -13,10 +12,6 @@ from difflib import SequenceMatcher
 
 with open(os.path.join(os.path.dirname(__file__), "config.json")) as file:
     config = json.load(file)
-
-tmdb = TMDb()
-tmdb.api_key = str(config["TMDB_API_KEY"])
-tmdb.language = "en"
 
 
 def scan_library():
@@ -259,9 +254,9 @@ def get_library(library_name, orderby):
     content_type = library_content_type(library_name)
 
     if content_type == "movie":
-        sql_query = f"""SELECT content_dir,title,release_date as release_date FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
+        sql_query = f"""SELECT content_dir,title,release_date as release_date FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]} LIMIT 50"""
     elif content_type == "tvshow":
-        sql_query = f"""SELECT content_dir,name as title,first_air_date as release_date FROM tvshow WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
+        sql_query = f"""SELECT content_dir,name as title,first_air_date as release_date FROM tvshow WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]} LIMIT 50"""
     else:
         return None
 
@@ -289,41 +284,41 @@ def get_media_by_keyword(keyword):
 
 
 def get_popular_movies():
-    movie = Movie()
-    popular = movie.popular()
+    # movie = Movie()
+    # popular = movie.popular()
 
-    popular_movie_titles = []
-    for movie in popular:
-        popular_movie_titles.append('"' + movie.title + '"')
+    # popular_movie_titles = []
+    # for movie in popular:
+    #     popular_movie_titles.append('"' + movie.title + '"')
 
-    sql_popular_movie_titles = ", ".join(popular_movie_titles)
+    # sql_popular_movie_titles = ", ".join(popular_movie_titles)
 
-    db = dbm.database_manager()
-    sql_query = f"""SELECT content_dir,title,substr(release_date, 1, 4) as release_date,overview,vote_average,library_name FROM movie WHERE title IN ({sql_popular_movie_titles}) COLLATE NOCASE """
-    sql_data = db.sql_execute(sql_query)
+    # db = dbm.database_manager()
+    # sql_query = f"""SELECT content_dir,title,substr(release_date, 1, 4) as release_date,overview,vote_average,library_name FROM movie WHERE title IN ({sql_popular_movie_titles}) COLLATE NOCASE """
+    # sql_data = db.sql_execute(sql_query)
 
-    for movie in sql_data:
-        if movie["title"] in str(popular_movie_titles):
-            popular_movie_titles.remove('"' + movie["title"] + '"')
+    # for movie in sql_data:
+    #     if movie["title"] in str(popular_movie_titles):
+    #         popular_movie_titles.remove('"' + movie["title"] + '"')
 
-    for movie in popular:
-        if movie.title in str(popular_movie_titles):
-            json = {
-                "content_dir": "",
-                "title": movie.title,
-                "release_date": movie.release_date[:4],
-                "overview": movie.overview,
-                "vote_average": movie.vote_average,
-                "poster_path": movie.poster_path,
-                "id": movie.id,
-            }
-            sql_data.append(json)
+    # for movie in popular:
+    #     if movie.title in str(popular_movie_titles):
+    #         json = {
+    #             "content_dir": "",
+    #             "title": movie.title,
+    #             "release_date": movie.release_date[:4],
+    #             "overview": movie.overview,
+    #             "vote_average": movie.vote_average,
+    #             "poster_path": movie.poster_path,
+    #             "id": movie.id,
+    #         }
+    #         sql_data.append(json)
 
-    sql_data_sorted = sorted(sql_data, key=lambda i: i["vote_average"], reverse=True)
+    # sql_data_sorted = sorted(sql_data, key=lambda i: i["vote_average"], reverse=True)
 
-    db.connection.close()
+    # db.connection.close()
 
-    return sql_data_sorted
+    return None
 
 
 def get_seasons(content_dir):
@@ -340,7 +335,7 @@ def get_seasons(content_dir):
 def get_meta_season_episode(content_dir, season_number, episode_number):
     db = dbm.database_manager()
 
-    sql_query = f"""SELECT content_dir,name as title,substr(air_date, 1, 4) as release_date,overview,vote_average,still_path FROM tvshow_episode WHERE content_dir="{content_dir}" COLLATE NOCASE AND season_number="{season_number}" AND episode_number = "{episode_number}" """
+    sql_query = f"""SELECT content_dir,('Episode ' || episode_number || ' - '|| name) as title,substr(air_date, 1, 4) as release_date,overview,vote_average,still_path FROM tvshow_episode WHERE content_dir="{content_dir}" COLLATE NOCASE AND season_number="{season_number}" AND episode_number = "{episode_number}" """
 
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
@@ -393,7 +388,10 @@ def get_filename(library_name, content_dir):
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
 
-    return sql_data[0]
+    if sql_data:
+        return sql_data[0]
+    else:
+        return None
 
 
 def get_filename_episode(library_name, content_dir, season_number, episode_number):
@@ -402,7 +400,10 @@ def get_filename_episode(library_name, content_dir, season_number, episode_numbe
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
 
-    return sql_data[0]
+    if sql_data:
+        return sql_data[0]
+    else:
+        return None
 
 
 def get_thumbnail_path():

@@ -49,6 +49,10 @@ main {
     color: #fff;
 }
 
+.logo a::before {
+    content: 'iXecSync';
+}
+
 .library {
     display: inline-flex;
     width: 100%;
@@ -248,6 +252,7 @@ main {
     position: relative;
     flex-direction: row;
     flex-wrap: wrap;
+    /* justify-content: space-around; */
     margin-bottom: var(--margin);
 }
 
@@ -278,21 +283,17 @@ main {
     line-height: 20px;
 }
 
-.button.play {
+.button.theme {
     background-color: var(--theme-color);
     border: var(--theme-color) 2px solid;
-}
-
-.button.transparent {
-    margin-top: auto;
-    background-color: rgba(0, 0, 0, 0.5);
-    border: transparent 2px solid;
 }
 
 .button {
     height: 50px;
     width: 100%;
     border-radius: var(--border_radius);
+    background-color: transparent;
+    border: var(--theme-color) 2px solid;
     color: #fefefe;
     font-size: 15px;
     font-weight: 600;

@@ -13,25 +13,31 @@
             <span class="rating">{{ meta.vote_average }}</span>
         </div>
         <span class="overview-text">{{ meta.overview }}</span>
-        <!-- <a href="play">
-            <button class="button">Play</button>
-        </a> -->
-
     </div>
 </section>
 <section class="overview-extra">
+    {% if not error %}
     {% if movie %}
     <ul class="media">
-        <a href="play?transcoding=0">
-            <li class="item">
-                <button class="button play">Play</button>
-            </li>
-        </a>
-        <a href="play?transcoding=1">
-            <li class="item">
-                <button class="button play">Play (Transcoding)</button>
-            </li>
-        </a>
+
+        <li class="item">
+            <a href="play?transcoding=0">
+                <button class="button theme">Play</button>
+            </a>
+        </li>
+
+        <li class="item">
+            <a href="play?transcoding=1">
+                <button class="button theme">Play (Transcoding)</button>
+            </a>
+        </li>
+
+        <li class="item">
+            <a href="/watch?v=qC5KtatMcUw">
+                <button class="button theme">Trailer</button>
+            </a>
+        </li>
+
     </ul>
     {% endif %}
     {% if season %}
@@ -61,6 +67,9 @@
         </a>
         {% endfor %}
     </ul>
+    {% endif %}
+    {% else %}
+    <span>{{ error }}</span>
     {% endif %}
 </section>
 {% endblock %}

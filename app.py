@@ -207,14 +207,13 @@ def get_library_items():
 
 @app.route("/library/")
 def library_home():
-    library_items = get_library_items()
 
-    files = tmdb.get_popular_movies()
+    files = ""
 
     return render_template(
         "library_media.html",
         selected="Home",
-        library=library_items,
+        library=get_library_items(),
         media=files,
         goback=False,
     )
@@ -222,7 +221,6 @@ def library_home():
 
 @app.route("/library/<string:library_name>/", methods=["POST", "GET"])
 def library_content(library_name):
-    library_items = get_library_items()
 
     sortby = request.form.get("sortby")
 
@@ -234,7 +232,7 @@ def library_content(library_name):
     return render_template(
         "library_media.html",
         selected=library_name,
-        library=library_items,
+        library=get_library_items(),
         media=files,
         goback=False,
         sortby_selection=sortby,
@@ -244,7 +242,6 @@ def library_content(library_name):
 
 @app.route("/library/<string:library_name>/<string:content_dir>/")
 def library_media_overview(library_name, content_dir):
-    library_items = get_library_items()
 
     meta = tmdb.get_meta(library_name, content_dir)
 
@@ -252,7 +249,7 @@ def library_media_overview(library_name, content_dir):
         return render_template(
             "library_media_overview.html",
             selected=library_name,
-            library=library_items,
+            library=get_library_items(),
             meta=meta,
             movie=True,
             goback=True,
@@ -262,7 +259,7 @@ def library_media_overview(library_name, content_dir):
         return render_template(
             "library_media_overview.html",
             selected=library_name,
-            library=library_items,
+            library=get_library_items(),
             meta=meta,
             season=extra,
             goback=True,
@@ -271,7 +268,6 @@ def library_media_overview(library_name, content_dir):
 
 @app.route("/library/<string:library_name>/<string:content_dir>/<int:season_number>/")
 def library_media_overview_season(library_name, content_dir, season_number):
-    library_items = get_library_items()
 
     meta = tmdb.get_meta(library_name, content_dir)
     extra = tmdb.get_episodes(content_dir, season_number)
@@ -279,7 +275,7 @@ def library_media_overview_season(library_name, content_dir, season_number):
     return render_template(
         "library_media_overview.html",
         selected=library_name,
-        library=library_items,
+        library=get_library_items(),
         meta=meta,
         episode=extra,
         season_number=season_number,
@@ -293,14 +289,13 @@ def library_media_overview_season(library_name, content_dir, season_number):
 def library_media_overview_season_episode(
     library_name, content_dir, season_number, episode_number
 ):
-    library_items = get_library_items()
 
     meta = tmdb.get_meta_season_episode(content_dir, season_number, episode_number)
 
     return render_template(
         "library_media_overview.html",
         selected=library_name,
-        library=library_items,
+        library=get_library_items(),
         meta=meta,
         goback=True,
     )
@@ -328,7 +323,15 @@ def library_media_overview_season_episode_play(
             code=303,
         )
     else:
-        return abort(404)
+        meta = tmdb.get_meta_season_episode(content_dir, season_number, episode_number)
+        return render_template(
+            "library_media_overview.html",
+            selected=library_name,
+            library=get_library_items(),
+            meta=meta,
+            error=f"Error - File not found",
+            goback=True,
+        )
 
 
 @app.route("/library/<string:library_name>/<string:content_dir>/play")
@@ -345,12 +348,20 @@ def library_media_overview_play(library_name, content_dir):
             code=303,
         )
     else:
-        return abort(404)
+        meta = tmdb.get_meta(library_name, content_dir)
+        return render_template(
+            "library_media_overview.html",
+            selected=library_name,
+            library=get_library_items(),
+            meta=meta,
+            error=f"Error - File not found",
+            goback=True,
+        )
 
 
 @app.route("/search/", methods=["POST", "GET"])
 def search_query():
-    library_items = get_library_items()
+
     if request.method == "POST":
         search = request.form.get("search")
 
@@ -359,21 +370,20 @@ def search_query():
         return render_template(
             "library_search.html",
             selected="Search",
-            library=library_items,
+            library=get_library_items(),
             media=files,
             search=search,
         )
 
     else:
         return render_template(
-            "library_search.html", selected="Search", library=library_items,
+            "library_search.html", selected="Search", library=get_library_items(),
         )
 
 
 @app.route("/files/", defaults={"path": ""})
 @app.route("/files/<path:path>")
 def library_files(path):
-    library_items = get_library_items()
 
     directory = Path(folder_location + path)
 
@@ -403,7 +413,7 @@ def library_files(path):
     return render_template(
         "library_media.html",
         selected="Files",
-        library=library_items,
+        library=get_library_items(),
         media=file_browser,
         goback=goback,
     )
