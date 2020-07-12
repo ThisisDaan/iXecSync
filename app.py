@@ -393,7 +393,7 @@ def library_files(path):
             json = {
                 "title": item.name,
                 "content_dir": item.name,
-                "release_date": "File",
+                "type": "file",
             }
             file_browser.append(json)
 
@@ -401,17 +401,16 @@ def library_files(path):
             json = {
                 "title": item.name,
                 "content_dir": item.name,
-                "release_date": "Folder",
+                "type": "folder",
             }
             file_browser.append(json)
-
     if path == "":
         goback = False
     else:
         goback = True
 
     return render_template(
-        "library_media.html",
+        "library_files.html",
         selected="Files",
         library=get_library_items(),
         media=file_browser,
@@ -493,6 +492,7 @@ def library_files(path):
 #     return content
 
 
+@app.route("/files/<string:name>.<string:extension>/", defaults={"path": ""})
 @app.route("/files/<path:path>/<string:name>.<string:extension>/")
 def file_browser_video(path, name, extension):
     if extension.startswith(("mp4", "mkv")):

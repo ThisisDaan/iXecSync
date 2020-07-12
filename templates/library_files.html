@@ -1,0 +1,63 @@
+{% extends "library_base.html" %}
+
+
+{% block navigation_content %}
+<li id="filter">
+    <input id='search' type=search onkeyup="search()" placeholder="Search...">
+</li>
+<script>
+    function search() {
+        var input, filter, ul, li, a, i, txtValue;
+        input = document.getElementById('search');
+        filter = input.value.toUpperCase();
+        ul = document.getElementById("media_list");
+        li = ul.getElementsByTagName('li');
+
+        // Loop through all list items, and hide those who don't match the search query
+        for (i = 0; i < li.length; i++) {
+            a = li[i].getElementsByTagName("span")[0];
+            txtValue = a.textContent || a.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                li[i].style.display = "";
+            } else {
+                li[i].style.display = "none";
+            }
+        }
+    }
+</script>
+{% endblock %}
+
+{% block content_section %}
+
+<ul id="media_list" class="file-browser media">
+    {% if media %}
+    {% for item in media %}
+
+
+    {% if item.type == 'folder' %}
+    {% set media_url = url_for('static', filename='icons/folder-24px.svg') %}
+    {% else %}
+    {% set media_url = url_for('static', filename='icons/description-24px.svg') %}
+    {% endif %}
+
+
+
+    <li class="item {% if item.content_dir == '' %}not-available{% endif %}">
+        <a href="{{ item.content_dir }}/">
+            <div class="thumbnail"><img src="{{media_url}}"></div>
+            <span>{{ item.title }}</span>
+            <span>({{ item.type }})</span>
+        </a>
+    </li>
+    {% endfor %}
+    {% else %}
+    <li class="item disabled">
+        <a>
+            <div class="thumbnail"><img src="{{url_for('static', filename='icons/folder-24px.svg')}}"></div>
+            <span>This folder is empty.</span>
+        </a>
+    </li>
+    {% endif %}
+</ul>
+
+{% endblock %}

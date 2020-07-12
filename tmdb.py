@@ -56,6 +56,7 @@ def scan_library_movie(library):
             if tmdb_data:
                 tmdb_data["content_dir"] = name
                 tmdb_data["library_name"] = library_name
+                tmdb_data["video"] = get_trailer(tmdb_data["id"])
                 db.sql_update_by_json("movie", tmdb_data)
                 print(f"Saving data to DB for {name}")
 
@@ -214,6 +215,21 @@ def scan_library_tvshow(library):
     db.connection.close()
 
 
+def get_trailer(movie_id):
+    api_url = f"""https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key={config["TMDB_API_KEY"]}&language=en-US"""
+    headers = {"Accept": "application/json"}
+    response = requests.get(api_url, headers=headers)
+    decoded_response = response.content.decode("utf-8")
+    json_response = json.loads(decoded_response)
+    json_results = json_response["results"]
+
+    for video in json_results:
+        if video["type"].lower() == "trailer" and video["site"].lower() == "youtube":
+            return video["key"]
+
+    return False
+
+
 def get_tmdb_genres():
 
     api_url = f"""https://api.themoviedb.org/3/genre/tv/list?api_key={config["TMDB_API_KEY"]}"""
@@ -254,9 +270,9 @@ def get_library(library_name, orderby):
     content_type = library_content_type(library_name)
 
     if content_type == "movie":
-        sql_query = f"""SELECT content_dir,title,release_date as release_date FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]} LIMIT 50"""
+        sql_query = f"""SELECT content_dir,title,release_date as release_date FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
     elif content_type == "tvshow":
-        sql_query = f"""SELECT content_dir,name as title,first_air_date as release_date FROM tvshow WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]} LIMIT 50"""
+        sql_query = f"""SELECT content_dir,name as title,first_air_date as release_date FROM tvshow WHERE library_name ="{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
     else:
         return None
 
@@ -370,7 +386,7 @@ def get_meta(library_name, content_dir):
 
     content_type = library_content_type(library_name)
     if content_type == "movie":
-        sql_query = f"""SELECT content_dir,title,substr(release_date, 1, 4) as release_date,overview,vote_average FROM movie WHERE content_dir="{content_dir}" COLLATE NOCASE """
+        sql_query = f"""SELECT content_dir,title,substr(release_date, 1, 4) as release_date,overview,vote_average,video FROM movie WHERE content_dir="{content_dir}" COLLATE NOCASE """
     elif content_type == "tvshow":
         sql_query = f"""SELECT content_dir,name as title,substr(first_air_date, 1, 4) as release_date,overview,vote_average FROM tvshow WHERE content_dir="{content_dir}" COLLATE NOCASE """
     else:
@@ -533,8 +549,8 @@ def similar(a, b):
 
 if __name__ == "__main__":
     # get_popular_movies()
-    # scan_library()
-    get_tmdb_genres()
+    scan_library()
+    # get_tmdb_genres()
     # movie = search("movie", "Interstellar", "2014")
     # print(movie)
 
