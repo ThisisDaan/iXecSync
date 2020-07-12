@@ -4,7 +4,7 @@
 }
 
 ::-webkit-scrollbar {
-    width: auto;
+    width: 5px;
 }
 
 body {
@@ -101,5 +101,4 @@ body {
     color: #fff;
     background-color: #18191c;
     user-select: none;
-    overflow: hidden;
 }

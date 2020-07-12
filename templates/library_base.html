@@ -10,30 +10,37 @@
 {% block content %}
 <main>
     <section id="menu-section">
-        <span class="logo">iXecSync</span>
+
+        <div class="logo"><a href="/">iXecSync</a></div>
+
         <ul class="library">
-            <a href="/library/">
-                <li class="item icon-home {% if selected.lower() == 'home' %}selected{% endif %}">
+
+            <li>
+                <a href="/library/" class="item icon-home {% if selected.lower() == 'home' %}selected{% endif %}">
                     <span>Home</span>
-                </li>
-            </a>
-            <a href="/files/">
-                <li class="item icon-files {% if selected.lower() == 'files' %}selected{% endif %}">
+                </a>
+            </li>
+
+            <li>
+                <a href="/files/" class="item icon-files {% if selected.lower() == 'files' %}selected{% endif %}">
                     <span>Files</span>
-                </li>
-            </a>
-            <a href="/search/">
-                <li class="item icon-search {% if selected.lower() == 'search' %}selected{% endif %}">
+                </a>
+            </li>
+
+
+            <li>
+                <a href="/search/" class="item icon-search {% if selected.lower() == 'search' %}selected{% endif %}">
                     <span>Search</span>
-                </li>
-            </a>
+                </a>
+            </li>
+
             {% for item in library %}
-            <a href="/library/{{ item.name }}/">
-                <li
+            <li>
+                <a href="/library/{{ item.name }}/"
                     class="item icon-{{ item.type.lower() }} {% if selected.lower() == item.name.lower() %}selected{% endif %}">
                     <span>{{ item.name }}</span>
-                </li>
-            </a>
+                </a>
+            </li>
             {% endfor %}
         </ul>
     </section>
@@ -41,10 +48,10 @@
     <section id="main-wrapper">
         <nav id="navigation">
             <ul>
-                <a href="../" class="{% if not goback %}disabled{% endif %}">
-                    <li class="nav-back" onclick="javascript:window.history.back()">
-                    </li>
-                </a>
+
+                <li onclick="location.href='../'" class="nav-back {% if not goback %}disabled{% endif %}">
+                </li>
+
                 {% block navigation_content %}
                 {% endblock %}
             </ul>

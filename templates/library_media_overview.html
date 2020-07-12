@@ -3,19 +3,20 @@
 
 
 {% block content_section %}
-<!-- <img class="backdrop" src="/thumbnail/{{ meta.content_dir }}.jpg"> -->
+<img class="backdrop" src="/thumbnail/{{ meta.content_dir }}.jpg">
 <section class="overview">
     <img class="poster" src="/thumbnail/{{ meta.content_dir }}.jpg">
     <div class="overview-side">
         <h1>{{ meta.title }}</h1>
         <div class="subtext">
-            <a href="#">{{ meta.release_date }}</a>
-            <a href="#" class="rating">{{ meta.vote_average }}</a>
+            <span>{{ meta.release_date }}</span>
+            <span class="rating">{{ meta.vote_average }}</span>
         </div>
-        <span>{{ meta.overview }}</span>
+        <span class="overview-text">{{ meta.overview }}</span>
         <!-- <a href="play">
             <button class="button">Play</button>
         </a> -->
+
     </div>
 </section>
 <section class="overview-extra">
@@ -23,12 +24,12 @@
     <ul class="media">
         <a href="play?transcoding=0">
             <li class="item">
-                <button class="play-button">Play</button>
+                <button class="button play">Play</button>
             </li>
         </a>
         <a href="play?transcoding=1">
             <li class="item">
-                <button class="play-button">Play (Transcoding)</button>
+                <button class="button play">Play (Transcoding)</button>
             </li>
         </a>
     </ul>
