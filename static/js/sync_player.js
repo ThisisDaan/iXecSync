@@ -27,22 +27,6 @@ var player = videojs('player', {
     nativeControlsForTouch: false,
 });
 
-var sync_player_control = function (player) {
-    return {
-        duration: function () {
-            return player.video_duration;
-        },
-        callPlay: function () {
-            //return videojs.middleware.TERMINATOR;
-        },
-        callPause: function () {
-            //return videojs.middleware.TERMINATOR;
-        }
-    };
-};
-
-videojs.use('*', sync_player_control);
-
 //player.play()
 
 player.on('play', player_play);
@@ -71,9 +55,23 @@ $(document).ready(function () {
         time = 0;
 
         if (transcode == "1") {
-            // player.duration = function () {
-            //     return player.video_duration;
-            // };
+
+            var sync_player_control = function (player) {
+                return {
+                    duration: function () {
+                        return player.video_duration;
+                    },
+                    callPlay: function () {
+                        //return videojs.middleware.TERMINATOR;
+                    },
+                    callPause: function () {
+                        //return videojs.middleware.TERMINATOR;
+                    }
+                };
+            };
+
+            videojs.use('*', sync_player_control);
+
             player.start = 0;
             player.oldCurrentTime = player.currentTime;
             player.currentTime = function (time) {
