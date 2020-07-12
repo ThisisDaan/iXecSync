@@ -1,7 +1,6 @@
 import sqlite3
 from sqlite3 import Error
 import os
-from tmdbv3api import TMDb, Movie, TV
 import time
 import json
 
