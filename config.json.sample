@@ -1,0 +1,26 @@
+{
+    "ENVIRONMENT": "development",
+    "DEBUG": true,
+    "TMDB_API_KEY": "",
+    "library": [{
+            "name": "Movies",
+            "type": "movie",
+            "path": "/app/video/-=Movies=-"
+        },
+        {
+            "name": "Movies3D",
+            "type": "movie",
+            "path": "/app/video/-=Movies3D=-"
+        },
+        {
+            "name": "MoviesNL",
+            "type": "movie",
+            "path": "/app/video/-=MoviesNL=-"
+        },
+        {
+            "name": "Series",
+            "type": "tvshow",
+            "path": "/app/video/-=Series=-"
+        }
+    ]
+}
