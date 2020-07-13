@@ -1,4 +1,6 @@
-import subprocess
+import subprocess as sp
+import queue
+import threading
 import sys
 import re
 import os
@@ -6,118 +8,231 @@ from flask import Response, abort, jsonify
 import time
 import queue
 import threading
-import ffmpeg_streaming
-from ffmpeg_streaming import Representation
+import uuid
+import traceback
+import json
+import logging
+import time
+import datetime
+
+temp_path = f"{os.path.dirname(os.path.realpath(__file__))}{os.sep}temp{os.sep}"
+if not os.path.exists(temp_path):
+    os.makedirs(temp_path)
+log_path = f"{os.path.dirname(os.path.realpath(__file__))}{os.sep}log{os.sep}"
+if not os.path.exists(log_path):
+    os.makedirs(log_path)
+ts = time.gmtime()
+tsformat = time.strftime("%Y.%m.%d_%H.%M.%S", ts)
+##create two handlers and add them to the python logger 1 file handler and 1 stdout handler
+file_handler = logging.FileHandler(
+    filename=f"log{os.sep}Transcoding_debug_{tsformat}.log"
+)
+stdout_handler = logging.StreamHandler(sys.stdout)
+handlers = [file_handler, stdout_handler]
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d]: %(message)s",
+    handlers=handlers,
+)
+log = logging.getLogger("transcoder_log")
+log.setLevel(logging.DEBUG)
+
+##redirect all prints to the logger *evil grin*
+print = log.info
 
 libs_path = f"{os.path.dirname(os.path.realpath(__file__))}{os.sep}Libs{os.sep}"
-ffmpeg = f"{libs_path}ffmpeg"
-ffprobe = f"{libs_path}ffprobe"
+ffmpeg_path = f"{libs_path}ffmpeg"
+ffprobe_path = f"{libs_path}ffprobe"
 if sys.platform == "win32":
-    ffmpeg += ".exe"
-    ffprobe += ".exe"
+    ffmpeg_path += ".exe"
+    ffprobe_path += ".exe"
+
+
+def ffprobe_probe(in_file):
+    ##Get all info from file into json format =)
+    try:
+        return json.loads(
+            sp.check_output(
+                (
+                    ffprobe_path,
+                    "-v",
+                    "quiet",
+                    "-print_format",
+                    "json",
+                    "-show_format",
+                    "-show_streams",
+                    in_file,
+                ),
+                encoding="utf-8",
+            )
+        )
+    except Exception:
+        traceback.print_exc()
 
 
 def ffprobe_getduration(path):
-    cmdline = list()
-    cmdline.append(ffprobe)
-    cmdline.extend(["-show_entries", "format=duration"])
-    cmdline.extend(["-v", "quiet"])
-    cmdline.extend(["-of", "csv=%s" % ("p=0")])
-    cmdline.append(path)
-    print(cmdline)
-    proc = subprocess.Popen(cmdline, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    try:
-        duration, err = proc.communicate()
-        # print("==========ffprobe_getduration output==========")
-        # print(duration.decode("utf-8"))
-        # print("".join(chr(x) for x in bytearray(duration)))
-        if err:
-            print("========= ffprobe_getduration error ========")
-            print(err)
-        return int(
-            ("".join(chr(x) for x in bytearray(duration))).rstrip("\r\n").split(".")[0]
-        )
-    finally:
-        proc.kill()
+    ##get duration in seconds
+    _json = ffprobe_probe(path)
+    log.debug(json.dumps(_json, indent=2))
+    if "format" in _json:
+        if "duration" in _json["format"]:
+            timeformatted = datetime.timedelta(
+                seconds=int(float(_json["format"]["duration"]))
+            )
+            print(str(int(float(_json["format"]["duration"]))))
+            print(f"FFprobe Duration: {timeformatted}")
+            return int(float(_json["format"]["duration"]))
+
+    if "streams" in _json:
+        # commonly stream 0 is the video
+        for s in _json["streams"]:
+            if "duration" in s:
+                timeformatted = datetime.timedelta(
+                    seconds=int(float(_json["format"]["duration"]))
+                )
+                print(f"FFprobe Duration: {timeformatted}")
+                return int(float(s["duration"]))
+
+    raise Exception("FFProbe: I found no duration")
 
 
-def transcode(path, start, vformat, vcodec, acodec):
-    ffprobe_getduration(path)
-    start_time = time.time()
-    wait_limit = 15
-    return_code = None
-    process = None  # type: subprocess.Popen
-    run_time = 0
-
+def ffmpeg_transcode(infile="", sstime=0):
+    ##transcode file from specific startpoint
+    transuuid = str(uuid.uuid4())[:8]
     cmdline = []
-    cmdline.append(ffmpeg)
+    cmdline.append(ffmpeg_path)
     cmdline.append("-nostdin")
-    # cmdline.append("-noaccurate_seek")
-    # -re is useful when live streaming (use input media frame rate), do not use it if you are creating a file,
-    # cmdline.append("-re")
-    # cmdline.append("00:08:00")
-    # cmdline.append("-itsoffset")
-    # cmdline.append("00:00:04.00")
-    cmdline.extend(["-i", path])
-    # -g 52 forces (at least) every 52nd frame to be a keyframe
-    # cmdline.append("-g")
-    # cmdline.append("52")
-    cmdline.extend(["-f", "mp4"])
+    cmdline.extend(["-loglevel", "0"])
+    cmdline.extend(["-v", "quiet"])
+    cmdline.append("-y")
+    cmdline.append("-copyts")
+    cmdline.append("-start_at_zero")
+    cmdline.extend(["-f", "matroska,webm"])
+    cmdline.extend(["-ss", str(sstime)])
+    cmdline.append("-noaccurate_seek")
+    cmdline.extend(["-c:v:0", "h264"])
+    cmdline.extend(["-i", infile])
+    cmdline.extend(["-map", "0:0"])
+    cmdline.extend(["-map", "0:1"])
+    cmdline.append("-sn")
+    cmdline.extend(["-c:v:0", "copy"])
+    cmdline.extend(["-bsf:v:0", "h264_mp4toannexb"])
+    cmdline.extend(["-c:a:0", "libmp3lame"])
+    cmdline.extend(["-ab:a:0", "192000"])
+    cmdline.extend(["-ac:a:0", "2"])
+    cmdline.extend(["-disposition:a:0", "default"])
+    cmdline.extend(["-max_delay", "5000000"])
+    cmdline.extend(["-avoid_negative_ts", "disabled"])
+    cmdline.extend(["-f", "segment"])
+    cmdline.extend(["-map_metadata", "-1"])
+    cmdline.extend(["-map_chapters", "-1"])
+    cmdline.extend(["-segment_format", "mpegts"])
+    cmdline.extend(["-segment_list", f"{temp_path}{os.sep}{transuuid}.m3u8"])
+    cmdline.extend(["-segment_list_type", "m3u8"])
+    cmdline.extend(["-segment_time", "6"])
+    cmdline.extend(["-segment_time_delta", f"-{str(sstime)}"])
+    cmdline.extend(["-segment_start_number", "255"])
+    cmdline.extend(["-break_non_keyframes", "1"])
+    cmdline.extend(["-individual_header_trailer", "0"])
+    cmdline.extend(["-write_header_trailer", "0"])
+    # cmdline.extend(["-segment_write_temp", "1"])
+    cmdline.append(f"{temp_path}{os.sep}{transuuid}_%d.ts")
+    cmdline.append("-stats")
+    cmdline.extend(["-progress", "pipe:1"])
 
-    # cmdline.extend(["-ignore_editlist", "1"])
-    cmdline.extend(["-vcodec", vcodec])
-    cmdline.extend(["-acodec", acodec])
-    # cmdline.extend(["-ab", "190k"])
-    # cmdline.extend(["-ar", "44100"])
-    # cmdline.extend(["-strict", "experimental"])
-    cmdline.extend(["-preset", "veryfast"])
-    # frag_keyframe causes fragmented output,
-    # empty_moov will cause output to be 100% fragmented; without this the first fragment will be muxed as a short movie (using moov) followed by the rest of the media in fragments,
-    cmdline.extend(["-movflags", "frag_keyframe+empty_moov+faststart"])
-    # cmdline.extend(["-movflags", "frag_keyframe"])
-    ##audiosyncfix
-    # cmdline.append("-af")
-    # cmdline.append("aresample=async=1:first_pts=0")
-    # cmdline.append("-vf")
-    # cmdline.append("setpts='if(eq(N\,0),0,PTS)'")
-    # cmdline.append("-async")
-    # cmdline.append("1")
-    cmdline.append("-hide_banner")
-    cmdline.append("-nostats")
-    cmdline.extend(["-loglevel", "warning"])
-    ##putting the timestamp logic to the output instead of the input creates magic!
-    cmdline.extend(["-ss", str(start)])
-    cmdline.append("pipe:1")
-    print(cmdline)
-    process = subprocess.Popen(cmdline, shell=False, stdout=subprocess.PIPE)
-    try:
-        for data in iter(process.stdout.readline, b""):
-            yield data
-    finally:
-        process.kill()
+    log.info("Starting FFmpeg Transcoding")
+    p = sp.Popen(cmdline, stdout=sp.PIPE, stderr=sp.PIPE)
+    ##catching progress for future use and added stop handler if session gets destoyed
+    stoptranscoding = False
+    # transcodingprogressstatic = {
+    #     "frame=": "",
+    #     "fps=": "",
+    #     "stream_0_1_q=": "",
+    #     "bitrate=": "",
+    #     "total_size=": "",
+    #     "out_time_us=": "",
+    #     "out_time_ms=": "",
+    #     "out_time=": "",
+    #     "dup_frames=": "",
+    #     "drop_frames=": "",
+    #     "speed=": "",
+    #     "progress=": "",
+    # }
+    transcodingprogress = {}
+    addmore = False
+    for line in iter(p.stdout.readline, ""):
+        if line:
+            linestring = line.decode("utf-8")
+            # log.debug(linestring)
+
+            if "frame=" in linestring:
+                addmore = True
+            if addmore:
+                key, value = linestring.split("=")
+                transcodingprogress[key] = value
+                if "progress" in key:
+                    addmore = False
+                    print(json.dumps(transcodingprogress, indent=4, sort_keys=True))
+                    transcodingprogress.clear()
+            continue
+        elif stoptranscoding:
+            log.info("Force Stopped FFmpeg Transcoder")
+            break
+        else:
+            log.info("Finished FFmpeg Transcoder")
+            break
+
+        # p.stderr.flush()
+        p.stdout.flush()
+        p.stderr.flush()
+    p.terminate()
 
 
-def ffmpeg_transcode(path="video/video.mkv", vformat="mp4", start=0):
-    vcodec = "copy"
-    acodec = "libmp3lame"
-    try:
-        mime = "video/mp4"
-        return Response(
-            response=transcode(path, start, vformat, vcodec, acodec),
-            status=200,
-            mimetype=mime,
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Content-Type": mime,
-                "Content-Disposition": "inline",
-                "Content-Transfer-Enconding": "binary",
-            },
-        )
-    except FileNotFoundError:
-        abort(404)
+# ffprobe_getduration("C:\\Users\\AciDCooL\\Documents\\iXecSync\\video\\video\\video.mkv")
+ffmpeg_transcode("C:\\-Coding-\\iXecSync\\video\\video\\video.mkv")
 
 
 #### RESEARCH ####
+
+# Seeking while doing a codec copy
+# Using -ss as input option together with -c:v copy might not be accurate since ffmpeg is forced to only use/split on i-frames. Though it will—if possible—adjust the start time of the stream to a negative value to compensate for that. Basically, if you specify "second 157" and there is no key frame until second 159, it will include two seconds of audio (with no video) at the start, then will start from the first key frame. So be careful when splitting and doing codec copy.
+
+# ffmpeg -i $inputFile \
+#   -map 0:v:0 -map 0:a\?:0 -map 0:v:0 -map 0:a\?:0 -map 0:v:0 -map 0:a\?:0 -map 0:v:0 -map 0:a\?:0 -map 0:v:0 -map 0:a\?:0 -map 0:v:0 -map 0:a\?:0  \
+#   -b:v:0 350k  -c:v:0 libx264 -filter:v:0 "scale=320:-1"  \
+#   -b:v:1 1000k -c:v:1 libx264 -filter:v:1 "scale=640:-1"  \
+#   -b:v:2 3000k -c:v:2 libx264 -filter:v:2 "scale=1280:-1" \
+#   -b:v:3 245k  -c:v:3 libvpx-vp9 -filter:v:3 "scale=320:-1"  \
+#   -b:v:4 700k  -c:v:4 libvpx-vp9 -filter:v:4 "scale=640:-1"  \
+#   -b:v:5 2100k -c:v:5 libvpx-vp9 -filter:v:5 "scale=1280:-1"  \
+#   -use_timeline 1 -use_template 1 -window_size 6 -adaptation_sets "id=0,streams=v  id=1,streams=a" \
+#   -hls_playlist true -f dash output/output.mpd
+
+
+# EMBY TRANSCODE options:
+# /bin/ffmpeg -loglevel +timing -y -print_graphs_file /config/logs/ffmpeg-remux-13eb85de-9bb4-4e0d-bbbb-e15be7883e16_1graph.txt -copyts -start_at_zero -f matroska,webm -noaccurate_seek -c:v:0 h264
+# -i "/media/-=Series=-/Westworld/Season 3/Westworld - S03E01 - Parce Domine WEBDL-1080p-XLF.mkv" -map 0:0 -map 0:1 -sn -c:v:0 copy -bsf:v:0 h264_mp4toannexb -c:a:0 libmp3lame -ab:a:0 192000
+# -ac:a:0 2 -disposition:a:0 default -max_delay 5000000 -avoid_negative_ts disabled -f segment -map_metadata -1 -map_chapters -1 -segment_format mpegts -segment_list /localmedia/EmbyStuff/EmbyTranscode/transcoding-temp/2244C6.m3u8
+# -segment_list_type m3u8 -segment_time 6 -segment_start_number 0 -break_non_keyframes 1 -individual_header_trailer 0 -write_header_trailer 0 -segment_write_temp 1 "/localmedia/EmbyStuff/EmbyTranscode/transcoding-temp/2244C6_%d.ts"
+#  -map 0:2 -map 0:0 -an -c:v:0 copy -c:s:0 webvtt -max_delay 5000000 -avoid_negative_ts disabled -f segment -map_metadata -1 -map_chapters -1 -segment_format webvtt -segment_list /localmedia/EmbyStuff/EmbyTranscode/transcoding-temp/2244C6_s2.m3u8
+# -segment_list_type m3u8 -segment_time 6 -segment_start_number 0 -break_non_keyframes 1 -individual_header_trailer 1 -write_header_trailer 0 -write_empty_segments 1 -segment_write_temp 1 -min_frame_time 00:00:00.000
+# "/localmedia/EmbyStuff/EmbyTranscode/transcoding-temp/2244C6_s2_%d.vtt"
+
+##op bepaalde tijd:
+# /bin/ffmpeg
+# -loglevel +timing -y -print_graphs_file
+# /config/logs/ffmpeg-remux-d20d5e7b-6d57-487a-8b31-bb125abed406_1graph.txt -copyts -start_at_zero
+# -f matroska,webm -ss 00:25:30.000 -noaccurate_seek -c:v:0 h264 -i "/media/-=Series=-/Westworld/Season 3/Westworld - S03E01 - Parce Domine WEBDL-1080p-XLF.mkv"
+# -map 0:0 -map 0:1 -sn -c:v:0 copy -bsf:v:0 h264_mp4toannexb -c:a:0 libmp3lame -ab:a:0 192000 -ac:a:0 2 -disposition:a:0 default
+# -max_delay 5000000 -avoid_negative_ts disabled -f segment -map_metadata -1 -map_chapters -1
+# -segment_format mpegts -segment_list /localmedia/EmbyStuff/EmbyTranscode/transcoding-temp/C5562D.m3u8
+# -segment_list_type m3u8 -segment_time 6 -segment_time_delta -00:25:30.000 -segment_start_number 255 -break_non_keyframes 1
+# -individual_header_trailer 0 -write_header_trailer 0 -segment_write_temp 1 "/localmedia/EmbyStuff/EmbyTranscode/transcoding-temp/C5562D_%d.ts"
+# -map 0:2 -map 0:0 -an -c:v:0 copy -c:s:0 webvtt -max_delay 5000000 -avoid_negative_ts disabled -f segment -map_metadata -1 -map_chapters -1
+# -segment_format webvtt -segment_list /localmedia/EmbyStuff/EmbyTranscode/transcoding-temp/C5562D_s2.m3u8 -segment_list_type m3u8 -segment_time 6
+# -segment_start_number 255 -break_non_keyframes 1 -individual_header_trailer 1 -write_header_trailer 0 -write_empty_segments 1 -segment_write_temp 1
+# -min_frame_time 00:25:30.000 "/localmedia/EmbyStuff/EmbyTranscode/transcoding-temp/C5562D_s2_%d.vtt"
+
 # https://emby.acidflix.eu/Items/203878/PlaybackInfo?UserId=708a7f9359ec45629fb80bdcba2bade2&StartTimeTicks=0&IsPlayback=true&AutoOpenLiveStream=true&AudioStreamIndex=2&SubtitleStreamIndex=-1&MediaSourceId=0d7616a7bb7f021c9671ad9d4263e4ec&MaxStreamingBitrate=140000000
 
 # {"MediaSources":[{"Protocol":"File","Id":"0d7616a7bb7f021c9671ad9d4263e4ec","Path":"/media/-=Movies=-/Greyhound (2020)/Greyhound (2020) - [WEBDL-1080P PROPER]-SECRECY.mp4","Type":"Default","Container":"mp4","Size":8323324201,"Name":"[WEBDL-1080P PROPER]-SECRECY","IsRemote":false,"RunTimeTicks":55034670000,"SupportsTranscoding":true,"SupportsDirectStream":false,"SupportsDirectPlay":false,"IsInfiniteStream":false,"RequiresOpening":false,"RequiresClosing":false,"RequiresLooping":false,"SupportsProbing":false,"MediaStreams":[{"Codec":"h264","CodecTag":"avc1","Language":"und","ColorTransfer":"bt709","ColorPrimaries":"bt709","ColorSpace":"bt709","TimeBase":"1/16000","CodecTimeBase":"2751713/131926000","VideoRange":"SDR","DisplayTitle":"1080p H264","NalLengthSize":"4","IsInterlaced":false,"IsAVC":true,"BitRate":10036304,"BitDepth":8,"RefFrames":1,"IsDefault":true,"IsForced":false,"Height":802,"Width":1920,"AverageFrameRate":23.971613,"RealFrameRate":23.976025,"Profile":"High","Type":"Video","AspectRatio":"960:401","Index":0,"IsExternal":false,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Protocol":"File","PixelFormat":"yuv420p","Level":40,"IsAnamorphic":false},{"Codec":"aac","CodecTag":"mp4a","Language":"eng","TimeBase":"1/48000","CodecTimeBase":"1/48000","DisplayTitle":"English AAC stereo","DisplayLanguage":"English","IsInterlaced":false,"ChannelLayout":"stereo","BitRate":256175,"Channels":2,"SampleRate":48000,"IsDefault":false,"IsForced":false,"Profile":"LC","Type":"Audio","Index":1,"IsExternal":false,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Protocol":"File"},{"Codec":"aac","CodecTag":"mp4a","Language":"eng","TimeBase":"1/48000","CodecTimeBase":"1/48000","DisplayTitle":"English AAC 5.1 (Default)","DisplayLanguage":"English","IsInterlaced":false,"ChannelLayout":"5.1","BitRate":1015595,"Channels":6,"SampleRate":48000,"IsDefault":true,"IsForced":false,"Profile":"LC","Type":"Audio","Index":2,"IsExternal":false,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Protocol":"File"},{"Codec":"eac3","CodecTag":"ec-3","Language":"eng","TimeBase":"1/48000","CodecTimeBase":"1/48000","DisplayTitle":"English EAC3 5.1","DisplayLanguage":"English","IsInterlaced":false,"ChannelLayout":"5.1","BitRate":767858,"Channels":6,"SampleRate":48000,"IsDefault":false,"IsForced":false,"Type":"Audio","Index":3,"IsExternal":false,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"eng","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"English (Default MOV_TEXT)","DisplayLanguage":"English","IsInterlaced":false,"BitRate":71,"IsDefault":true,"IsForced":false,"Type":"Subtitle","Index":4,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"eng","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"English (MOV_TEXT)","DisplayLanguage":"English","IsInterlaced":false,"BitRate":77,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":5,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"ara","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Arabic (MOV_TEXT)","DisplayLanguage":"Arabic","IsInterlaced":false,"BitRate":128,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":6,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"bul","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Bulgarian (MOV_TEXT)","DisplayLanguage":"Bulgarian","IsInterlaced":false,"BitRate":98,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":7,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"ces","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Czech (MOV_TEXT)","DisplayLanguage":"Czech","IsInterlaced":false,"BitRate":61,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":8,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"dan","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Danish (MOV_TEXT)","DisplayLanguage":"Danish","IsInterlaced":false,"BitRate":62,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":9,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"nld","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Dutch (MOV_TEXT)","DisplayLanguage":"Dutch","IsInterlaced":false,"BitRate":54,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":10,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"est","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Estonian (MOV_TEXT)","DisplayLanguage":"Estonian","IsInterlaced":false,"BitRate":69,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":11,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"fin","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Finnish (MOV_TEXT)","DisplayLanguage":"Finnish","IsInterlaced":false,"BitRate":57,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":12,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"fra","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"French (MOV_TEXT)","DisplayLanguage":"French","IsInterlaced":false,"BitRate":56,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":13,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"fra","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"French (MOV_TEXT)","DisplayLanguage":"French","IsInterlaced":false,"BitRate":56,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":14,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"deu","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"German (MOV_TEXT)","DisplayLanguage":"German","IsInterlaced":false,"BitRate":73,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":15,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"ell","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Greek, Modern (1453-) (MOV_TEXT)","DisplayLanguage":"Greek, Modern (1453-)","IsInterlaced":false,"BitRate":109,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":16,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"heb","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Hebrew (MOV_TEXT)","DisplayLanguage":"Hebrew","IsInterlaced":false,"BitRate":109,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":17,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"hin","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Hindi (MOV_TEXT)","DisplayLanguage":"Hindi","IsInterlaced":false,"BitRate":154,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":18,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"hun","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Hungarian (MOV_TEXT)","DisplayLanguage":"Hungarian","IsInterlaced":false,"BitRate":64,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":19,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"ind","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Indonesian (MOV_TEXT)","DisplayLanguage":"Indonesian","IsInterlaced":false,"BitRate":71,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":20,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"ita","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Italian (MOV_TEXT)","DisplayLanguage":"Italian","IsInterlaced":false,"BitRate":61,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":21,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"jpn","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Japanese (MOV_TEXT)","DisplayLanguage":"Japanese","IsInterlaced":false,"BitRate":53,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":22,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"lit","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Lithuanian (MOV_TEXT)","DisplayLanguage":"Lithuanian","IsInterlaced":false,"BitRate":82,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":23,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"lav","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Latvian (MOV_TEXT)","DisplayLanguage":"Latvian","IsInterlaced":false,"BitRate":75,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":24,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"msa","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Malay (MOV_TEXT)","DisplayLanguage":"Malay","IsInterlaced":false,"BitRate":76,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":25,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"zho","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Chinese (MOV_TEXT)","DisplayLanguage":"Chinese","IsInterlaced":false,"BitRate":66,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":26,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"zho","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Chinese (MOV_TEXT)","DisplayLanguage":"Chinese","IsInterlaced":false,"BitRate":62,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":27,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"zho","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Chinese (MOV_TEXT)","DisplayLanguage":"Chinese","IsInterlaced":false,"BitRate":63,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":28,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"nor","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Norwegian (MOV_TEXT)","DisplayLanguage":"Norwegian","IsInterlaced":false,"BitRate":57,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":29,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"pol","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Polish (MOV_TEXT)","DisplayLanguage":"Polish","IsInterlaced":false,"BitRate":60,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":30,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"por","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Portuguese (MOV_TEXT)","DisplayLanguage":"Portuguese","IsInterlaced":false,"BitRate":64,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":31,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"por","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Portuguese (MOV_TEXT)","DisplayLanguage":"Portuguese","IsInterlaced":false,"BitRate":63,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":32,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"rus","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Russian (MOV_TEXT)","DisplayLanguage":"Russian","IsInterlaced":false,"BitRate":99,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":33,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"slk","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Slovak (MOV_TEXT)","DisplayLanguage":"Slovak","IsInterlaced":false,"BitRate":57,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":34,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"slv","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Slovenian (MOV_TEXT)","DisplayLanguage":"Slovenian","IsInterlaced":false,"BitRate":56,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":35,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"spa","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Spanish (MOV_TEXT)","DisplayLanguage":"Spanish","IsInterlaced":false,"BitRate":75,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":36,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"spa","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Spanish (MOV_TEXT)","DisplayLanguage":"Spanish","IsInterlaced":false,"BitRate":78,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":37,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"swe","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Swedish (MOV_TEXT)","DisplayLanguage":"Swedish","IsInterlaced":false,"BitRate":71,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":38,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"tam","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Tamil (MOV_TEXT)","DisplayLanguage":"Tamil","IsInterlaced":false,"BitRate":197,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":39,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"tel","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Telugu (MOV_TEXT)","DisplayLanguage":"Telugu","IsInterlaced":false,"BitRate":218,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":40,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"tha","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Thai (MOV_TEXT)","DisplayLanguage":"Thai","IsInterlaced":false,"BitRate":176,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":41,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"ukr","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Ukrainian (MOV_TEXT)","DisplayLanguage":"Ukrainian","IsInterlaced":false,"BitRate":94,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":42,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mov_text","CodecTag":"tx3g","Language":"vie","TimeBase":"1/1000000","CodecTimeBase":"0/1","DisplayTitle":"Vietnamese (MOV_TEXT)","DisplayLanguage":"Vietnamese","IsInterlaced":false,"BitRate":86,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":43,"IsExternal":false,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Protocol":"File"},{"Codec":"mjpeg","ColorSpace":"bt470bg","TimeBase":"1/90000","CodecTimeBase":"0/1","IsInterlaced":false,"BitDepth":8,"RefFrames":1,"IsDefault":false,"IsForced":false,"Height":3000,"Width":2000,"RealFrameRate":90000,"Profile":"Progressive","Type":"EmbeddedImage","AspectRatio":"2:3","Index":44,"IsExternal":false,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Protocol":"File","PixelFormat":"yuvj420p","Level":-99,"IsAnamorphic":false},{"Codec":"srt","Language":"ger","DisplayTitle":"German (SRT)","DisplayLanguage":"German","IsInterlaced":false,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":45,"IsExternal":true,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Path":"/media/-=Movies=-/Greyhound (2020)/Greyhound (2020) - [WEBDL-1080P PROPER]-SECRECY.de.srt","Protocol":"File"},{"Codec":"srt","Language":"dut","DisplayTitle":"Dutch (SRT)","DisplayLanguage":"Dutch","IsInterlaced":false,"IsDefault":false,"IsForced":false,"Type":"Subtitle","Index":46,"IsExternal":true,"DeliveryMethod":"Hls","IsTextSubtitleStream":true,"SupportsExternalStream":true,"Path":"/media/-=Movies=-/Greyhound (2020)/Greyhound (2020) - [WEBDL-1080P PROPER]-SECRECY.nl.srt","Protocol":"File"}],"Formats":[],"Bitrate":12099026,"RequiredHttpHeaders":{},"DirectStreamUrl":"/videos/203878/master.m3u8?DeviceId=2dd104a0-cdb5-475e-8c3f-7effb61bee52&MediaSourceId=0d7616a7bb7f021c9671ad9d4263e4ec&PlaySessionId=7588e690e38f4ffe97e2a0f0afa2bd66&api_key=1d0d2667be93432a88659ceb5f11d652&VideoCodec=h264&AudioCodec=mp3,aac&VideoBitrate=139360000&AudioBitrate=640000&AudioStreamIndex=2&SubtitleMethod=Encode&TranscodingMaxAudioChannels=2&SegmentContainer=ts&MinSegments=1&BreakOnNonKeyFrames=True&ManifestSubtitles=vtt&h264-profile=high,main,baseline,constrainedbaseline,high10&h264-level=52&TranscodeReasons=SecondaryAudioNotSupported","TranscodingUrl":"/videos/203878/master.m3u8?DeviceId=2dd104a0-cdb5-475e-8c3f-7effb61bee52&MediaSourceId=0d7616a7bb7f021c9671ad9d4263e4ec&PlaySessionId=7588e690e38f4ffe97e2a0f0afa2bd66&api_key=1d0d2667be93432a88659ceb5f11d652&VideoCodec=h264&AudioCodec=mp3,aac&VideoBitrate=139360000&AudioBitrate=640000&AudioStreamIndex=2&SubtitleMethod=Encode&TranscodingMaxAudioChannels=2&SegmentContainer=ts&MinSegments=1&BreakOnNonKeyFrames=True&ManifestSubtitles=vtt&h264-profile=high,main,baseline,constrainedbaseline,high10&h264-level=52&TranscodeReasons=SecondaryAudioNotSupported","TranscodingSubProtocol":"hls","TranscodingContainer":"ts","ReadAtNativeFramerate":false,"DefaultAudioStreamIndex":2,"DefaultSubtitleStreamIndex":-1}],"PlaySessionId":"7588e690e38f4ffe97e2a0f0afa2bd66"}
