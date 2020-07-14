@@ -1,0 +1,55 @@
+<nav class="media-filters">
+    <ul>
+        <li class="sort-filter">
+            <form method="post">
+                <select name="sortby" onchange="this.form.submit()">
+                    <option value="popularity DESC" {% if sortby_selection=='popularity DESC' %} selected="selected"
+                        {% endif %}>Popularity (High - Low)</option>
+                    <option value="popularity ASC" {% if sortby_selection=='popularity ASC' %} selected="selected"
+                        {% endif %}>
+                        Popularity (Low - High)</option>
+                    <option value="vote_average DESC" {% if sortby_selection=='vote_average DESC' %} selected="selected"
+                        {% endif %}>Rating (High - Low)</option>
+                    <option value="vote_average ASC" {% if sortby_selection=='vote_average ASC' %} selected="selected"
+                        {% endif %}>Rating (Low - High)</option>
+                    <option value="release_date DESC" {% if sortby_selection=='release_date DESC' %} selected="selected"
+                        {% endif %}>Release Date (New - Old)</option>
+                    <option value="release_date ASC" {% if sortby_selection=='release_date ASC' %} selected="selected"
+                        {% endif %}>Release Date (Old - New)
+                    </option>
+                    <option value="title ASC" {% if sortby_selection=='title ASC' %} selected="selected" {% endif %}>
+                        Title (A-Z)
+                    </option>
+                    <option value="title DESC" {% if sortby_selection=='title DESC' %} selected="selected" {% endif %}>
+                        Title
+                        (Z-A)</option>
+                </select>
+            </form>
+        </li>
+
+        <li class="search-filter">
+            <input id='search' type=search onkeyup="search()" placeholder="Search...">
+        </li>
+
+        <script>
+            function search() {
+                var input, filter, ul, li, a, i, txtValue;
+                input = document.getElementById('search');
+                filter = input.value.toUpperCase();
+                ul = document.getElementById("media");
+                li = ul.getElementsByTagName('li');
+
+                // Loop through all list items, and hide those who don't match the search query
+                for (i = 0; i < li.length; i++) {
+                    a = li[i].getElementsByTagName("span")[0];
+                    txtValue = a.textContent || a.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        li[i].style.display = "";
+                    } else {
+                        li[i].style.display = "none";
+                    }
+                }
+            }
+        </script>
+    </ul>
+</nav>

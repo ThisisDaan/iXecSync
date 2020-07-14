@@ -1,19 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}iXecSync{% endblock %}
+{% block title %}{{title}}{% endblock %}
 
 
 {% block head %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='player/video-js.min.css') }}" />
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sync_player_skin.css') }}" />
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sync_player.css') }}" />
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/library.css') }}" />
 <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
 {% endblock %}
 
 
 {% block content %}
-<video id="player" class="video-js vjs-big-play-button" controls preload="auto"></video>
+<video id="player" class="video-js vjs-big-play-button" controls preload="auto">
+    {% if youtube %}
+    <source src="https://www.youtube.com/watch?v={{youtube}}" type="video/youtube">
+    {% elif video %}
+    <source src="/player/get/{{video}}" type="video/mp4">
+    {% endif %}
+</video>
+<div id="video-overlay-copy">
+    {% include "library_header.html" %}
+</div>
 {% endblock %}
 
 
@@ -23,5 +33,18 @@
 <script src="{{ url_for('static', filename='player/video-http-streaming.js') }}"></script>
 {% block video_plugins %}
 {% endblock %}
-<script src="{{ url_for('static', filename='js/sync_player.js') }}"></script>
+<script src="{{ url_for('static', filename='js/player.js') }}"></script>
+<script src="{{ url_for('static', filename='js/sync.js') }}"></script>
+<script>
+    var video_id = "{{ video }}"
+    player.video_duration = "{{ duration }}"
+
+    // // Resize on window resize
+    // window.onresize = function () {
+    //     player.height(window.innerHeight) // changes player to height window
+    //     player.width(window.innerWidth) // changes player to width window
+    // }
+
+    start_session(video_id)
+</script>
 {% endblock %}

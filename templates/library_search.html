@@ -14,7 +14,7 @@
 {% if media %}
 <ul class="media poster-size">
     {% for item in media %}
-    <a href="/library/{{ item.library_name }}/{{ item.content_dir }}/">
+    <a href="/library/{{ item.library_name }}/{{ item.id }}/">
         <li class="item">
             <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
             <span>{{ item.title }}</span>
