@@ -15,6 +15,7 @@ thumbnail/*
 
 config.json
 fsociety00.db
+log/
 
 ### Flask ###
 instance/*
