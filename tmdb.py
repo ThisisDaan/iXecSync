@@ -72,33 +72,33 @@ def scan_library_movie(library):
                     except Exception:
                         print(f"Unable download poster for {name}")
 
+                # Scanning directory for files
+                supported_files = []
+                for file in directory.rglob("*.mkv"):
+                    supported_files.append(file)
+
+                for file in directory.rglob("*.mp4"):
+                    supported_files.append(file)
+
+                for file in supported_files:
+                    file_data = {
+                        "id": tmdb_data["id"],
+                        "library_name": library_name,
+                        "library_path": library_path,
+                        "content_type": "movie",
+                        "content_dir": file.parent.name,
+                        "content_file": file.name,
+                    }
+
+                    # Writing data to database
+                    try:
+                        db.sql_update_by_json("file", file_data)
+                        print(f"Saving data to DB for {file.name}")
+                    except Exception:
+                        print(f"Unable to write to database for {file.name}")
+
             else:
                 print(f"Nothing found on TMDB for {name}")
-
-            # Scanning directory for files
-            supported_files = []
-            for file in directory.rglob("*.mkv"):
-                supported_files.append(file)
-
-            for file in directory.rglob("*.mp4"):
-                supported_files.append(file)
-
-            for file in supported_files:
-                file_data = {
-                    "id": tmdb_data["id"],
-                    "library_name": library_name,
-                    "library_path": library_path,
-                    "content_type": "movie",
-                    "content_dir": file.parent.name,
-                    "content_file": file.name,
-                }
-
-                # Writing data to database
-                try:
-                    db.sql_update_by_json("file", file_data)
-                    print(f"Saving data to DB for {file.name}")
-                except Exception:
-                    print(f"Unable to write to database for {file.name}")
 
     # closing database connection
     db.connection.close()
@@ -182,32 +182,32 @@ def scan_library_tvshow(library):
                         else:
                             print(f"Error status code: {response.status_code}")
 
+                supported_files = []
+                for file in directory.rglob("*.mkv"):
+                    supported_files.append(file)
+
+                for file in directory.rglob("*.mp4"):
+                    supported_files.append(file)
+
+                for file in supported_files:
+                    file_data = {
+                        "id": tmdb_data["id"],
+                        "library_name": library_name,
+                        "library_path": library_path,
+                        "content_type": "tvshow",
+                        "content_dir": file.parent.parent.name,
+                        "content_file": file.name,
+                    }
+
+                    # Writing data to database
+                    try:
+                        db.sql_update_by_json("file", file_data)
+                        print(f"Saving data to DB for {file.name}")
+                    except Exception:
+                        print(f"Unable to write to database for {file.name}")
+
             else:
                 print(f"Nothing found on TMDB for {name}")
-
-            supported_files = []
-            for file in directory.rglob("*.mkv"):
-                supported_files.append(file)
-
-            for file in directory.rglob("*.mp4"):
-                supported_files.append(file)
-
-            for file in supported_files:
-                file_data = {
-                    "id": tmdb_data["id"],
-                    "library_name": library_name,
-                    "library_path": library_path,
-                    "content_type": "tvshow",
-                    "content_dir": file.parent.parent.name,
-                    "content_file": file.name,
-                }
-
-                # Writing data to database
-                try:
-                    db.sql_update_by_json("file", file_data)
-                    print(f"Saving data to DB for {file.name}")
-                except Exception:
-                    print(f"Unable to write to database for {file.name}")
 
     db.connection.close()
 
