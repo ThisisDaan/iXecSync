@@ -312,7 +312,7 @@ def library_media_overview_season_episode_play(
 
     if data:
         session_id = f"{uuid.uuid4()}"[:8]
-        create_new_session(session_id, f"{video_id}/{season_number}/{episode_number}")
+        create_new_session(f"{video_id}/{season_number}/{episode_number}")
 
         redirect_url = f"""/video/{video_id}/{season_number}/{episode_number}?session={session_id}"""
 
@@ -340,7 +340,7 @@ def library_media_overview_play(library_name, video_id):
 
     if data:
         session_id = f"{uuid.uuid4()}"[:8]
-        create_new_session(session_id, video_id)
+        create_new_session(video_id)
 
         redirect_url = f"""/video/{video_id}?session={session_id}"""
 
@@ -526,11 +526,23 @@ def library_files(path):
 #         return redirect(f"/video.sync?session={session_id}", code=303)
 
 
-def create_new_session(session_id, video_id):
-    session_storage[session_id] = {
-        "video_id": video_id,
-        "time": None,
-    }
+def create_new_session(video_id, session_id=None):
+    if session_id in session_storage:
+        return session_id
+    elif session_id:
+        new_session_id = session_id
+        session_storage[new_session_id] = {
+            "video_id": video_id,
+            "time": None,
+        }
+        return new_session_id
+    else:
+        new_session_id = f"{uuid.uuid4()}"[:8]
+        session_storage[new_session_id] = {
+            "video_id": video_id,
+            "time": None,
+        }
+        return new_session_id
 
 
 def get_subtitles(video_filename):
@@ -700,10 +712,9 @@ def on_connect():
     session_id = request.args.get("session")
     video_id = request.args.get("video_id")
 
-    if session_id not in session_storage:
-        create_new_session(session_id, video_id)
+    client_session = create_new_session(video_id, session_id)
 
-    session.client = iXecSync(request, session_id)
+    session.client = iXecSync(request, client_session)
 
 
 @socketio.on("disconnect", namespace="/sync")

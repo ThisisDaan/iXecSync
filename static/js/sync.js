@@ -36,7 +36,7 @@ function create_websocket() {
     var url = protocol + hostname + ':' + port + '/sync';
     var query = {
         "query": {
-            "session": session_id,
+            "session": url_parameters.get('session'),
             "video_id": video_id
         }
     }
