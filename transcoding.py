@@ -21,24 +21,34 @@ if not os.path.exists(temp_path):
 log_path = f"{os.path.dirname(os.path.realpath(__file__))}{os.sep}log{os.sep}"
 if not os.path.exists(log_path):
     os.makedirs(log_path)
-ts = time.gmtime()
-tsformat = time.strftime("%Y.%m.%d_%H.%M.%S", ts)
-##create two handlers and add them to the python logger 1 file handler and 1 stdout handler
-file_handler = logging.FileHandler(
-    filename=f"log{os.sep}Transcoding_debug_{tsformat}.log"
-)
-stdout_handler = logging.StreamHandler(sys.stdout)
-handlers = [file_handler, stdout_handler]
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d]: %(message)s",
-    handlers=handlers,
-)
-log = logging.getLogger("transcoder_log")
-log.setLevel(logging.DEBUG)
+# ts = time.gmtime()
+# tsformat = time.strftime("%Y.%m.%d_%H.%M.%S", ts)
 
-##redirect all prints to the logger *evil grin*
-print = log.info
+# logger = logging.getLogger()
+# while logger.hasHandlers():
+#     logger.removeHandler(logger.handlers[0])
+# ##create two handlers and add them to the python logger 1 file handler and 1 stdout handler
+# file_handler = logging.FileHandler(
+#     filename=f"log{os.sep}Transcoding_debug_{tsformat}.log"
+# )
+# stdout_handler = logging.StreamHandler(sys.stdout)
+# handlers = [file_handler, stdout_handler]
+
+# logging.basicConfig(
+#     level=logging.DEBUG,
+#     format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d]: %(message)s",
+#     handlers=handlers,
+#     force=True,
+# )
+
+
+# log = logging.getLogger("transcoder_log")
+# log.setLevel(logging.DEBUG)
+
+# logging.removeHandler()
+
+# ##redirect all prints to the logger *evil grin*
+# print = log.info
 
 libs_path = f"{os.path.dirname(os.path.realpath(__file__))}{os.sep}Libs{os.sep}"
 ffmpeg_path = f"{libs_path}ffmpeg"
@@ -73,7 +83,7 @@ def ffprobe_probe(in_file):
 def ffprobe_getduration(path):
     ##get duration in seconds
     _json = ffprobe_probe(path)
-    log.debug(json.dumps(_json, indent=2))
+    print(json.dumps(_json, indent=2))
     if "format" in _json:
         if "duration" in _json["format"]:
             timeformatted = datetime.timedelta(
@@ -96,9 +106,11 @@ def ffprobe_getduration(path):
     raise Exception("FFProbe: I found no duration")
 
 
-def ffmpeg_transcode(infile="", sstime=0):
+def ffmpeg_transcode(infile="", start=0):
     ##transcode file from specific startpoint
     transuuid = str(uuid.uuid4())[:8]
+    if os.path.isfile(infile):
+        print("File Exists")
     cmdline = []
     cmdline.append(ffmpeg_path)
     cmdline.append("-nostdin")
@@ -108,7 +120,7 @@ def ffmpeg_transcode(infile="", sstime=0):
     cmdline.append("-copyts")
     cmdline.append("-start_at_zero")
     cmdline.extend(["-f", "matroska,webm"])
-    cmdline.extend(["-ss", str(sstime)])
+    cmdline.extend(["-ss", str(start)])
     cmdline.append("-noaccurate_seek")
     cmdline.extend(["-c:v:0", "h264"])
     cmdline.extend(["-i", infile])
@@ -130,7 +142,7 @@ def ffmpeg_transcode(infile="", sstime=0):
     cmdline.extend(["-segment_list", f"{temp_path}{os.sep}{transuuid}.m3u8"])
     cmdline.extend(["-segment_list_type", "m3u8"])
     cmdline.extend(["-segment_time", "6"])
-    cmdline.extend(["-segment_time_delta", f"-{str(sstime)}"])
+    cmdline.extend(["-segment_time_delta", f"-{str(start)}"])
     cmdline.extend(["-segment_start_number", "255"])
     cmdline.extend(["-break_non_keyframes", "1"])
     cmdline.extend(["-individual_header_trailer", "0"])
@@ -140,7 +152,7 @@ def ffmpeg_transcode(infile="", sstime=0):
     cmdline.append("-stats")
     cmdline.extend(["-progress", "pipe:1"])
 
-    log.info("Starting FFmpeg Transcoding")
+    print("Starting FFmpeg Transcoding")
     p = sp.Popen(cmdline, stdout=sp.PIPE, stderr=sp.PIPE)
     ##catching progress for future use and added stop handler if session gets destoyed
     stoptranscoding = False
@@ -163,33 +175,35 @@ def ffmpeg_transcode(infile="", sstime=0):
     for line in iter(p.stdout.readline, ""):
         if line:
             linestring = line.decode("utf-8")
-            # log.debug(linestring)
-
+            # print(linestring)
             if "frame=" in linestring:
                 addmore = True
+                ##temp return after we know there is output, until I figure out this fucker https://stackoverflow.com/questions/11604699/is-there-a-way-to-do-more-work-after-a-return-statement
+                return f"{temp_path}{os.sep}{transuuid}.m3u8"
             if addmore:
                 key, value = linestring.split("=")
-                transcodingprogress[key] = value
+                transcodingprogress[key] = value.strip()
                 if "progress" in key:
                     addmore = False
                     print(json.dumps(transcodingprogress, indent=4, sort_keys=True))
                     transcodingprogress.clear()
             continue
         elif stoptranscoding:
-            log.info("Force Stopped FFmpeg Transcoder")
+            print("Force Stopped FFmpeg Transcoder")
+            addmore = False
+            transcodingprogress.clear()
             break
         else:
-            log.info("Finished FFmpeg Transcoder")
+            print("Finished FFmpeg Transcoder")
             break
 
-        # p.stderr.flush()
         p.stdout.flush()
         p.stderr.flush()
     p.terminate()
+    # return f"{temp_path}{os.sep}{transuuid}.m3u8"
 
 
-# ffprobe_getduration("C:\\Users\\AciDCooL\\Documents\\iXecSync\\video\\video\\video.mkv")
-ffmpeg_transcode("C:\\-Coding-\\iXecSync\\video\\video\\video.mkv")
+# ffmpeg_transcode("C:\\-Coding-\\iXecSync\\video\\video\\video.mkv")
 
 
 #### RESEARCH ####
