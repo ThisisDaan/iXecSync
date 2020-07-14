@@ -236,18 +236,18 @@ def library_content(library_name):
         media=files,
         goback=False,
         sortby_selection=sortby,
-        library_overview=True,
+        media_filters=True,
     )
 
 
-@app.route("/library/<string:library_name>/<string:content_dir>/")
-def library_media_overview(library_name, content_dir):
+@app.route("/library/<string:library_name>/<string:video_id>/")
+def library_media_overview(library_name, video_id):
 
-    meta = tmdb.get_meta(library_name, content_dir)
+    meta = tmdb.get_meta(library_name, video_id)
 
     if tmdb.library_content_type(library_name) == "movie":
         return render_template(
-            "library_media_overview.html",
+            "overview/library_media_overview.html",
             selected=library_name,
             library=get_library_items(),
             meta=meta,
@@ -255,9 +255,9 @@ def library_media_overview(library_name, content_dir):
             goback=True,
         )
     elif tmdb.library_content_type(library_name) == "tvshow":
-        extra = tmdb.get_seasons(content_dir)
+        extra = tmdb.get_seasons(video_id)
         return render_template(
-            "library_media_overview.html",
+            "overview/library_media_overview.html",
             selected=library_name,
             library=get_library_items(),
             meta=meta,
@@ -266,14 +266,14 @@ def library_media_overview(library_name, content_dir):
         )
 
 
-@app.route("/library/<string:library_name>/<string:content_dir>/<int:season_number>/")
-def library_media_overview_season(library_name, content_dir, season_number):
+@app.route("/library/<string:library_name>/<string:video_id>/<int:season_number>/")
+def library_media_overview_season(library_name, video_id, season_number):
 
-    meta = tmdb.get_meta(library_name, content_dir)
-    extra = tmdb.get_episodes(content_dir, season_number)
+    meta = tmdb.get_meta(library_name, video_id)
+    extra = tmdb.get_episodes(video_id, season_number)
 
     return render_template(
-        "library_media_overview.html",
+        "overview/library_media_overview.html",
         selected=library_name,
         library=get_library_items(),
         meta=meta,
@@ -284,16 +284,16 @@ def library_media_overview_season(library_name, content_dir, season_number):
 
 
 @app.route(
-    "/library/<string:library_name>/<string:content_dir>/<int:season_number>/<int:episode_number>/"
+    "/library/<string:library_name>/<string:video_id>/<int:season_number>/<int:episode_number>/"
 )
 def library_media_overview_season_episode(
-    library_name, content_dir, season_number, episode_number
+    library_name, video_id, season_number, episode_number
 ):
 
-    meta = tmdb.get_meta_season_episode(content_dir, season_number, episode_number)
+    meta = tmdb.get_meta_season_episode(video_id, season_number, episode_number)
 
     return render_template(
-        "library_media_overview.html",
+        "overview/library_media_overview.html",
         selected=library_name,
         library=get_library_items(),
         meta=meta,
@@ -302,61 +302,158 @@ def library_media_overview_season_episode(
 
 
 @app.route(
-    "/library/<string:library_name>/<string:content_dir>/<int:season_number>/<int:episode_number>/play"
+    "/library/<string:library_name>/<string:video_id>/<int:season_number>/<int:episode_number>/play"
 )
 def library_media_overview_season_episode_play(
-    library_name, content_dir, season_number, episode_number
+    library_name, video_id, season_number, episode_number
 ):
 
-    filename = tmdb.get_filename_episode(
-        library_name, content_dir, season_number, episode_number
+    data = tmdb.get_filename_episode(video_id, season_number, episode_number)
+
+    if data:
+        session_id = f"{uuid.uuid4()}"[:8]
+        create_new_session(session_id, f"{video_id}/{season_number}/{episode_number}")
+
+        redirect_url = f"""/video/{video_id}/{season_number}/{episode_number}?session={session_id}"""
+
+        transcode = request.args.get("transcoding")
+        if transcode:
+            redirect_url += f"""&transcoding={request.args.get("transcoding")}"""
+
+        return redirect(redirect_url)
+    else:
+        meta = tmdb.get_meta_season_episode(video_id, season_number, episode_number)
+        return render_template(
+            "overview/library_media_overview.html",
+            selected=library_name,
+            library=get_library_items(),
+            meta=meta,
+            error=f"Error - File not found",
+            goback=True,
+        )
+
+
+@app.route("/library/<string:library_name>/<string:video_id>/play/")
+def library_media_overview_play(library_name, video_id):
+
+    data = tmdb.get_filename(video_id)
+
+    if data:
+        session_id = f"{uuid.uuid4()}"[:8]
+        create_new_session(session_id, video_id)
+
+        redirect_url = f"""/video/{video_id}?session={session_id}"""
+
+        transcode = request.args.get("transcoding")
+        if transcode:
+            redirect_url += f"""&transcoding={request.args.get("transcoding")}"""
+
+        return redirect(redirect_url)
+    else:
+        meta = tmdb.get_meta(library_name, video_id)
+        return render_template(
+            "overview/library_media_overview.html",
+            selected=library_name,
+            library=get_library_items(),
+            meta=meta,
+            error=f"Error - File not found",
+            goback=True,
+        )
+
+
+#
+#  PLAYER - MOVIES
+#
+
+
+@app.route("/video/<string:video_id>")
+def play_video(video_id):
+
+    meta = tmdb.get_meta_by_id("movie", video_id)
+
+    try:
+        path = tmdb.get_path(video_id)
+        duration = acid_transcode.ffprobe_getduration(path)
+    except Exception as e:
+        duration = 0
+        print(f"Can not get duration of video: {e}")
+
+    return render_template(
+        "sync_player.html",
+        title=meta["title"],
+        video=video_id,
+        sync=True,
+        duration=duration,
     )
 
-    if filename:
-        directory = os.path.join(
-            filename["library_path"], filename["content_dir"], f"Season {season_number}"
-        )
-        session_id = f"{uuid.uuid4()}"
-        create_new_session(session_id, directory, filename["content_file"])
-        return redirect(
-            f"/video.sync?session={session_id}&transcoding={request.args.get('transcoding')}",
-            code=303,
-        )
-    else:
-        meta = tmdb.get_meta_season_episode(content_dir, season_number, episode_number)
-        return render_template(
-            "library_media_overview.html",
-            selected=library_name,
-            library=get_library_items(),
-            meta=meta,
-            error=f"Error - File not found",
-            goback=True,
-        )
+
+@app.route("/player/get/<string:video_id>")
+def player_get_video(video_id):
+    transcode = request.args.get("transcoding")
+    transcode_time = request.args.get("time")
+
+    try:
+        if transcode == "1":
+            return acid_transcode.ffmpeg_transcode(
+                tmdb.get_path(video_id), start=int(transcode_time),
+            )
+        else:
+            data = tmdb.get_filename(video_id)
+            directory = os.path.join(data["library_path"], data["content_dir"])
+            return send_from_directory(
+                directory=directory, filename=data["content_file"]
+            )
+    except KeyError:
+        return abort(404)
 
 
-@app.route("/library/<string:library_name>/<string:content_dir>/play")
-def library_media_overview_play(library_name, content_dir):
+#
+#  PLAYER - TV SHOWS
+#
 
-    filename = tmdb.get_filename(library_name, content_dir)
 
-    if filename:
-        directory = os.path.join(filename["library_path"], filename["content_dir"])
-        session_id = f"{uuid.uuid4()}"
-        create_new_session(session_id, directory, filename["content_file"])
-        return redirect(
-            f"/video.sync?session={session_id}&transcoding={request.args.get('transcoding')}",
-            code=303,
-        )
-    else:
-        meta = tmdb.get_meta(library_name, content_dir)
-        return render_template(
-            "library_media_overview.html",
-            selected=library_name,
-            library=get_library_items(),
-            meta=meta,
-            error=f"Error - File not found",
-            goback=True,
-        )
+@app.route("/video/<string:video_id>/<int:season_number>/<int:episode_number>")
+def play_episode(video_id, season_number, episode_number):
+
+    meta = tmdb.get_meta_by_id("tvshow", video_id)
+
+    try:
+        path = tmdb.get_path_episode(video_id, season_number, episode_number)
+        duration = acid_transcode.ffprobe_getduration(path)
+    except Exception as e:
+        duration = 0
+        print(f"Can not get duration of video: {e}")
+
+    return render_template(
+        "sync_player.html",
+        title=f"""{meta["title"]} - S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}""",
+        video=f"{video_id}/{season_number}/{episode_number}",
+        sync=True,
+        duration=duration,
+    )
+
+
+@app.route("/player/get/<string:video_id>/<int:season_number>/<int:episode_number>")
+def player_get_episode(video_id, season_number, episode_number):
+    transcode = request.args.get("transcoding")
+    transcode_time = request.args.get("time")
+
+    try:
+        if transcode == "1":
+            return acid_transcode.ffmpeg_transcode(
+                tmdb.get_path_episode(video_id, season_number, episode_number),
+                start=int(transcode_time),
+            )
+        else:
+            data = tmdb.get_filename_episode(video_id, season_number, episode_number)
+            directory = os.path.join(
+                data["library_path"], data["content_dir"], f"Season {season_number}"
+            )
+            return send_from_directory(
+                directory=directory, filename=data["content_file"]
+            )
+    except KeyError:
+        return abort(404)
 
 
 @app.route("/search/", methods=["POST", "GET"])
@@ -418,106 +515,22 @@ def library_files(path):
     )
 
 
-# @app.route("/file/", defaults={"path": ""})
-# @app.route("/file/<path:path>")
-# def file_browsing_root(path):
-#     content = get_content(folder_location + path)
-#     return render_template(
-#         "file_browser.html",
-#         folders=content["folders"],
-#         files=content["files"],
-#         empty=content["empty"],
-#     )
+# @app.route("/files/<string:name>.<string:extension>/", defaults={"path": ""})
+# @app.route("/files/<path:path>/<string:name>.<string:extension>/")
+# def file_browser_video(path, name, extension):
+#     if extension.startswith(("mp4", "mkv")):
+#         session_id = f"{uuid.uuid4()}"
+#         directory = folder_location + path
+#         filename = f"{name}.{extension}"
+#         create_new_session(session_id, directory, filename)
+#         return redirect(f"/video.sync?session={session_id}", code=303)
 
 
-# @app.route("/search/<string:search>")
-# def file_browsing_search(search):
-#     content = get_content(folder_location, search)
-#     return render_template(
-#         "file_browser.html",
-#         folders=content["folders"],
-#         files=content["files"],
-#         empty=content["empty"],
-#         search=True,
-#     )
-
-
-# def get_content(folder, search_string=None):
-#     content = defaultdict(list)
-
-#     for (root, dirs, files) in os.walk(folder):
-#         for directory in dirs:
-#             if search_string is None or search_string.lower() in directory.lower():
-#                 json = {
-#                     "name": f"{directory}",
-#                     "thumbnail": f"/thumbnail/{directory.lower()}.jpg",
-#                     "path": f"{os.path.join(root.replace(folder_location, ''), directory)}",
-#                     "type": "folder",
-#                 }
-#                 # tmdb.download_movie_poster(
-#                 #     directory, thumbnail_location + directory + ".jpg", json["path"]
-#                 # )
-#                 content["folders"].append(json)
-
-#         for filename in files:
-#             if search_string is None or search_string.lower() in filename.lower():
-#                 if filename:  # )
-#                     json = {
-#                         "name": f"{filename}",
-#                         "path": f"{os.path.join(root.replace(folder_location, ''), filename)}",
-#                         "type": "file",
-#                     }
-#                     if filename.endswith((".mp4", ".mkv")):
-#                         json["format"] = "video"
-#                         json["order"] = 0
-#                         content["files"].insert(0, json)
-#                     else:
-#                         json["format"] = "other"
-#                         json["order"] = 1
-#                         content["files"].append(json)
-
-#         if search_string is None:
-#             break
-
-#     if len(content) == 0:
-#         if search_string:
-#             content["empty"].append({"name": "No items match your search."})
-#         else:
-#             content["empty"].append({"name": "This folder is empty."})
-
-#     content["folders"] = sorted(content["folders"], key=lambda k: (k["name"].lower()))
-#     content["files"] = sorted(
-#         content["files"], key=lambda k: (k["order"], k["name"].lower())
-#     )
-#     return content
-
-
-@app.route("/files/<string:name>.<string:extension>/", defaults={"path": ""})
-@app.route("/files/<path:path>/<string:name>.<string:extension>/")
-def file_browser_video(path, name, extension):
-    if extension.startswith(("mp4", "mkv")):
-        session_id = f"{uuid.uuid4()}"
-        directory = folder_location + path
-        filename = f"{name}.{extension}"
-        create_new_session(session_id, directory, filename)
-        return redirect(f"/video.sync?session={session_id}", code=303)
-
-
-def create_new_session(session_id, directory, filename):
-    srtToVtt_directory(directory)
-    lang = get_subtitles(filename)
-    path = os.path.join(directory, filename)
-    duration = 0
-    duration = acid_transcode.ffprobe_getduration(path)
-
+def create_new_session(session_id, video_id):
     session_storage[session_id] = {
-        "directory": directory,
-        "filename": filename,
-        "path": path,
+        "video_id": video_id,
         "time": None,
-        "meta": {"title": filename, "duration": duration, "lang": lang,},
     }
-    print(session_storage[session_id]["meta"])
 
 
 def get_subtitles(video_filename):
@@ -536,34 +549,32 @@ def get_subtitles(video_filename):
                 print(f"Error get_subtitles: {e}")
     return subtitles_list
 
-    # for (root, dirs, files) in os.walk(subtitle_folder_location):
-    #     for filename in files:
-    #         if video_filename[0] in filename:
-    #             try:
-    #                 filename = filename.split(".")
-    #                 lang_code = str(filename[-2])
-    #                 lang_name = languages.get(alpha2=lang_code).name
-    #                 subtitles_list.append({"name": lang_name, "code": lang_code})
-    #             except Exception as e:
-    #                 print(f"Error get_subtitles: {e}")
 
-    #     break
-    # return subtitles_list
-
-
-@app.route("/video.sync")
-def player():
-    session_id = request.args.get("session")
-    if session_id in session_storage:
-        return render_template("sync_player.html")
-    else:
-        return redirect("/", code=303)
+# @app.route("/video.sync")
+# def player():
+#     session_id = request.args.get("session")
+#     if session_id in session_storage:
+#         title = session_storage[session_id]["meta"]["title"]
+#         return render_template("sync_player.html", title=title)
+#     else:
+#         return redirect("/", code=303)
 
 
 @app.route("/scan_library")
 def scanning_tmdb():
     tmdb.scan_library()
     return redirect("/", code=303)
+
+
+@app.route("/library/<string:library_name>/<string:video_id>/trailer/")
+def movie_trailer(library_name, video_id):
+    trailer = tmdb.get_trailer(library_name, video_id)
+    return render_template(
+        "youtube.html",
+        sync=False,
+        youtube=trailer["video"],
+        title=f"""Trailer - {trailer["title"]}""",
+    )
 
 
 @app.route("/watch")
@@ -582,9 +593,9 @@ def youtube_player():
         return redirect("/", code=303)
 
 
-@app.route("/player/meta/<string:session_id>")
-def session_duration(session_id):
-    return jsonify(session_storage[session_id]["meta"])
+# @app.route("/player/meta/<string:session_id>")
+# def session_duration(session_id):
+#     return jsonify(session_storage[session_id]["meta"])
 
 
 @app.route("/player/<string:session_id>")
@@ -661,13 +672,6 @@ def srtToVtt_directory(directory):
         if item.is_file() and (item.name).endswith(".srt"):
             srtToVtt(item)
 
-    # for (root, dirs, files) in os.walk(directory):
-    #     for filename in files:
-    #         if filename.endswith(".srt"):
-    #             srt_path = os.path.join(root, filename)
-    #             srtToVtt(srt_path)
-    #     break
-
 
 @app.route("/subtitle/<string:session_id>/<string:language_code>")
 def subtitle(session_id, language_code):
@@ -680,21 +684,26 @@ def subtitle(session_id, language_code):
         return abort(404)
 
 
+@socketio.on("client update", namespace="/sync")
+def client_update(client_data):
+    session.client.update_client(client_data)
+    session.client.check_client_in_sync()
+
+
 @socketio.on("client request sync", namespace="/sync")
 def sync_time(client_data):
     session.client.sync_other_clients(client_data)
 
 
-# @socketio.on("client update", namespace="/sync")
-# def sync_time(client_data):
-#     session.client.update_client(client_data)
-#     session.client.check_client_in_sync()
-
-
 @socketio.on("connect", namespace="/sync")
 def on_connect():
-    client_session = request.args.get("session")
-    session.client = iXecSync(request, client_session)
+    session_id = request.args.get("session")
+    video_id = request.args.get("video_id")
+
+    if session_id not in session_storage:
+        create_new_session(session_id, video_id)
+
+    session.client = iXecSync(request, session_id)
 
 
 @socketio.on("disconnect", namespace="/sync")

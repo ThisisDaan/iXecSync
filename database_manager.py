@@ -15,17 +15,18 @@ class database_manager:
         self.sql_create_table(
             """CREATE TABLE IF NOT EXISTS file (
                 c_id INTEGER PRIMARY KEY,
+                id TEXT,
                 library_name TEXT,
                 library_path TEXT,
                 content_type TEXT,
                 content_dir TEXT,
-                content_file TEXT UNIQUE
+                content_file TEXT
                 );"""
         )
 
         self.sql_create_table(
             """CREATE TABLE IF NOT EXISTS movie (
-                c_id INTEGER PRIMARY KEY,
+                id TEXT PRIMARY KEY,
                 library_name TEXT,
                 content_dir TEXT UNIQUE,
                 poster_path TEXT,
@@ -33,7 +34,6 @@ class database_manager:
                 overview TEXT,
                 release_date TEXT,
                 genre_ids TEXT,
-                id TEXT,
                 original_title TEXT,
                 original_language TEXT,
                 title TEXT,
@@ -44,15 +44,13 @@ class database_manager:
                 vote_average INTEGER
                 );"""
         )
-
         self.sql_create_table(
             """CREATE TABLE IF NOT EXISTS tvshow (
-                c_id INTEGER PRIMARY KEY,
+                id TEXT PRIMARY KEY,
                 library_name TEXT,
                 content_dir TEXT UNIQUE,
                 poster_path TEXT,
                 popularity INTEGER,
-                id TEXT,
                 backdrop_path TEXT,
                 vote_average INTEGER,
                 overview TEXT,
@@ -68,20 +66,22 @@ class database_manager:
 
         self.sql_create_table(
             """CREATE TABLE IF NOT EXISTS tvshow_season (
-                c_id INTEGER PRIMARY KEY,
+                id TEXT PRIMARY KEY,
+                show_id TEXT,
                 content_dir TEXT,
                 air_date TEXT,
                 name TEXT,
                 overview TEXT,
-                id TEXT,
                 poster_path TEXT,
-                season_number TEXT
+                season_number TEXT,
+                _id TEXT
                 );"""
         )
 
         self.sql_create_table(
             """CREATE TABLE IF NOT EXISTS tvshow_episode (
-                c_id INTEGER PRIMARY KEY,
+                id TEXT PRIMARY KEY,
+                show_id TEXT,
                 content_dir TEXT,
                 air_date TEXT,
                 crew TEXT,
@@ -89,8 +89,6 @@ class database_manager:
                 guest_stars TEXT,
                 name TEXT,
                 overview TEXT,
-                id TEXT,
-                show_id TEXT,
                 production_code TEXT,
                 season_number TEXT,
                 still_path TEXT,
@@ -101,8 +99,7 @@ class database_manager:
 
         self.sql_create_table(
             """CREATE TABLE IF NOT EXISTS genre (
-                c_id INTEGER PRIMARY KEY,
-                id TEXT UNIQUE,
+                id TEXT PRIMARY KEY,
                 name TEXT
                 );"""
         )

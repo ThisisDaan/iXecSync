@@ -1,68 +1,19 @@
 {% extends "library_base.html" %}
 
 
-{% block navigation_content %}
-{% if library_overview %}
-<li id="sortby">
-    <form method="post">
-        <select name="sortby" onchange="this.form.submit()">
-            <option value="popularity DESC" {% if sortby_selection=='popularity DESC' %} selected="selected"
-                {% endif %}>Popularity (High - Low)</option>
-            <option value="popularity ASC" {% if sortby_selection=='popularity ASC' %} selected="selected" {% endif %}>
-                Popularity (Low - High)</option>
-            <option value="vote_average DESC" {% if sortby_selection=='vote_average DESC' %} selected="selected"
-                {% endif %}>Rating (High - Low)</option>
-            <option value="vote_average ASC" {% if sortby_selection=='vote_average ASC' %} selected="selected"
-                {% endif %}>Rating (Low - High)</option>
-            <option value="release_date DESC" {% if sortby_selection=='release_date DESC' %} selected="selected"
-                {% endif %}>Release Date (New - Old)</option>
-            <option value="release_date ASC" {% if sortby_selection=='release_date ASC' %} selected="selected"
-                {% endif %}>Release Date (Old - New)</option>
-            <option value="title ASC" {% if sortby_selection=='title ASC' %} selected="selected" {% endif %}>
-                Title (A-Z)
-            </option>
-            <option value="title DESC" {% if sortby_selection=='title DESC' %} selected="selected" {% endif %}>
-                Title
-                (Z-A)</option>
-        </select>
-    </form>
-</li>
-{% endif %}
-<li id="filter">
-    <input id='search' type=search onkeyup="search()" placeholder="Search...">
-</li>
-<script>
-    function search() {
-        var input, filter, ul, li, a, i, txtValue;
-        input = document.getElementById('search');
-        filter = input.value.toUpperCase();
-        ul = document.getElementById("media_list");
-        li = ul.getElementsByTagName('li');
-
-        // Loop through all list items, and hide those who don't match the search query
-        for (i = 0; i < li.length; i++) {
-            a = li[i].getElementsByTagName("span")[0];
-            txtValue = a.textContent || a.innerText;
-            if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                li[i].style.display = "";
-            } else {
-                li[i].style.display = "none";
-            }
-        }
-    }
-</script>
-{% endblock %}
-
 {% block content_section %}
+
+{% if media_filters %}
+{% include "library_media_filters.html" %}
+{% endif %}
+
 {% if media %}
-<ul id="media_list" class="media poster-size">
+<ul id="media" class="media center-content poster-size">
     {% for item in media %}
-
-
     {% if item.library_name %}
-    {% set media_url = item.library_name + "/" + item.content_dir + "/" %}
+    {% set media_url = item.library_name + "/" + item.id + "/" %}
     {% elif item.content_dir %}
-    {% set media_url = item.content_dir + "/" %}
+    {% set media_url = item.id + "/" %}
     {% else %}
     {% set media_url = "https://www.themoviedb.org/movie/" + item.id|string %}
     {% endif %}
@@ -73,7 +24,7 @@
     {% set thumbnail_src =  "https://image.tmdb.org/t/p/w500" +item.poster_path %}
     {% endif %}
 
-    <li class="item {% if item.content_dir == '' %}not-available{% endif %}">
+    <li class="item{% if item.content_dir == '' %} not-available{% endif %}">
         <a href="{{media_url}}">
             <div class="thumbnail"><img src="{{ thumbnail_src }}"></div>
             <span>{{ item.title }}</span>

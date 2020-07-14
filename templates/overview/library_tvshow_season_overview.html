@@ -1,0 +1,11 @@
+<ul class="media poster-size">
+    {% for item in season %}
+    <a href="{{item.season_number}}/">
+        <li class="item">
+            <div class="thumbnail"><img src="https://image.tmdb.org/t/p/w500{{item.poster_path}}">
+            </div>
+            <span>Season {{item.season_number}}</span>
+        </li>
+    </a>
+    {% endfor %}
+</ul>

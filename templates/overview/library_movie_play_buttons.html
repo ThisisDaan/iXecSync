@@ -1,0 +1,20 @@
+<ul class="media">
+    <li class="item">
+        <a href="play">
+            <button class="button theme">Play</button>
+        </a>
+    </li>
+
+    <li class="item">
+        <a href="play/?transcoding=1">
+            <button class="button theme">Play (Transcoding)</button>
+        </a>
+    </li>
+    {% if meta.video %}
+    <li class="item">
+        <a href="trailer/">
+            <button class="button optional">Trailer</button>
+        </a>
+    </li>
+    {% endif %}
+</ul>

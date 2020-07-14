@@ -8,58 +8,11 @@
 
 
 {% block content %}
-<main>
-    <header id="menu-section">
-
-        <div class="logo"><a href="/"></a></div>
-
-        <ul class="library">
-
-            <li>
-                <a href="/library/" class="item icon-home {% if selected.lower() == 'home' %}selected{% endif %}">
-                    <span>Home</span>
-                </a>
-            </li>
-
-            <li>
-                <a href="/files/" class="item icon-files {% if selected.lower() == 'files' %}selected{% endif %}">
-                    <span>Files</span>
-                </a>
-            </li>
-
-
-            <li>
-                <a href="/search/" class="item icon-search {% if selected.lower() == 'search' %}selected{% endif %}">
-                    <span>Search</span>
-                </a>
-            </li>
-
-            {% for item in library %}
-            <li>
-                <a href="/library/{{ item.name }}/"
-                    class="item icon-{{ item.type.lower() }} {% if selected.lower() == item.name.lower() %}selected{% endif %}">
-                    <span>{{ item.name }}</span>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-    </header>
-
-    <section id="main-wrapper">
-        <nav id="navigation">
-            <ul>
-
-                <li onclick="location.href='../'" class="nav-back {% if not goback %}disabled{% endif %}">
-                </li>
-
-                {% block navigation_content %}
-                {% endblock %}
-            </ul>
-        </nav>
-        <section id="content-section">
-            {% block content_section %}
-            {% endblock %}
-        </section>
+<main class="layout">
+    {% include 'library_header.html' %}
+    <section id="content-section">
+        {% block content_section %}
+        {% endblock %}
     </section>
 
 </main>
