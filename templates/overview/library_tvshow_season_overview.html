@@ -1,11 +1,16 @@
 <h2>Seasons</h2>
-<ul class="media poster-size">
-    {% for item in season %}
-    <a href="{{item.season_number}}/">
+<ul class="media">
+    {% for season in season %}
+    <a href="{{ season.season_number }}/">
         <li class="item">
-            <div class="thumbnail"><img src="https://image.tmdb.org/t/p/w500{{item.poster_path}}">
+            <div class="aspect-ratio-9x16 border-selection">
+                <div class="inner-aspect-ratio">
+                    <img src="/thumbnail{{ season.poster_path }}">
+                </div>
             </div>
-            <span>Season {{item.season_number}}</span>
+            <div class="meta">
+                <span>Season {{season.season_number}}</span>
+            </div>
         </li>
     </a>
     {% endfor %}

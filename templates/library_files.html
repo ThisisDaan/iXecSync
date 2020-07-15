@@ -28,36 +28,45 @@
 {% endblock %}
 
 {% block content_section %}
+<section class="container">
+    <h2>{{ current_dir }}</h2>
+    <ul class="media files">
+        {% if media %}
+        {% for item in media %}
 
-<ul id="media_list" class="file-browser media">
-    {% if media %}
-    {% for item in media %}
-
-
-    {% if item.type == 'folder' %}
-    {% set media_url = url_for('static', filename='icons/folder-24px.svg') %}
-    {% else %}
-    {% set media_url = url_for('static', filename='icons/description-24px.svg') %}
-    {% endif %}
-
-
-
-    <li class="item {% if item.content_dir == '' %}not-available{% endif %}">
-        <a href="{{ item.content_dir }}/">
-            <div class="thumbnail"><img src="{{media_url}}"></div>
-            <span>{{ item.title }}</span>
-            <span>({{ item.type }})</span>
-        </a>
-    </li>
-    {% endfor %}
-    {% else %}
-    <li class="item disabled">
-        <a>
-            <div class="thumbnail"><img src="{{url_for('static', filename='icons/folder-24px.svg')}}"></div>
-            <span>This folder is empty.</span>
-        </a>
-    </li>
-    {% endif %}
-</ul>
-
+        {% if item.type == 'folder' %}
+        {% set media_url = url_for('static', filename='icons/folder-24px.svg') %}
+        {% else %}
+        {% set media_url = url_for('static', filename='icons/description-24px.svg') %}
+        {% endif %}
+        <li class="item">
+            <a href="{{ item.content_dir }}/">
+                <div class="aspect-ratio-16x9 border-selection">
+                    <div class="inner-aspect-ratio">
+                        <img class="files-image" src="{{ media_url }}">
+                    </div>
+                </div>
+                <div class="meta">
+                    <span>{{ item.title }}</span>
+                    <span>({{ item.type }})</span>
+                </div>
+            </a>
+        </li>
+        {% endfor %}
+        {% else %}
+        <li class="item disabled">
+            <a>
+                <div class="aspect-ratio-16x9 border-selection">
+                    <div class="inner-aspect-ratio">
+                        <img class="files-image" src="{{ url_for('static', filename='icons/folder-24px.svg') }}">
+                    </div>
+                </div>
+                <div class="meta">
+                    <span>This folder is empty.</span>
+                </div>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</section>
 {% endblock %}

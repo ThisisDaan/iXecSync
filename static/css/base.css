@@ -96,13 +96,13 @@ body {
     font-style: italic;
 }
 
-html,
+
 body {
     outline: none;
     font-family: 'Roboto';
     margin: 0px;
     padding: 0px;
     color: #fff;
-    background-color: #18191c;
     user-select: none;
+    background-color: #18191c;
 }

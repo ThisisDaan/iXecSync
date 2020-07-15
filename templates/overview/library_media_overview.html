@@ -21,17 +21,21 @@
         <span class="overview-text">{{ meta.overview }}</span>
     </div>
 </section>
-<section class="overview-extra">
-    {% if not error %}
+
+<section class="container">
     {% include "overview/library_movie_play_buttons.html" %}
-    {% if season %}
-    {% include "overview/library_tvshow_season_overview.html" %}
-    {% endif %}
-    {% if episode %}
-    {% include "overview/library_tvshow_episode_overview.html" %}
-    {% endif %}
-    {% else %}
-    <span>{{ error }}</span>
-    {% endif %}
 </section>
+
+{% if season %}
+<section class="container">
+    {% include "overview/library_tvshow_season_overview.html" %}
+</section>
+{% endif %}
+
+{% if episode %}
+<section class="container">
+    {% include "overview/library_tvshow_episode_overview.html" %}
+</section>
+{% endif %}
+
 {% endblock %}

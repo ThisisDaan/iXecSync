@@ -1,13 +1,18 @@
 <h2>Season {{season_number}}</h2>
-<ul class="media hd-size">
-    {% for item in episode %}
-    {% set tmdb_link = "https://www.themoviedb.org/tv/" + item.show_id + "/season/" + item.season_number + "/episode/" + item.episode_number %}
-    <a href="{% if item.available %} {{item.episode_number}}/play{% else %} {{ tmdb_link }} {% endif %}">
-        <li class="item{% if not item.available %} not-available{% endif %}">
-            <div class="thumbnail"><img src="https://image.tmdb.org/t/p/w500{{item.still_path}}" />
+<ul class="media hd">
+    {% for episode in episode %}
+    {% set tmdb_link = "https://www.themoviedb.org/tv/" + episode.show_id + "/season/" + episode.season_number + "/episode/" + episode.episode_number %}
+    <a href="{% if episode.available %}{{episode.episode_number}}/play{% else %} {{ tmdb_link }} {% endif %}">
+        <li class="item{% if not episode.available %} not-available{% endif %}">
+            <div class="aspect-ratio-16x9 border-selection">
+                <div class="inner-aspect-ratio">
+                    <img src="/thumbnail{{ episode.still_path }}">
+                </div>
             </div>
-            <span>Episode {{item.episode_number}}</span>
-            <span>{{ item.name }}</span>
+            <div class="meta">
+                <span>Episode {{episode.episode_number}}</span>
+                <span>{{ episode.name }}</span>
+            </div>
         </li>
     </a>
     {% endfor %}

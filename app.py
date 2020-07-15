@@ -519,6 +519,7 @@ def library_files(path):
             file_browser.append(json)
     if path == "":
         goback = False
+        path = "Files"
     else:
         goback = True
 
@@ -528,6 +529,7 @@ def library_files(path):
         library=get_library_items(),
         media=file_browser,
         goback=goback,
+        current_dir=path,
     )
 
 

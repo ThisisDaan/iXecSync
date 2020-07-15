@@ -8,17 +8,23 @@
 {% endif %}
 
 {% if media %}
-<ul id="media" class="media center-content poster-size">
+<ul id="media" class="media">
     {% for item in media %}
 
     {% set media_url = "/library/" + item.library_name.lower() + "/" + item.id + "/" %}
     {% set thumbnail_src =  "/thumbnail" + item.poster_path %}
 
-    <li class="item{% if item.content_dir == '' %} not-available{% endif %}">
+    <li class="item">
         <a href="{{ media_url }}">
-            <div class="thumbnail"><img src="{{ thumbnail_src }}"></div>
-            <span>{{ item.title }}</span>
-            <span>({{ item.release_date[:4] }})</span>
+            <div class="aspect-ratio-9x16 border-selection">
+                <div class="inner-aspect-ratio">
+                    <img src="{{ thumbnail_src }}">
+                </div>
+            </div>
+            <div class="meta">
+                <span>{{ item.title }}</span>
+                <span>({{ item.release_date[:4] }})</span>
+            </div>
         </a>
     </li>
     {% endfor %}

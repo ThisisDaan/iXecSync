@@ -1,4 +1,4 @@
-<ul class="media">
+<ul class="media buttons">
     {% if movie %}
     <li class="item">
         <a href="play">
@@ -12,6 +12,8 @@
         </a>
     </li>
     {% endif %}
+
+
     {% if meta.video %}
     <li class="item">
         <a href="/library/{{ meta.library_name }}/{{ meta.id }}/trailer/">
