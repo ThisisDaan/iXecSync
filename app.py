@@ -240,7 +240,27 @@ def library_content(library_name):
     )
 
 
-@app.route("/library/<string:library_name>/<string:video_id>/")
+@app.route("/library/<string:library_name>/<string:genre>/", methods=["POST", "GET"])
+def library_media_genre(library_name, genre):
+    sortby = request.form.get("sortby")
+
+    if sortby is None:
+        sortby = "popularity DESC"
+
+    files = tmdb.get_media_by_genre(library_name, genre, sortby)
+
+    return render_template(
+        "library_media.html",
+        selected=library_name,
+        library=get_library_items(),
+        media=files,
+        goback=True,
+        sortby_selection=sortby,
+        media_filters=True,
+    )
+
+
+@app.route("/library/<string:library_name>/<int:video_id>/")
 def library_media_overview(library_name, video_id):
 
     meta = tmdb.get_meta(library_name, video_id)
@@ -266,7 +286,7 @@ def library_media_overview(library_name, video_id):
         )
 
 
-@app.route("/library/<string:library_name>/<string:video_id>/<int:season_number>/")
+@app.route("/library/<string:library_name>/<int:video_id>/<int:season_number>/")
 def library_media_overview_season(library_name, video_id, season_number):
 
     meta = tmdb.get_meta(library_name, video_id)
@@ -284,7 +304,7 @@ def library_media_overview_season(library_name, video_id, season_number):
 
 
 @app.route(
-    "/library/<string:library_name>/<string:video_id>/<int:season_number>/<int:episode_number>/"
+    "/library/<string:library_name>/<int:video_id>/<int:season_number>/<int:episode_number>/"
 )
 def library_media_overview_season_episode(
     library_name, video_id, season_number, episode_number
@@ -302,7 +322,7 @@ def library_media_overview_season_episode(
 
 
 @app.route(
-    "/library/<string:library_name>/<string:video_id>/<int:season_number>/<int:episode_number>/play"
+    "/library/<string:library_name>/<int:video_id>/<int:season_number>/<int:episode_number>/play"
 )
 def library_media_overview_season_episode_play(
     library_name, video_id, season_number, episode_number
@@ -333,7 +353,7 @@ def library_media_overview_season_episode_play(
         )
 
 
-@app.route("/library/<string:library_name>/<string:video_id>/play/")
+@app.route("/library/<string:library_name>/<int:video_id>/play/")
 def library_media_overview_play(library_name, video_id):
 
     data = tmdb.get_filename(video_id)
@@ -366,7 +386,7 @@ def library_media_overview_play(library_name, video_id):
 #
 
 
-@app.route("/video/<string:video_id>")
+@app.route("/video/<int:video_id>")
 def play_video(video_id):
 
     meta = tmdb.get_meta_by_id("movie", video_id)
@@ -387,7 +407,7 @@ def play_video(video_id):
     )
 
 
-@app.route("/player/get/<string:video_id>")
+@app.route("/player/get/<int:video_id>")
 def player_get_video(video_id):
     transcode = request.args.get("transcoding")
     transcode_time = request.args.get("time")
@@ -399,9 +419,8 @@ def player_get_video(video_id):
             )
         else:
             data = tmdb.get_filename(video_id)
-            directory = os.path.join(data["library_path"], data["content_dir"])
             return send_from_directory(
-                directory=directory, filename=data["content_file"]
+                directory=data["path"], filename=data["filename"]
             )
     except KeyError:
         return abort(404)
@@ -412,7 +431,7 @@ def player_get_video(video_id):
 #
 
 
-@app.route("/video/<string:video_id>/<int:season_number>/<int:episode_number>")
+@app.route("/video/<int:video_id>/<int:season_number>/<int:episode_number>")
 def play_episode(video_id, season_number, episode_number):
 
     meta = tmdb.get_meta_by_id("tvshow", video_id)
@@ -433,7 +452,7 @@ def play_episode(video_id, season_number, episode_number):
     )
 
 
-@app.route("/player/get/<string:video_id>/<int:season_number>/<int:episode_number>")
+@app.route("/player/get/<int:video_id>/<int:season_number>/<int:episode_number>")
 def player_get_episode(video_id, season_number, episode_number):
     transcode = request.args.get("transcoding")
     transcode_time = request.args.get("time")
@@ -446,11 +465,8 @@ def player_get_episode(video_id, season_number, episode_number):
             )
         else:
             data = tmdb.get_filename_episode(video_id, season_number, episode_number)
-            directory = os.path.join(
-                data["library_path"], data["content_dir"], f"Season {season_number}"
-            )
             return send_from_directory(
-                directory=directory, filename=data["content_file"]
+                directory=data["path"], filename=data["filename"]
             )
     except KeyError:
         return abort(404)
@@ -482,7 +498,7 @@ def search_query():
 @app.route("/files/<path:path>")
 def library_files(path):
 
-    directory = Path(folder_location + path)
+    directory = Path(folder_location, path)
 
     file_browser = []
     for item in directory.iterdir():
@@ -578,7 +594,7 @@ def scanning_tmdb():
     return redirect("/", code=303)
 
 
-@app.route("/library/<string:library_name>/<string:video_id>/trailer/")
+@app.route("/library/<string:library_name>/<int:video_id>/trailer/")
 def movie_trailer(library_name, video_id):
     trailer = tmdb.get_trailer(library_name, video_id)
     return render_template(
@@ -628,23 +644,16 @@ def video(session_id):
         return abort(404)
 
 
-@app.route("/thumbnail/<string:title>")
-def get_thumbnail(title):
-    file = Path(tmdb.get_thumbnail_path() + title)
+@app.route("/thumbnail/<string:poster_path>")
+def get_thumbnail(poster_path):
+    file = Path(tmdb.get_thumbnail_path(), poster_path)
 
     if file.exists():
-        return send_from_directory(directory=tmdb.get_thumbnail_path(), filename=title,)
-    else:
-        default_icon = os.path.join(
-            os.path.dirname(os.path.realpath(__file__))
-            + os.sep
-            + "static"
-            + os.sep
-            + "icons"
-        )
         return send_from_directory(
-            directory=default_icon, filename="movie_creation-24px.svg",
+            directory=tmdb.get_thumbnail_path(), filename=poster_path,
         )
+    else:
+        return redirect(f"https://image.tmdb.org/t/p/w500/{poster_path}")
 
 
 def srtToVtt(srt_path):

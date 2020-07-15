@@ -10,22 +10,12 @@
 {% if media %}
 <ul id="media" class="media center-content poster-size">
     {% for item in media %}
-    {% if item.library_name %}
-    {% set media_url = item.library_name + "/" + item.id + "/" %}
-    {% elif item.content_dir %}
-    {% set media_url = item.id + "/" %}
-    {% else %}
-    {% set media_url = "https://www.themoviedb.org/movie/" + item.id|string %}
-    {% endif %}
 
-    {% if item.content_dir %}
-    {% set thumbnail_src =  "/thumbnail/" +item.content_dir + ".jpg" %}
-    {% else %}
-    {% set thumbnail_src =  "https://image.tmdb.org/t/p/w500" +item.poster_path %}
-    {% endif %}
+    {% set media_url = "/library/" + item.library_name.lower() + "/" + item.id + "/" %}
+    {% set thumbnail_src =  "/thumbnail" + item.poster_path %}
 
     <li class="item{% if item.content_dir == '' %} not-available{% endif %}">
-        <a href="{{media_url}}">
+        <a href="{{ media_url }}">
             <div class="thumbnail"><img src="{{ thumbnail_src }}"></div>
             <span>{{ item.title }}</span>
             <span>({{ item.release_date[:4] }})</span>

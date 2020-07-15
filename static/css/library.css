@@ -85,10 +85,6 @@
     pointer-events: all;
 }
 
-.library li:first-child .item {
-    margin-left: 0px;
-}
-
 .library .item span {
     margin-left: 10px;
 }
@@ -142,7 +138,6 @@
     flex-direction: column;
 }
 
-
 .icon-movie::before {
     -webkit-mask-image: url(../icons/movie_creation-24px.svg);
     mask-image: url(../icons/movie_creation-24px.svg);
@@ -181,6 +176,11 @@
 .icon-back::before {
     -webkit-mask-image: url(../icons/arrow_back-24px.svg);
     mask-image: url(../icons/arrow_back-24px.svg);
+}
+
+.icon-menu::before {
+    -webkit-mask-image: url(../icons/menu-24px.svg);
+    mask-image: url(../icons/menu-24px.svg);
 }
 
 .center-content {
@@ -295,12 +295,22 @@
     margin-bottom: var(--margin);
 }
 
+.video-title {
+    margin-left: 25px;
+    font-size: 25px;
+    width: calc(100vw - 150px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .overview .poster {
     height: 375px;
     width: 250px;
     border-radius: calc(var(--border_radius) * 2);
     border: 5px solid transparent;
     pointer-events: none;
+    object-fit: cover;
 }
 
 .overview-side {
@@ -485,4 +495,78 @@
     border-radius: 5px;
     font-size: 14px;
     font-weight: 500;
+}
+
+.genre:hover {
+    color: var(--theme-color);
+}
+
+.mobile ul {
+    display: inherit;
+}
+
+@media (max-width:768px) {
+    .library {
+        justify-content: space-between;
+    }
+
+    .library .back-button {
+        order: 1;
+        display: inline-flex;
+    }
+
+    .library .logo {
+        order: 2;
+        display: inline-flex;
+    }
+
+    .library .menu-button {
+        order: 3;
+        display: inline-flex;
+    }
+
+    .library li {
+        order: 5;
+    }
+
+    .mobile {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 75px;
+        left: 0;
+        z-index: 99;
+        background-color: rgba(0, 0, 0, 0.9);
+        width: 100vw;
+        max-height: calc(100vh - 75px);
+        overflow: scroll;
+    }
+
+    .library .mobile.active {
+        display: block;
+    }
+
+    .library .mobile {
+        display: none;
+    }
+
+    .mobile ul {
+        display: block;
+        min-height: 100vh;
+    }
+
+    .mobile ul li {
+        height: 90px;
+    }
+
+    .mobile ul li a {
+        width: 100%;
+    }
+
+}
+
+@media (min-width:769px) {
+    .library .menu-button {
+        display: none;
+    }
 }

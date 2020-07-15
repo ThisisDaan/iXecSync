@@ -16,11 +16,8 @@ class database_manager:
             """CREATE TABLE IF NOT EXISTS file (
                 c_id INTEGER PRIMARY KEY,
                 id TEXT,
-                library_name TEXT,
-                library_path TEXT,
-                content_type TEXT,
-                content_dir TEXT,
-                content_file TEXT
+                path TEXT,
+                filename TEXT
                 );"""
         )
 
@@ -28,39 +25,38 @@ class database_manager:
             """CREATE TABLE IF NOT EXISTS movie (
                 id TEXT PRIMARY KEY,
                 library_name TEXT,
-                content_dir TEXT UNIQUE,
-                poster_path TEXT,
-                adult TEXT,
+                title TEXT,
                 overview TEXT,
                 release_date TEXT,
+                poster_path TEXT,
+                backdrop_path TEXT,
                 genre_ids TEXT,
                 original_title TEXT,
                 original_language TEXT,
-                title TEXT,
-                backdrop_path TEXT,
+                adult TEXT,
                 popularity INTEGER,
                 vote_count INTEGER,
-                video TEXT,
-                vote_average INTEGER
+                vote_average INTEGER,
+                video TEXT
                 );"""
         )
         self.sql_create_table(
             """CREATE TABLE IF NOT EXISTS tvshow (
                 id TEXT PRIMARY KEY,
                 library_name TEXT,
-                content_dir TEXT UNIQUE,
-                poster_path TEXT,
-                popularity INTEGER,
-                backdrop_path TEXT,
-                vote_average INTEGER,
+                name TEXT,
                 overview TEXT,
                 first_air_date TEXT,
+                original_name TEXT,
+                poster_path TEXT,
+                backdrop_path TEXT,
                 origin_country TEXT,
-                genre_ids TEXT,
                 original_language TEXT,
+                genre_ids TEXT,
+                popularity INTEGER,
+                vote_average INTEGER,
                 vote_count INTEGER,
-                name TEXT,
-                original_name TEXT
+                video
                 );"""
         )
 
@@ -68,12 +64,11 @@ class database_manager:
             """CREATE TABLE IF NOT EXISTS tvshow_season (
                 id TEXT PRIMARY KEY,
                 show_id TEXT,
-                content_dir TEXT,
-                air_date TEXT,
                 name TEXT,
+                season_number TEXT,
+                air_date TEXT,
                 overview TEXT,
                 poster_path TEXT,
-                season_number TEXT,
                 _id TEXT
                 );"""
         )
@@ -82,25 +77,17 @@ class database_manager:
             """CREATE TABLE IF NOT EXISTS tvshow_episode (
                 id TEXT PRIMARY KEY,
                 show_id TEXT,
-                content_dir TEXT,
+                name TEXT,
+                season_number TEXT,
+                episode_number TEXT,
+                overview TEXT,
                 air_date TEXT,
                 crew TEXT,
-                episode_number TEXT,
                 guest_stars TEXT,
-                name TEXT,
-                overview TEXT,
                 production_code TEXT,
-                season_number TEXT,
                 still_path TEXT,
                 vote_average INTEGER,
                 vote_count INTEGER
-                );"""
-        )
-
-        self.sql_create_table(
-            """CREATE TABLE IF NOT EXISTS genre (
-                id TEXT PRIMARY KEY,
-                name TEXT
                 );"""
         )
 
@@ -112,14 +99,15 @@ class database_manager:
         except Exception as e:
             print(f"SQL_CREATE_TABLE ERROR: {e}")
 
-    def not_exists(self, content_dir, library_type):
-        sql_query = f"""SELECT content_dir FROM {library_type} WHERE content_dir COLLATE NOCASE = "{content_dir}" COLLATE NOCASE"""
+    def not_exists(self, directory, filename):
+        sql_query = f"""SELECT * FROM file WHERE path = "{directory}" COLLATE NOCASE AND filename = "{filename}" """
         # print(sql_query)
         cur = self.connection.cursor()
 
         cur.execute(sql_query)
         sql_result = cur.fetchall()
         cur.close()
+
         if sql_result:
             return False
         else:
