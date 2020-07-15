@@ -114,8 +114,15 @@ def new_scan_library_tvshow(library):
 
             match = re.findall(r"S[0-9][0-9]E[0-9][0-9]", file.name)
             if match:
-                season_number = match[0][2]
-                episode_number = match[0][-1]
+                if match[0][1] == 0:
+                    season_number = match[0][2]
+                else:
+                    season_number = match[0][1:3]
+
+                if match[0][-2] == 0:
+                    episode_number = match[0][-1]
+                else:
+                    episode_number = match[0][-2:]
 
             episode = {
                 "season_number": season_number,
@@ -176,55 +183,55 @@ def new_scan_library_tvshow(library):
             else:
                 print(f"No poster - {file.name}")
 
-        for season in collected_files[tvshow]:
+            for season in collected_files[tvshow]:
 
-            tv_id = tmdb_data["id"]
-            season_number = season
+                tv_id = tmdb_data["id"]
+                season_number = season
 
-            api_url = f"https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}?api_key={config['TMDB_API_KEY']}"
+                api_url = f"https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}?api_key={config['TMDB_API_KEY']}"
 
-            headers = {"Accept": "application/json"}
-            response = requests.get(api_url, headers=headers)
-            print(f"Connecting to TMDB - {response.url}")
-            decoded_response = response.content.decode("utf-8")
-            json_response = json.loads(decoded_response)
+                headers = {"Accept": "application/json"}
+                response = requests.get(api_url, headers=headers)
+                print(f"Connecting to TMDB - {response.url}")
+                decoded_response = response.content.decode("utf-8")
+                json_response = json.loads(decoded_response)
 
-            if response.status_code == 200:
-                tvshow_episodes = dict(json_response)
-                tvshow_season = dict(json_response)
+                if response.status_code == 200:
+                    tvshow_episodes = dict(json_response)
+                    tvshow_season = dict(json_response)
 
-                del tvshow_season["episodes"]
-                tvshow_season["show_id"] = tmdb_data["id"]
-                print(f"Adding {name} Season {tvshow_season['season_number']}")
-                db.sql_update_by_json("tvshow_season", tvshow_season)
+                    del tvshow_season["episodes"]
+                    tvshow_season["show_id"] = tmdb_data["id"]
+                    print(f"Adding {name} Season {tvshow_season['season_number']}")
+                    db.sql_update_by_json("tvshow_season", tvshow_season)
 
-            else:
-                print(f"Error status code: {response.status_code}")
+                else:
+                    print(f"Error status code: {response.status_code}")
 
-            for episode in collected_files[tvshow][season]:
+                for episode in collected_files[tvshow][season]:
 
-                # Adding episodes to database
+                    # Adding episodes to database
 
-                for tmdb_episode in tvshow_episodes["episodes"]:
-                    tmdb_episode["show_id"] = tmdb_data["id"]
-                    print(
-                        f"Adding S{tmdb_episode['season_number']}E{tmdb_episode['episode_number']}"
-                    )
-                    print("=" * 80)
-                    db.sql_update_by_json("tvshow_episode", tmdb_episode)
+                    for tmdb_episode in tvshow_episodes["episodes"]:
+                        tmdb_episode["show_id"] = tmdb_data["id"]
+                        print(
+                            f"Adding S{tmdb_episode['season_number']}E{tmdb_episode['episode_number']}"
+                        )
+                        print("=" * 80)
+                        db.sql_update_by_json("tvshow_episode", tmdb_episode)
 
-                    if str(tmdb_episode["episode_number"]) == str(
-                        episode["episode_number"]
-                    ):
-                        file_data = {
-                            "id": tmdb_episode["id"],
-                            "path": episode["path"],
-                            "filename": episode["filename"],
-                        }
+                        if str(tmdb_episode["episode_number"]) == str(
+                            episode["episode_number"]
+                        ):
+                            file_data = {
+                                "id": tmdb_episode["id"],
+                                "path": episode["path"],
+                                "filename": episode["filename"],
+                            }
 
-                        # Writing file to database
-                        db.sql_update_by_json("file", file_data)
-                        print(f"Saving file to DB - {file.name}")
+                            # Writing file to database
+                            db.sql_update_by_json("file", file_data)
+                            print(f"Saving file to DB - {file.name}")
 
     db.connection.close()
 
