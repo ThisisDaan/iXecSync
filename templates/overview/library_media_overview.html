@@ -23,9 +23,7 @@
 </section>
 <section class="overview-extra">
     {% if not error %}
-    {% if movie %}
     {% include "overview/library_movie_play_buttons.html" %}
-    {% endif %}
     {% if season %}
     {% include "overview/library_tvshow_season_overview.html" %}
     {% endif %}

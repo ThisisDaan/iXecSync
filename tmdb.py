@@ -115,9 +115,10 @@ def new_scan_library_tvshow(library):
             match = re.findall(r"S[0-9][0-9]E[0-9][0-9]", file.name)
             if match:
                 season_number = match[0][2]
-                episode_number = match[-1]
+                episode_number = match[0][-1]
 
             episode = {
+                "season_number": season_number,
                 "episode_number": episode_number,
                 "path": str(file.parent),
                 "filename": str(file.name),
@@ -197,26 +198,33 @@ def new_scan_library_tvshow(library):
                 print(f"Adding {name} Season {tvshow_season['season_number']}")
                 db.sql_update_by_json("tvshow_season", tvshow_season)
 
-                # Adding episodes to database
-                for episode in tvshow_episodes["episodes"]:
-                    episode["show_id"] = tmdb_data["id"]
-                    print(
-                        f"Adding s{episode['season_number']}e{episode['episode_number']}"
-                    )
-                    db.sql_update_by_json("tvshow_episode", episode)
             else:
                 print(f"Error status code: {response.status_code}")
 
             for episode in collected_files[tvshow][season]:
-                file_data = {
-                    "id": tmdb_data["id"],
-                    "path": episode["path"],
-                    "filename": episode["filename"],
-                }
 
-                # Writing file to database
-                db.sql_update_by_json("file", file_data)
-                print(f"Saving file to DB - {file.name}")
+                # Adding episodes to database
+
+                for tmdb_episode in tvshow_episodes["episodes"]:
+                    tmdb_episode["show_id"] = tmdb_data["id"]
+                    print(
+                        f"Adding S{tmdb_episode['season_number']}E{tmdb_episode['episode_number']}"
+                    )
+                    print("=" * 80)
+                    db.sql_update_by_json("tvshow_episode", tmdb_episode)
+
+                    if str(tmdb_episode["episode_number"]) == str(
+                        episode["episode_number"]
+                    ):
+                        file_data = {
+                            "id": tmdb_episode["id"],
+                            "path": episode["path"],
+                            "filename": episode["filename"],
+                        }
+
+                        # Writing file to database
+                        db.sql_update_by_json("file", file_data)
+                        print(f"Saving file to DB - {file.name}")
 
     db.connection.close()
 
@@ -577,12 +585,21 @@ def get_meta_season_episode(video_id, season_number, episode_number):
 def get_episodes(video_id, season_number):
     db = dbm.database_manager()
 
-    sql_query = f"""SELECT name,overview,episode_number,still_path FROM tvshow_episode WHERE show_id = "{video_id}" AND season_number = "{season_number}" COLLATE nocase"""
-    sql_data = db.sql_execute(sql_query)
+    # sql_query = f"""SELECT name,overview,episode_number,still_path FROM tvshow_episode WHERE show_id = "{video_id}" AND season_number = "{season_number}" COLLATE nocase"""
+    sql_query = f"""SELECT name,overview,episode_number,still_path,id,show_id,season_number FROM tvshow_episode WHERE show_id = "{video_id}" AND season_number = "{season_number}" COLLATE nocase AND id IN (SELECT id FROM file)"""
+    local_episodes = db.sql_execute(sql_query)
 
+    sql_query = f"""SELECT name,overview,episode_number,still_path,id,show_id,season_number FROM tvshow_episode WHERE show_id = "{video_id}" AND season_number = "{season_number}";"""
+    total_episodes = db.sql_execute(sql_query)
     db.connection.close()
 
-    return sql_data
+    for episode in total_episodes:
+        if episode in local_episodes:
+            episode["available"] = True
+        else:
+            episode["available"] = False
+
+    return total_episodes
 
 
 def get_episodes_info(content_dir, season_number, episode_number):
@@ -617,9 +634,9 @@ def get_meta(library_name, video_id):
 
     content_type = library_content_type(library_name)
     if content_type == "movie":
-        sql_query = f"""SELECT title,substr(release_date, 1, 4) as release_date,overview,vote_average,video,poster_path,genre_ids,library_name FROM movie WHERE id="{video_id}" COLLATE NOCASE"""
+        sql_query = f"""SELECT title,substr(release_date, 1, 4) as release_date,overview,vote_average,video,poster_path,genre_ids,library_name,id FROM movie WHERE id="{video_id}" COLLATE NOCASE"""
     elif content_type == "tvshow":
-        sql_query = f"""SELECT name as title,substr(first_air_date, 1, 4) as release_date,overview,vote_average,video,poster_path,genre_ids,library_name FROM tvshow WHERE id="{video_id}" COLLATE NOCASE """
+        sql_query = f"""SELECT name as title,substr(first_air_date, 1, 4) as release_date,overview,vote_average,video,poster_path,genre_ids,library_name,id FROM tvshow WHERE id="{video_id}" COLLATE NOCASE """
     else:
         return None
 
@@ -657,7 +674,8 @@ def get_path(video_id):
 
 def get_filename_episode(video_id, season_number, episode_number):
     db = dbm.database_manager()
-    sql_query = f"""SELECT path,filename from file WHERE id="{video_id}" AND filename LIKE "%S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}%" COLLATE NOCASE;"""
+    # sql_query = f"""SELECT path,filename from file WHERE id="{video_id}" AND filename LIKE "%S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}%" COLLATE NOCASE;"""
+    sql_query = f"""SELECT path,filename from file WHERE id=(SELECT id FROM tvshow_episode WHERE show_id= "{video_id}" AND season_number = "{season_number}" AND episode_number = "{episode_number}")"""
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
 
@@ -693,8 +711,15 @@ def get_video_id(library_name, content_dir):
 
 
 def get_trailer(library_name, video_id):
+
     db = dbm.database_manager()
-    sql_query = f"""SELECT title,video from movie WHERE id="{video_id}" COLLATE NOCASE limit 1;"""
+
+    content_type = library_content_type(library_name)
+    if content_type == "movie":
+        sql_query = f"""SELECT title,video from movie WHERE id="{video_id}" COLLATE NOCASE limit 1;"""
+    elif content_type == "tvshow":
+        sql_query = f"""SELECT name as title,video from tvshow   WHERE id="{video_id}" COLLATE NOCASE limit 1;"""
+
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
 

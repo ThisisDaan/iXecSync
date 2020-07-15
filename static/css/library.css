@@ -227,6 +227,10 @@
     border: 5px solid var(--theme-color);
 }
 
+.media .item.not-available:hover img {
+    border: 5px solid #01b4e4;
+}
+
 .media .item span {
     display: block;
     text-overflow: ellipsis;
@@ -409,7 +413,7 @@
 }
 
 .media.hd-size {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, 280px);
 }
 
 .media.poster-size {
@@ -439,7 +443,8 @@
 .overview-extra h2 {
     font-size: 25px;
     font-weight: 500;
-    margin-bottom: 25px;
+    margin-bottom: var(--margin);
+    margin-top: var(--margin);
 }
 
 .disabled {
