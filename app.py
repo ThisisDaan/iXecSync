@@ -632,9 +632,21 @@ def video(session_id):
     transcode_time = request.args.get("time")
     try:
         if transcode == "1":
-            return acid_transcode.ffmpeg_transcode(
+            m3u8fullpath = acid_transcode.ffmpeg_transcode(
                 session_storage[session_id]["path"], start=int(transcode_time)
             )
+            if m3u8fullpath:
+                session_storage[session_id]["m3u8fullpath"] = m3u8fullpath
+                return send_from_directory(
+                    directory=os.path.dirname(m3u8fullpath),
+                    filename=os.path.basename(m3u8fullpath),
+                )
+            else:
+                m3u8fullpath = session_storage[session_id]["m3u8fullpath"]
+                return send_from_directory(
+                    directory=os.path.dirname(m3u8fullpath),
+                    filename=os.path.basename(m3u8fullpath),
+                )
         else:
             return send_from_directory(
                 directory=session_storage[session_id]["directory"],
