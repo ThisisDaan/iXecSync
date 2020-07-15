@@ -1,5 +1,9 @@
 :root {
     --theme-color: #52b54b;
+    --theme-color-rgb: rgb(82, 181, 75);
+    --theme-color-value-hover: rgba(82, 181, 75, 1);
+    --theme-color-value-hover-light: rgba(82, 181, 75, 0.5);
+    --theme-color-value: rgb(82, 181, 75, 0.8);
     --header-height: 80px;
 }
 

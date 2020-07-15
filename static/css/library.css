@@ -336,26 +336,35 @@
     line-height: 20px;
 }
 
-.button.theme {
-    background-color: var(--theme-color);
-    border: var(--theme-color) 2px solid;
-}
-
-.button.optional {
-    border: var(--theme-color) 2px solid;
-}
-
 .button {
     height: 50px;
     width: 100%;
     border-radius: var(--border_radius);
     background-color: transparent;
-    border: var(--theme-color) 2px solid;
+    border: var(--theme-color-value) 2px solid;
     color: #fefefe;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     outline: none;
+}
+
+.button.theme {
+    background-color: var(--theme-color-value);
+    border: var(--theme-color-value) 2px solid;
+}
+
+.button.theme:hover {
+    background-color: var(--theme-color-value-hover);
+    border: var(--theme-color-value-hover) 2px solid;
+}
+
+.button.optional {
+    border: var(--theme-color-value) 2px solid;
+}
+
+.button.optional:hover {
+    border: var(--theme-color-value-hover) 2px solid;
 }
 
 .overview-side h1 {

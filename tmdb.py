@@ -114,13 +114,15 @@ def new_scan_library_tvshow(library):
 
             match = re.findall(r"S[0-9][0-9]E[0-9][0-9]", file.name)
             if match:
-                if match[0][1] == 0:
+                if match[0][1] == "0":
                     season_number = match[0][2]
+                    print(season_number)
                 else:
                     season_number = match[0][1:3]
 
-                if match[0][-2] == 0:
+                if match[0][-2] == "0":
                     episode_number = match[0][-1]
+                    print(episode_number)
                 else:
                     episode_number = match[0][-2:]
 
