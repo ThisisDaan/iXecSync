@@ -7,7 +7,7 @@
     <div class="overview-side">
         <h1>{{ meta.title }}</h1>
         <div class="subtext">
-            <span>{{ meta.release_date }}</span>
+            <span>{{ meta.release_date[:4] }}</span>
             <span class="rating">{{ meta.vote_average }}</span>
             {% if meta.genre_ids %}
             {% set genres = meta.genre_ids.split(',') %}

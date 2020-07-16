@@ -7,27 +7,38 @@
 {% include "library_media_filters.html" %}
 {% endif %}
 
-{% if media %}
-<ul id="media" class="media">
-    {% for item in media %}
+{% if home %}
+<section class="container">
+    <h2>Popular Movies</h2>
+    {% endif %}
+    {% if media %}
+    <ul class="media">
+        {% for item in media %}
 
-    {% set media_url = "/library/" + item.library_name.lower() + "/" + item.id + "/" %}
-    {% set thumbnail_src =  "/thumbnail" + item.poster_path %}
+        {% if item.notavailable %}
+        {% set media_url = "https://www.themoviedb.org/movie/" + item.id|string %}
+        {% else %}
+        {% set media_url = "/library/" + item.library_name.lower() + "/" + item.id|string + "/" %}
+        {% endif %}
 
-    <li class="item">
-        <a href="{{ media_url }}">
-            <div class="aspect-ratio-9x16 border-selection">
-                <div class="inner-aspect-ratio">
-                    <img src="{{ thumbnail_src }}">
+        {% set thumbnail_src =  "/thumbnail" + item.poster_path %}
+        <li class="item{% if item.notavailable %} not-available{% endif %}">
+            <a href="{{ media_url }}">
+                <div class="aspect-ratio-9x16 border-selection">
+                    <div class="inner-aspect-ratio">
+                        <img src="{{ thumbnail_src }}">
+                    </div>
                 </div>
-            </div>
-            <div class="meta">
-                <span>{{ item.title }}</span>
-                <span>({{ item.release_date[:4] }})</span>
-            </div>
-        </a>
-    </li>
-    {% endfor %}
-</ul>
+                <div class="meta">
+                    <span>{{ item.title }}</span>
+                    <span>({{ item.release_date[:4] }})</span>
+                </div>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% if home %}
+</section>
 {% endif %}
 {% endblock %}

@@ -208,7 +208,7 @@ def get_library_items():
 @app.route("/library/")
 def library_home():
 
-    files = ""
+    files = tmdb.get_popular_movies()
 
     return render_template(
         "library_media.html",
@@ -216,6 +216,7 @@ def library_home():
         library=get_library_items(),
         media=files,
         goback=False,
+        home=True,
     )
 
 
