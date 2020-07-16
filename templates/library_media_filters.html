@@ -26,6 +26,23 @@
                 </select>
             </form>
         </li>
+        <li class="sort-filter">
+            <form method="post">
+                <select name="genre" onchange="document.location = this.value" value="GO">
+                    <option value="/library/{{ meta.library_name.lower() }}/" {% if filter_genre=='all' %}
+                        selected="selected" {% endif %}>
+                        All
+                    </option>
+                    {% for genre in genres %}
+                    <option value="/library/{{ meta.library_name.lower() }}/{{ genre.name.lower().replace(' ', '_')}}/"
+                        {% if filter_genre == genre.name.lower().replace(' ', '_') %} selected="selected" {% endif %}>
+                        {{ genre.name }}
+                        {{filter}}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </li>
 
         <li class="search-filter">
             <input id='search' type=search onkeyup="search()" placeholder="Search...">

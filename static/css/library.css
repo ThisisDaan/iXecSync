@@ -7,6 +7,7 @@
     text-decoration: none;
     list-style-type: none;
     outline: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 :root {
@@ -62,6 +63,7 @@
     flex-direction: row;
     flex-wrap: wrap;
     height: 100%;
+    overflow: none;
 }
 
 .library li {
@@ -423,6 +425,7 @@
 
 .media-filters input::placeholder,
 .media-filters input,
+.media-filters select option,
 .media-filters select {
     width: 100%;
     color: #fff;
@@ -444,6 +447,8 @@
 .library .menu-button {
     display: none;
 }
+
+@media only screen {}
 
 @media (max-width: 600px) {
     .library {
@@ -583,6 +588,7 @@
     border-radius: var(--margin);
     overflow: hidden;
 }
+
 
 .border-selection:hover {
     border: 5px var(--theme-color-value-hover) solid;

@@ -229,6 +229,7 @@ def library_content(library_name):
         sortby = "popularity DESC"
 
     files = tmdb.get_library(library_name, sortby)
+    genres = tmdb.get_genre_list(library_name)
 
     return render_template(
         "library_media.html",
@@ -236,8 +237,10 @@ def library_content(library_name):
         library=get_library_items(),
         media=files,
         goback=False,
+        meta={"library_name": library_name},
         sortby_selection=sortby,
         media_filters=True,
+        genres=genres,
     )
 
 
@@ -249,6 +252,10 @@ def library_media_genre(library_name, genre):
         sortby = "popularity DESC"
 
     files = tmdb.get_media_by_genre(library_name, genre, sortby)
+    genres = tmdb.get_genre_list(library_name)
+    print(genres)
+
+    print(genre)
 
     return render_template(
         "library_media.html",
@@ -258,6 +265,9 @@ def library_media_genre(library_name, genre):
         goback=True,
         sortby_selection=sortby,
         media_filters=True,
+        meta={"library_name": library_name},
+        filter_genre=genre,
+        genres=genres,
     )
 
 
@@ -495,43 +505,99 @@ def search_query():
         )
 
 
-@app.route("/files/", defaults={"path": ""})
-@app.route("/files/<path:path>")
-def library_files(path):
-
-    directory = Path(folder_location, path)
-
+@app.route("/files/")
+@app.route("/files/<string:library_name>/")
+@app.route("/files/<string:library_name>/<path:path>")
+def library_files(path="", library_name=None):
     file_browser = []
-    for item in directory.iterdir():
-        if item.is_file():
-            json = {
-                "title": item.name,
-                "content_dir": item.name,
-                "type": "file",
-            }
-            file_browser.append(json)
+    library_items = get_library_items()
 
-        else:
-            json = {
-                "title": item.name,
-                "content_dir": item.name,
+    if library_name:
+
+        for library in library_items:
+            if library["name"] == library_name:
+                library_path = library["path"]
+
+        directory = Path(library_path, path)
+        for item in directory.iterdir():
+            if item.is_file():
+                json = {
+                    "title": item.name,
+                    "content_dir": item.name,
+                    "type": "file",
+                }
+                file_browser.append(json)
+
+            else:
+                json = {
+                    "title": item.name,
+                    "content_dir": item.name,
+                    "type": "folder",
+                }
+                file_browser.append(json)
+
+        return render_template(
+            "library_files.html",
+            selected="Files",
+            library=library_items,
+            media=file_browser,
+            goback=True,
+            current_dir=directory.name,
+        )
+
+    else:
+        for library in library_items:
+
+            json_data = {
+                "title": library["name"],
+                "content_dir": library["name"],
                 "type": "folder",
             }
-            file_browser.append(json)
-    if path == "":
-        goback = False
-        path = "Files"
-    else:
-        goback = True
+            file_browser.append(json_data)
 
-    return render_template(
-        "library_files.html",
-        selected="Files",
-        library=get_library_items(),
-        media=file_browser,
-        goback=goback,
-        current_dir=path,
-    )
+        return render_template(
+            "library_files.html",
+            selected="Files",
+            library=library_items,
+            media=file_browser,
+            goback=False,
+            current_dir="Files",
+        )
+
+    # directory = Path(folder_location, path)
+
+    # file_browser = []
+    # for item in directory.iterdir():
+    #     if item.is_file():
+    #         json = {
+    #             "title": item.name,
+    #             "content_dir": item.name,
+    #             "type": "file",
+    #         }
+    #         file_browser.append(json)
+
+    #     else:
+    #         json = {
+    #             "title": item.name,
+    #             "content_dir": item.name,
+    #             "type": "folder",
+    #         }
+    #         file_browser.append(json)
+
+    # if path == "":
+    #     goback = False
+    #     path = "Files"
+    # else:
+    #     goback = True
+
+    # return render_template(
+    #     "library_files.html",
+    #     selected="Files",
+    #     library=get_library_items(),
+    #     media=file_browser,
+    #     goback=goback,
+    #     current_dir=path,
+    # )
 
 
 # @app.route("/files/<string:name>.<string:extension>/", defaults={"path": ""})
