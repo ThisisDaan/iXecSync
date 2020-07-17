@@ -1,0 +1,80 @@
+{% if media_filters %}
+    <nav class="media-filters">
+        <ul>
+            {% if media_filters.sortby %}
+                <li class="sort-filter">
+                    <form method="post">
+                        <select name="sortby" onchange="this.form.submit()">
+                            <option value="popularity DESC" {% if media_filters.sortby.selected=='popularity DESC' %}
+                                selected="selected" {% endif %}>Popularity (High - Low)</option>
+                            <option value="popularity ASC" {% if media_filters.sortby.selected=='popularity ASC' %}
+                                selected="selected" {% endif %}>
+                                Popularity (Low - High)</option>
+                            <option value="vote_average DESC" {% if media_filters.sortby.selected=='vote_average DESC' %}
+                                selected="selected" {% endif %}>Rating (High - Low)</option>
+                            <option value="vote_average ASC" {% if media_filters.sortby.selected=='vote_average ASC' %}
+                                selected="selected" {% endif %}>Rating (Low - High)</option>
+                            <option value="release_date DESC" {% if media_filters.sortby.selected=='release_date DESC' %}
+                                selected="selected" {% endif %}>Release Date (New - Old)</option>
+                            <option value="release_date ASC" {% if media_filters.sortby.selected=='release_date ASC' %}
+                                selected="selected" {% endif %}>Release Date (Old - New)
+                            </option>
+                            <option value="title ASC" {% if media_filters.sortby.selected=='title ASC' %} selected="selected"
+                                {% endif %}>
+                                Title (A-Z)
+                            </option>
+                            <option value="title DESC" {% if media_filters.sortby.selected=='title DESC' %} selected="selected"
+                                {% endif %}>
+                                Title
+                                (Z-A)</option>
+                        </select>
+                    </form>
+                </li>
+            {% endif %}
+            {% if media_filters.genres %}
+                <li class="sort-filter">
+                    <form method="post">
+                        <select name="genre" onchange="document.location = this.value" value="GO">
+                            <option value="/library/{{ meta.library_name.lower() }}/"
+                                {% if media_filters.genres.selected=='all' %} selected="selected" {% endif %}>
+                                All
+                            </option>
+                            {% for genre in media_filters.genres.list %}
+                                {% set name = genre.name.lower() %}
+                                <option value="/library/{{ meta.library_name.lower() }}/{{name}}/"
+                                    {% if media_filters.genres.selected== name %} selected="selected" {% endif %}>
+                                    {{ genre.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </li>
+            {% endif %}
+            {% if media_filters.search %}
+                <li class="search-filter">
+                    <input id='search' type=search onkeyup="search()" placeholder="Search...">
+                </li>
+                <script>
+                    function search() {
+                        var input, filter, ul, li, a, i, txtValue;
+                        input = document.getElementById('search');
+                        filter = input.value.toUpperCase();
+                        ul = document.getElementById("media");
+                        li = ul.getElementsByTagName('li');
+
+                        // Loop through all list items, and hide those who don't match the search query
+                        for (i = 0; i < li.length; i++) {
+                            a = li[i].getElementsByTagName("span")[0];
+                            txtValue = a.textContent || a.innerText;
+                            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                                li[i].style.display = "";
+                            } else {
+                                li[i].style.display = "none";
+                            }
+                        }
+                    }
+                </script>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}

@@ -1,7 +1,7 @@
     <header id='header'>
         <ul class='library'>
             <li class="back-button">
-                <a href='{% if title %}javascript:window.history.back(){% else %}../{% endif %}'
+                <a href='javascript:window.history.back()'
                     class='item icon icon-back{% if goback == False %} disabled{% endif %}'></a>
             </li>
             {% if title %}

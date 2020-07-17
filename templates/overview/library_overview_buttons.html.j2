@@ -12,11 +12,15 @@
         </a>
     </li>
     {% endif %}
-
-
-    {% if meta.video %}
+    
     <li class="item">
-        <a href="/library/{{ meta.library_name }}/{{ meta.id }}/trailer/">
+        <a href="https://www.themoviedb.org/{{item_content_type}}/{{item_id}}">
+            <button class="button optional">View on TMDB</button>
+        </a>
+    </li>
+    {% if video %}
+    <li class="item">
+        <a href="trailer/">
             <button class="button optional">Trailer</button>
         </a>
     </li>

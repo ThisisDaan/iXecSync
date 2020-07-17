@@ -1,0 +1,71 @@
+{% extends "library_base.html" %}
+
+{% block content_section %}
+
+{% set item_image_src = "/thumbnail/" + meta.poster_path %}
+{% set item_title = meta.title %}
+{% set item_description = meta.overview %}
+{% set item_release_date = meta.release_date[:4] %}
+{% set item_rating = meta.vote_average %}
+{% set item_genres = meta.genres %}
+{% set item_id = meta.id %}
+{% set item_genre_link_prefix = "#" %}
+
+{% if content_type == "movie" %}
+{% set item_content_type = "movie" %}
+{% else %}
+{% set item_content_type = "tv" %}
+{% endif %}
+
+{% include "library_media_overview_meta.html.j2" %}
+
+<section class="container">
+    {% set video = False %}
+    {% include "overview/library_overview_buttons.html.j2" %}
+</section>
+
+{% if season %}
+    <section class="container">
+        <h2>Seasons</h2>
+        <ul id="media" class="media">
+            {% for season in season %}
+
+                {% set item_link = season.season_number|string + "/" %}
+                {% set item_image_src = "/thumbnail/" + season.poster_path %}
+                {% set item_meta_text_1 = "Season " + season.season_number|string %}
+                {% set item_not_available = False %}
+
+                {% include "components/poster-meta-text.html.j2" %}
+
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}
+
+{% if episode %}
+    <section class="container">
+        <h2>Season {{ season_number}}</h2>
+        <ul id="media" class="media hd">
+            {% for episode in episode %}
+
+                {% if episode.available %}
+                    {% set item_link = episode.episode_number + "/play" %}
+                    {% set item_not_available = False %}
+                {% else %}
+                    {% set item_link = "" %}
+                    {% set item_not_available = True %}
+                {% endif %}
+
+                {% set orientation = "landscape" %}
+                {% set item_image_src = "/thumbnail/" + episode.still_path %}
+                {% set item_meta_text_1 = "Episode " + episode.episode_number|string %}
+                {% set item_meta_text_2 = episode.name %}
+
+                {% include "components/poster-meta-text.html.j2" %}
+
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}
+
+{% endblock %}

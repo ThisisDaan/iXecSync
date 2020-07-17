@@ -55,14 +55,18 @@ def new_scan_library_movie(library):
             if tmdb_data:
                 tmdb_data["video"] = get_api_trailer("movie", tmdb_data["id"])
 
-                tmdb_genre = []
-                for genre_id in tmdb_data["genre_ids"]:
-                    try:
-                        tmdb_genre.append(genres[genre_id])
-                    except KeyError:
-                        print("genre id not found")
+                # tmdb_genre = []
+                # for genre_id in tmdb_data["genre_ids"]:
+                #     try:
+                #         tmdb_genre.append(genres[genre_id])
+                #     except KeyError:
+                #         print("genre id not found")
 
-                tmdb_data["genre_ids"] = ",".join(tmdb_genre)
+                for genre in tmdb_data["genre_ids"]:
+                    json_data = {"id": tmdb_data["id"], "genre_id": genre}
+                    db.sql_update_by_json("media_genre", json_data)
+
+                del tmdb_data["genre_ids"]
                 tmdb_data["library_name"] = library["name"]
 
                 # Writing movie to database
@@ -161,14 +165,19 @@ def new_scan_library_tvshow(library):
         if tmdb_data:
             tmdb_data["video"] = get_api_trailer("tv", tmdb_data["id"])
 
-            tmdb_genre = []
-            for genre_id in tmdb_data["genre_ids"]:
-                try:
-                    tmdb_genre.append(genres[genre_id])
-                except KeyError:
-                    print("genre id not found")
+            # tmdb_genre = []
+            # for genre_id in tmdb_data["genre_ids"]:
+            #     try:
+            #         tmdb_genre.append(genres[genre_id])
+            #     except KeyError:
+            #         print("genre id not found")
 
-            tmdb_data["genre_ids"] = ",".join(tmdb_genre)
+            # tmdb_data["genre_ids"] = ",".join(tmdb_genre)
+            for genre in tmdb_data["genre_ids"]:
+                json_data = {"id": tmdb_data["id"], "genre_id": genre}
+                db.sql_update_by_json("media_genre", json_data)
+
+            del tmdb_data["genre_ids"]
             tmdb_data["library_name"] = library["name"]
 
             # Writing movie to database
@@ -239,9 +248,15 @@ def get_supported_files(directory):
 
 
 def get_api_trailer(content_type, movie_id):
+
+    if content_type == "tvshow":
+        content_type = "tv"
+
     api_url = f"""https://api.themoviedb.org/3/{content_type}/{movie_id}/videos?api_key={config["TMDB_API_KEY"]}&language=en-US"""
     api_response = tmdb_api_request(api_url)
     results = api_response["results"]
+
+    print(results)
 
     for video in results:
         if video["type"].lower() == "trailer" and video["site"].lower() == "youtube":
@@ -287,8 +302,18 @@ def get_tmdb_genres():
 
 def get_genre_list(library_name):
     db = dbm.database_manager()
-    sql_query = f"""SELECT name FROM genre"""
+
+    content_type = library_content_type(library_name)
+
+    sql_query = f"""
+    SELECT DISTINCT g.name from genre as g 
+    JOIN media_genre as mg ON g.id = mg.genre_id
+    JOIN {content_type} as m ON m.id = mg.id
+    WHERE m.id = mg.id AND m.library_name = "{library_name}" COLLATE NOCASE
+    """
+
     sql_data = db.sql_execute(sql_query)
+    # print(sql_data)
     db.connection.close()
     sql_data_sorted = sorted(sql_data, key=lambda i: i["name"], reverse=False)
     return sql_data_sorted
@@ -320,11 +345,32 @@ def library_content_type(library_name):
             return item["type"]
 
 
+def get_tmdb_data(content_type, video_id):
+
+    if content_type == "movie":
+        api_url = f"""https://api.themoviedb.org/3/movie/{video_id}?api_key={config["TMDB_API_KEY"]}&language=en-US"""
+        # trailer = get_api_trailer("movie", video_id)
+    else:
+        api_url = f"""https://api.themoviedb.org/3/tv/{video_id}?api_key={config["TMDB_API_KEY"]}&language=en-US"""
+        # trailer = get_api_trailer("tv", video_id)
+
+    api_response = tmdb_api_request(api_url)
+    results = api_response
+
+    if content_type == "tvshow":
+        results["release_date"] = results["first_air_date"]
+        results["title"] = results["name"]
+
+    # results["video"] = trailer
+
+    return results
+
+
 def get_media_by_keyword(keyword):
     db = dbm.database_manager()
-    sql_query_movie = f"""SELECT content_dir,title,release_date,library_name,id FROM movie WHERE title LIKE "%{keyword}%" COLLATE NOCASE OR substr(release_date, 1, 4) LIKE "%{keyword}%" COLLATE NOCASE"""
-    sql_query_tvshow = f"""SELECT content_dir,name as title,first_air_date as release_date,library_name,id FROM tvshow WHERE title LIKE "%{keyword}%" COLLATE NOCASE OR substr(first_air_date, 1, 4) LIKE "%{keyword}%" COLLATE NOCASE"""
-    sql_query = f"{sql_query_movie} UNION ALL {sql_query_tvshow} ORDER BY content_dir"
+    sql_query_movie = f"""SELECT title,release_date,library_name,id,poster_path FROM movie WHERE title LIKE "%{keyword}%" COLLATE NOCASE OR substr(release_date, 1, 4) LIKE "%{keyword}%" COLLATE NOCASE"""
+    sql_query_tvshow = f"""SELECT name as title,first_air_date as release_date,library_name,id,poster_path FROM tvshow WHERE title LIKE "%{keyword}%" COLLATE NOCASE OR substr(first_air_date, 1, 4) LIKE "%{keyword}%" COLLATE NOCASE"""
+    sql_query = f"{sql_query_movie} UNION ALL {sql_query_tvshow} ORDER BY title"
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
 
@@ -340,14 +386,27 @@ def get_media_by_genre(library_name, genre, orderby):
     content_type = library_content_type(library_name)
 
     if content_type == "movie":
-        sql_query = f"""SELECT title,release_date,overview,vote_average,video,poster_path,genre_ids,library_name,id FROM movie WHERE library_name = "{library_name}" COLLATE NOCASE AND genre_ids LIKE "%{genre}%" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
+        sql_query = f"""
+    SELECT DISTINCT m.title,m.library_name,m.poster_path,m.release_date,m.id from genre as g 
+    JOIN media_genre as mg ON g.id = mg.genre_id
+    JOIN movie as m ON m.id = mg.id
+    WHERE g.name = "{genre}" COLLATE NOCASE AND m.library_name = "{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}
+    """
+        # sql_query = f"""SELECT title,release_date,overview,vote_average,video,poster_path,genre_ids,library_name,id FROM movie WHERE library_name = "{library_name}" COLLATE NOCASE AND genre_ids LIKE "%{genre}%" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
     elif content_type == "tvshow":
-        sql_query = f"""SELECT name as title,first_air_date as release_date,overview,vote_average,video,poster_path,genre_ids,library_name,id FROM tvshow WHERE library_name = "{library_name}" COLLATE NOCASE AND genre_ids LIKE "%{genre}%" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
+        sql_query = f"""
+    SELECT DISTINCT m.name as title,m.library_name,m.poster_path,m.first_air_date as release_date,m.id from genre as g 
+    JOIN media_genre as mg ON g.id = mg.genre_id
+    JOIN tvshow as m ON m.id = mg.id
+    WHERE g.name = "{genre}" COLLATE NOCASE AND m.library_name = "{library_name}" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}
+    """
+        # sql_query = f"""SELECT name as title,first_air_date as release_date,overview,vote_average,video,poster_path,genre_ids,library_name,id FROM tvshow WHERE library_name = "{library_name}" COLLATE NOCASE AND genre_ids LIKE "%{genre}%" COLLATE NOCASE ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
     else:
         return None
 
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
+    # print(sql_data)
 
     return sql_data
 
@@ -379,6 +438,50 @@ def get_popular_movies():
                 "library_name": "",
                 "title": movie["title"],
                 "release_date": movie["release_date"],
+                "poster_path": movie["poster_path"],
+                "popularity": movie["popularity"],
+                "vote_average": movie["vote_average"],
+                "id": movie["id"],
+                "notavailable": True,
+            }
+            sql_data.append(json_data)
+
+    sql_data_sorted = sorted(sql_data, key=lambda i: i["vote_average"], reverse=True)
+
+    db.connection.close()
+
+    return sql_data_sorted
+
+
+def get_popular_tvshows():
+
+    api_url = (
+        f"""https://api.themoviedb.org/3/tv/popular?api_key={config["TMDB_API_KEY"]}"""
+    )
+    api_response = tmdb_api_request(api_url)
+    results = api_response["results"]
+
+    popular_movie_titles = []
+    for movie in results:
+        popular_movie_titles.append('"' + movie["name"] + '"')
+
+    sql_popular_movie_titles = ", ".join(popular_movie_titles)
+
+    db = dbm.database_manager()
+    sql_query = f"""SELECT name as title,first_air_date as release_date,id,poster_path,library_name,popularity,vote_average FROM tvshow WHERE name IN ({sql_popular_movie_titles}) COLLATE NOCASE """
+
+    sql_data = db.sql_execute(sql_query)
+
+    for movie in sql_data:
+        if movie["title"] in str(popular_movie_titles):
+            popular_movie_titles.remove('"' + movie["title"] + '"')
+
+    for movie in results:
+        if movie["name"] in str(popular_movie_titles):
+            json_data = {
+                "library_name": "",
+                "title": movie["name"],
+                "release_date": movie["first_air_date"],
                 "poster_path": movie["poster_path"],
                 "popularity": movie["popularity"],
                 "vote_average": movie["vote_average"],
@@ -468,13 +571,27 @@ def get_meta(library_name, video_id):
 
     content_type = library_content_type(library_name)
     if content_type == "movie":
-        sql_query = f"""SELECT title,release_date,overview,vote_average,video,poster_path,genre_ids,library_name,id FROM movie WHERE id="{video_id}" COLLATE NOCASE"""
+        sql_query = f"""SELECT title,release_date,overview,vote_average,video,poster_path,library_name,id FROM movie WHERE id="{video_id}" COLLATE NOCASE"""
     elif content_type == "tvshow":
-        sql_query = f"""SELECT name as title,first_air_date as release_date,overview,vote_average,video,poster_path,genre_ids,library_name,id FROM tvshow WHERE id="{video_id}" COLLATE NOCASE """
+        sql_query = f"""SELECT name as title,first_air_date as release_date,overview,vote_average,video,poster_path,library_name,id FROM tvshow WHERE id="{video_id}" COLLATE NOCASE """
     else:
         return None
 
     sql_data = db.sql_execute(sql_query)
+
+    genre_query = f"""
+    SELECT g.name from genre as g 
+    JOIN media_genre as mg ON g.id = mg.genre_id
+    JOIN {content_type} as m ON m.id = mg.id
+    WHERE m.id = "{video_id}"
+    """
+
+    sql_genre = db.sql_execute(genre_query)
+
+    sql_data[0]["genres"] = sql_genre
+
+    # print(sql_data)
+
     db.connection.close()
 
     return sql_data[0]

@@ -193,11 +193,6 @@ class iXecSync:
             )
 
 
-@app.route("/")
-def index():
-    return redirect("/library", code=303)
-
-
 def get_library_items():
     with open(os.path.join(os.path.dirname(__file__), "config.json")) as file:
         config = json.load(file)
@@ -205,24 +200,48 @@ def get_library_items():
     return config["library"]
 
 
+def get_media_filters(request, library_name, genre=None):
+    sortby = request.form.get("sortby")
+
+    if sortby is None:
+        sortby = "popularity DESC"
+
+    if genre is None:
+        genre = "all"
+
+    genres = tmdb.get_genre_list(library_name)
+
+    media_filters = {
+        "sortby": {"selected": sortby,},
+        "genres": {"selected": genre, "list": genres},
+        "search": True,
+    }
+
+    return media_filters
+
+
+@app.route("/")
+def index():
+    return redirect("/library", code=303)
+
+
 @app.route("/library/")
 def library_home():
-
-    files = tmdb.get_popular_movies()
-
     return render_template(
-        "library_media.html",
+        "library_home.html.j2",
         selected="Home",
         library=get_library_items(),
-        media=files,
+        movie=tmdb.get_popular_movies(),
+        tvshow=tmdb.get_popular_tvshows(),
         goback=False,
-        home=True,
     )
+
+
+# library
 
 
 @app.route("/library/<string:library_name>/", methods=["POST", "GET"])
 def library_content(library_name):
-
     sortby = request.form.get("sortby")
 
     if sortby is None:
@@ -232,43 +251,56 @@ def library_content(library_name):
     genres = tmdb.get_genre_list(library_name)
 
     return render_template(
-        "library_media.html",
+        "library_media.html.j2",
         selected=library_name,
         library=get_library_items(),
         media=files,
         goback=False,
         meta={"library_name": library_name},
-        sortby_selection=sortby,
-        media_filters=True,
-        genres=genres,
+        media_filters={
+            "sortby": {"selected": sortby,},
+            "genres": {"selected": "all", "list": genres},
+            "search": True,
+        },
     )
+
+
+# Genre filters
 
 
 @app.route("/library/<string:library_name>/<string:genre>/", methods=["POST", "GET"])
 def library_media_genre(library_name, genre):
-    sortby = request.form.get("sortby")
 
-    if sortby is None:
-        sortby = "popularity DESC"
-
-    files = tmdb.get_media_by_genre(library_name, genre, sortby)
-    genres = tmdb.get_genre_list(library_name)
-    print(genres)
-
-    print(genre)
+    media_filters = get_media_filters(request, library_name, genre)
+    files = tmdb.get_media_by_genre(
+        library_name, genre, media_filters["sortby"]["selected"]
+    )
 
     return render_template(
-        "library_media.html",
+        "library_media.html.j2",
         selected=library_name,
         library=get_library_items(),
         media=files,
-        goback=True,
-        sortby_selection=sortby,
-        media_filters=True,
+        goback=False,
         meta={"library_name": library_name},
-        filter_genre=genre,
-        genres=genres,
+        media_filters=media_filters,
     )
+
+
+# Trailer page of movie or tvshow
+
+
+@app.route("/library/<string:library_name>/<int:video_id>/trailer/")
+def movie_trailer(video_id, library_name=None, content_type=None):
+
+    trailer = tmdb.get_trailer(library_name, video_id)
+    youtube = trailer["video"]
+    title = f"""Trailer - {trailer["title"]}"""
+
+    return render_template("youtube.html", sync=False, youtube=youtube, title=title,)
+
+
+# overview page of movie or tv show
 
 
 @app.route("/library/<string:library_name>/<int:video_id>/")
@@ -278,40 +310,70 @@ def library_media_overview(library_name, video_id):
 
     if tmdb.library_content_type(library_name) == "movie":
         return render_template(
-            "overview/library_media_overview.html",
+            "library_media_overview.html.j2",
             selected=library_name,
             library=get_library_items(),
             meta=meta,
             movie=True,
             goback=True,
+            content_type="movie",
         )
     elif tmdb.library_content_type(library_name) == "tvshow":
-        extra = tmdb.get_seasons(video_id)
+        season = tmdb.get_seasons(video_id)
         return render_template(
-            "overview/library_media_overview.html",
+            "library_media_overview.html.j2",
             selected=library_name,
             library=get_library_items(),
             meta=meta,
-            season=extra,
+            season=season,
             goback=True,
+            content_type="tvshow",
         )
+
+
+# overview page of a season
 
 
 @app.route("/library/<string:library_name>/<int:video_id>/<int:season_number>/")
 def library_media_overview_season(library_name, video_id, season_number):
 
     meta = tmdb.get_meta(library_name, video_id)
-    extra = tmdb.get_episodes(video_id, season_number)
+    episode = tmdb.get_episodes(video_id, season_number)
 
     return render_template(
-        "overview/library_media_overview.html",
+        "library_media_overview.html.j2",
         selected=library_name,
         library=get_library_items(),
         meta=meta,
-        episode=extra,
+        episode=episode,
         season_number=season_number,
         goback=True,
+        content_type="tvshow",
     )
+
+
+# overview page of not available media
+
+
+@app.route("/tmdb/<string:content_type>/<int:video_id>/")
+def library_tmdb_overview(content_type, video_id):
+
+    if content_type == "movie" or content_type == "tvshow":
+        meta = tmdb.get_tmdb_data(content_type, video_id)
+
+        return render_template(
+            "library_tmdb_overview.html.j2",
+            selected="home",
+            library=get_library_items(),
+            meta=meta,
+            goback=True,
+            content_type=content_type,
+        )
+    else:
+        redirect("/")
+
+
+# overview page of an episode
 
 
 @app.route(
@@ -330,6 +392,9 @@ def library_media_overview_season_episode(
         meta=meta,
         goback=True,
     )
+
+
+# Play buttons
 
 
 @app.route(
@@ -402,31 +467,37 @@ def play_video(video_id):
 
     meta = tmdb.get_meta_by_id("movie", video_id)
 
-    try:
-        path = tmdb.get_path(video_id)
-        duration = acid_transcode.ffprobe_getduration(path)
-    except Exception as e:
-        duration = 0
-        print(f"Can not get duration of video: {e}")
+    # try:
+    #     path = tmdb.get_path(video_id)
+    #     duration = acid_transcode.ffprobe_getduration(path)
+    # except Exception as e:
+    #     duration = 0
+    #     print(f"Can not get duration of video: {e}")
 
     return render_template(
-        "sync_player.html",
+        "sync_player.html.j2",
         title=meta["title"],
         video=video_id,
-        sync=True,
-        duration=duration,
+        sync=request.args.get("session"),
+        transcode=request.args.get("transcoding"),
     )
 
 
 @app.route("/player/get/<int:video_id>")
 def player_get_video(video_id):
+
     transcode = request.args.get("transcoding")
     transcode_time = request.args.get("time")
 
     try:
         if transcode == "1":
-            return acid_transcode.ffmpeg_transcode(
-                tmdb.get_path(video_id), start=int(transcode_time),
+            m3u8fullpath = acid_transcode.ffmpeg_transcode(
+                tmdb.get_path(video_id), start=int(transcode_time)
+            )
+
+            return send_from_directory(
+                directory=os.path.dirname(m3u8fullpath),
+                filename=os.path.basename(m3u8fullpath),
             )
         else:
             data = tmdb.get_filename(video_id)
@@ -447,35 +518,43 @@ def play_episode(video_id, season_number, episode_number):
 
     meta = tmdb.get_meta_by_id("tvshow", video_id)
 
-    try:
-        path = tmdb.get_path_episode(video_id, season_number, episode_number)
-        duration = acid_transcode.ffprobe_getduration(path)
-    except Exception as e:
-        duration = 0
-        print(f"Can not get duration of video: {e}")
+    # try:
+    #     path = tmdb.get_path_episode(video_id, season_number, episode_number)
+    #     duration = acid_transcode.ffprobe_getduration(path)
+    # except Exception as e:
+    #     duration = 0
+    #     print(f"Can not get duration of video: {e}")
 
     return render_template(
-        "sync_player.html",
+        "sync_player.html.j2",
         title=f"""{meta["title"]} - S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}""",
         video=f"{video_id}/{season_number}/{episode_number}",
-        sync=True,
-        duration=duration,
+        sync=request.args.get("session"),
+        transcode=request.args.get("transcoding"),
     )
 
 
 @app.route("/player/get/<int:video_id>/<int:season_number>/<int:episode_number>")
 def player_get_episode(video_id, season_number, episode_number):
+
     transcode = request.args.get("transcoding")
     transcode_time = request.args.get("time")
 
     try:
         if transcode == "1":
-            return acid_transcode.ffmpeg_transcode(
+
+            m3u8fullpath = acid_transcode.ffmpeg_transcode(
                 tmdb.get_path_episode(video_id, season_number, episode_number),
                 start=int(transcode_time),
             )
+
+            return send_from_directory(
+                directory=os.path.dirname(m3u8fullpath),
+                filename=os.path.basename(m3u8fullpath),
+            )
         else:
             data = tmdb.get_filename_episode(video_id, season_number, episode_number)
+
             return send_from_directory(
                 directory=data["path"], filename=data["filename"]
             )
@@ -503,6 +582,9 @@ def search_query():
         return render_template(
             "library_search.html", selected="Search", library=get_library_items(),
         )
+
+
+# file manager
 
 
 @app.route("/files/")
@@ -537,7 +619,7 @@ def library_files(path="", library_name=None):
                 file_browser.append(json)
 
         return render_template(
-            "library_files.html",
+            "library_files.html.j2",
             selected="Files",
             library=library_items,
             media=file_browser,
@@ -556,48 +638,13 @@ def library_files(path="", library_name=None):
             file_browser.append(json_data)
 
         return render_template(
-            "library_files.html",
+            "library_files.html.j2",
             selected="Files",
             library=library_items,
             media=file_browser,
             goback=False,
             current_dir="Files",
         )
-
-    # directory = Path(folder_location, path)
-
-    # file_browser = []
-    # for item in directory.iterdir():
-    #     if item.is_file():
-    #         json = {
-    #             "title": item.name,
-    #             "content_dir": item.name,
-    #             "type": "file",
-    #         }
-    #         file_browser.append(json)
-
-    #     else:
-    #         json = {
-    #             "title": item.name,
-    #             "content_dir": item.name,
-    #             "type": "folder",
-    #         }
-    #         file_browser.append(json)
-
-    # if path == "":
-    #     goback = False
-    #     path = "Files"
-    # else:
-    #     goback = True
-
-    # return render_template(
-    #     "library_files.html",
-    #     selected="Files",
-    #     library=get_library_items(),
-    #     media=file_browser,
-    #     goback=goback,
-    #     current_dir=path,
-    # )
 
 
 # @app.route("/files/<string:name>.<string:extension>/", defaults={"path": ""})
@@ -663,17 +710,6 @@ def scanning_tmdb():
     return redirect("/", code=303)
 
 
-@app.route("/library/<string:library_name>/<int:video_id>/trailer/")
-def movie_trailer(library_name, video_id):
-    trailer = tmdb.get_trailer(library_name, video_id)
-    return render_template(
-        "youtube.html",
-        sync=False,
-        youtube=trailer["video"],
-        title=f"""Trailer - {trailer["title"]}""",
-    )
-
-
 @app.route("/watch")
 def youtube_player():
     try:
@@ -690,39 +726,39 @@ def youtube_player():
         return redirect("/", code=303)
 
 
-# @app.route("/player/meta/<string:session_id>")
-# def session_duration(session_id):
-#     return jsonify(session_storage[session_id]["meta"])
-
-
-@app.route("/player/<string:session_id>")
-def video(session_id):
-    transcode = request.args.get("transcoding")
-    transcode_time = request.args.get("time")
-    try:
-        if transcode == "1":
-            m3u8fullpath = acid_transcode.ffmpeg_transcode(
-                session_storage[session_id]["path"], start=int(transcode_time)
-            )
-            if m3u8fullpath:
-                session_storage[session_id]["m3u8fullpath"] = m3u8fullpath
-                return send_from_directory(
-                    directory=os.path.dirname(m3u8fullpath),
-                    filename=os.path.basename(m3u8fullpath),
-                )
-            else:
-                m3u8fullpath = session_storage[session_id]["m3u8fullpath"]
-                return send_from_directory(
-                    directory=os.path.dirname(m3u8fullpath),
-                    filename=os.path.basename(m3u8fullpath),
-                )
-        else:
-            return send_from_directory(
-                directory=session_storage[session_id]["directory"],
-                filename=session_storage[session_id]["filename"],
-            )
-    except KeyError:
-        return abort(404)
+#######
+#####
+### OLD CODE SEE /PLAYER/GET/
+####
+#####
+# @app.route("/player/<string:session_id>")
+# def video(session_id):
+#     transcode = request.args.get("transcoding")
+#     transcode_time = request.args.get("time")
+#     try:
+#         if transcode == "1":
+#             m3u8fullpath = acid_transcode.ffmpeg_transcode(
+#                 session_storage[session_id]["path"], start=int(transcode_time)
+#             )
+#             if m3u8fullpath:
+#                 session_storage[session_id]["m3u8fullpath"] = m3u8fullpath
+#                 return send_from_directory(
+#                     directory=os.path.dirname(m3u8fullpath),
+#                     filename=os.path.basename(m3u8fullpath),
+#                 )
+#             else:
+#                 m3u8fullpath = session_storage[session_id]["m3u8fullpath"]
+#                 return send_from_directory(
+#                     directory=os.path.dirname(m3u8fullpath),
+#                     filename=os.path.basename(m3u8fullpath),
+#                 )
+#         else:
+#             return send_from_directory(
+#                 directory=session_storage[session_id]["directory"],
+#                 filename=session_storage[session_id]["filename"],
+#             )
+#     except KeyError:
+#         return abort(404)
 
 
 @app.route("/thumbnail/<string:poster_path>")

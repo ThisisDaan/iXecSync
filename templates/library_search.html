@@ -12,15 +12,21 @@
 </section>
 
 {% if media %}
-<ul class="media poster-size">
+<ul class="media">
     {% for item in media %}
-    <a href="/library/{{ item.library_name }}/{{ item.id }}/">
-        <li class="item">
-            <div class="thumbnail"><img src="/thumbnail/{{ item.content_dir }}.jpg"></div>
-            <span>{{ item.title }}</span>
-            <span>({{ item.release_date }})</span>
-        </li>
-    </a>
+    <li class="item{% if item.notavailable %} not-available{% endif %}">
+        <a href="/library/{{ item.library_name }}/{{ item.id }}/">
+            <div class="aspect-ratio-9x16 border-selection">
+                <div class="inner-aspect-ratio">
+                    <img src="{{ thumbnail_src }}">
+                </div>
+            </div>
+            <div class="meta">
+                <span>{{ item.title }}</span>
+                <span>({{ item.release_date }})</span>
+            </div>
+        </a>
+    </li>
     {% endfor %}
 
 </ul>

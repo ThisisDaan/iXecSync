@@ -1,0 +1,17 @@
+<li class="item{% if item_not_available %} not-available{% endif %}">
+    <a href="{{ item_link }}">
+        <div class="{% if orientation == 'landscape' %}aspect-ratio-16x9{% else %}aspect-ratio-9x16{% endif %} border-selection">
+            <div class="inner-aspect-ratio">
+                <img src="{{ item_image_src }}">
+            </div>
+        </div>
+        <div class="meta">
+            {% if item_meta_text_1 %}
+                <span>{{ item_meta_text_1 }}</span>
+            {% endif %}
+            {% if item_meta_text_2 %}
+                <span>({{ item_meta_text_2 }})</span>
+            {% endif %}
+        </div>
+    </a>
+</li>

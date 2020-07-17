@@ -14,7 +14,6 @@ class database_manager:
 
         self.sql_create_table(
             """CREATE TABLE IF NOT EXISTS file (
-                c_id INTEGER PRIMARY KEY,
                 id TEXT,
                 path TEXT,
                 filename TEXT
@@ -30,7 +29,6 @@ class database_manager:
                 release_date TEXT,
                 poster_path TEXT,
                 backdrop_path TEXT,
-                genre_ids TEXT,
                 original_title TEXT,
                 original_language TEXT,
                 adult TEXT,
@@ -52,7 +50,6 @@ class database_manager:
                 backdrop_path TEXT,
                 origin_country TEXT,
                 original_language TEXT,
-                genre_ids TEXT,
                 popularity INTEGER,
                 vote_average INTEGER,
                 vote_count INTEGER,
@@ -95,6 +92,13 @@ class database_manager:
             """CREATE TABLE IF NOT EXISTS genre (
                 id INTEGER PRIMARY KEY,
                 name TEXT
+                );"""
+        )
+
+        self.sql_create_table(
+            """CREATE TABLE IF NOT EXISTS media_genre (
+                id INTEGER,
+                genre_id INTEGER
                 );"""
         )
 

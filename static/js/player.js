@@ -39,57 +39,59 @@ player.overlay({
 
 
 // Transcoding
-
-transcode = url_parameters.get('transcoding')
-if (transcode == "1") {
-    time = 0;
-    var sync_player_control = function (player) {
-        return {
-            duration: function () {
-                return player.video_duration;
-            },
-            callPlay: function () {
-                //return videojs.middleware.TERMINATOR;
-            },
-            callPause: function () {
-                //return videojs.middleware.TERMINATOR;
-            }
+function load_player(video_id, video_type) {
+    transcode = url_parameters.get('transcoding')
+    if (transcode == "1") {
+        time = 0;
+        var sync_player_control = function (player) {
+            return {
+                duration: function () {
+                    return player.video_duration;
+                },
+                callPlay: function () {
+                    //return videojs.middleware.TERMINATOR;
+                },
+                callPause: function () {
+                    //return videojs.middleware.TERMINATOR;
+                }
+            };
         };
-    };
 
-    videojs.use('*', sync_player_control);
+        videojs.use('*', sync_player_control);
 
-    player.start = 0;
-    player.oldCurrentTime = player.currentTime;
-    player.currentTime = function (time) {
-        if (time == undefined) {
-            if (player.readyState() == 0) {
-                var percentage = player.start * 100 / player.video_duration
-                $(".vjs-play-progress").css("width", percentage + "%")
+        player.start = 0;
+        player.oldCurrentTime = player.currentTime;
+        player.currentTime = function (time) {
+            if (time == undefined) {
+                if (player.readyState() == 0) {
+                    var percentage = player.start * 100 / player.video_duration
+                    $(".vjs-play-progress").css("width", percentage + "%")
+                }
+                return player.oldCurrentTime() + player.start;
             }
-            return player.oldCurrentTime() + player.start;
-        }
-        console.log(Math.floor(time))
+            console.log(Math.floor(time))
 
-        player.start = time;
-        player.oldCurrentTime(0);
+            player.start = time;
+            player.oldCurrentTime(0);
+            player.src({
+                src: '/player/get/' + video_id + "?transcoding=" + transcode + "&time=" + Math.floor(time),
+                type: video_type
+            });
+            return time;
+        };
+
         player.src({
-            src: '/player/get/' + video_id + "?transcoding=" + transcode + "&time=" + Math.floor(time),
-            type: 'video/mp4'
+            type: video_type,
+            src: '/player/get/' + video_id + "?transcoding=" + transcode + "&time=" + time
         });
-        return time;
-    };
+    }
 
-    player.src({
-        type: 'video/mp4',
-        src: '/player/get/' + video_id + "?transcoding=" + transcode + "&time=" + time
-    });
+
+    // playing on load
+
+    player.play()
 }
 
-
-// playing on load
-
-player.play()
 
 
 // Volume
@@ -105,24 +107,3 @@ function player_set_volume() {
 function player_save_volume() {
     window.localStorage.setItem('player_volume', player.volume()); // saves volume to local storage
 }
-
-// function player_metadata() {
-//     $.getJSON('/player/meta/' + session_id, function (metadata) {
-//         if (metadata["title"] != null) {
-//             title = document.getElementById("video-overlay-title")
-//             title.textContent = metadata["title"]
-//         }
-//         if (metadata["duration"] != null) {
-//             player.video_duration = metadata["duration"]
-//         }
-//         if (metadata["lang"] != null) {
-//             for (i = 0; i < metadata["lang"].length; i++) {
-//                 player.addRemoteTextTrack({
-//                     kind: 'captions',
-//                     label: metadata["lang"][i]["name"],
-//                     src: '/subtitle/' + session_id + "/" + metadata["lang"][i]["code"]
-//                 })
-//             }
-//         }
-//     });
-// }

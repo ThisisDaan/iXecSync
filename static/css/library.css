@@ -532,6 +532,12 @@
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 
+.media.horizontal_scroll {
+    display: grid;
+    /* overflow-x: scroll;
+    max-height: 375px; */
+}
+
 @media (max-width:769px) {
     .media {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
