@@ -485,9 +485,12 @@ def play_video(video_id):
 
 
 @app.route(
+    "/player/get/<string:session_id>/<path:useless>/<string:video_file>.<string:video_extension>"
+)
+@app.route(
     "/player/get/<string:session_id>/<string:video_file>.<string:video_extension>"
 )
-def m3u8_request_ts(session_id, video_file, video_extension):
+def m3u8_request_ts(session_id, video_file, video_extension, useless=""):
 
     root = os.path.dirname(os.path.realpath(__file__))
     directory = os.path.join(root, "temp", session_id)
