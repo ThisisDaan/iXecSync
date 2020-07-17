@@ -478,7 +478,7 @@ def play_video(video_id):
         "sync_player.html.j2",
         title=meta["title"],
         video=video_id,
-        sync=request.args.get("session"),
+        session=request.args.get("session"),
         transcode=request.args.get("transcoding"),
     )
 
@@ -487,12 +487,13 @@ def play_video(video_id):
 def player_get_video(video_id):
 
     transcode = request.args.get("transcoding")
+    session = request.args.get("session")
     transcode_time = request.args.get("time")
 
     try:
         if transcode == "1":
             m3u8fullpath = acid_transcode.ffmpeg_transcode(
-                tmdb.get_path(video_id), start=int(transcode_time)
+                tmdb.get_path(video_id), int(transcode_time), session
             )
 
             return send_from_directory(
@@ -529,7 +530,7 @@ def play_episode(video_id, season_number, episode_number):
         "sync_player.html.j2",
         title=f"""{meta["title"]} - S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}""",
         video=f"{video_id}/{season_number}/{episode_number}",
-        sync=request.args.get("session"),
+        session=request.args.get("session"),
         transcode=request.args.get("transcoding"),
     )
 

@@ -19,13 +19,13 @@
             <source src="https://www.youtube.com/watch?v={{youtube}}" type="video/youtube">
         {% elif video %}
             {% if transcode %}
-                {% set type = "application/x-mpegURL" %}
-                <source src="/player/get/{{video}}?transcoding=1&time=0" type="{{type}}">
+                {% set video_type = "application/x-mpegURL" %}
+                {% set video_src = video + "?transcoding=1&time=0&session=" + session %}
             {% else %}
-                {% set type = "video/mp4" %}
-                <source src="/player/get/{{ video }}" type="{{type}}">
+                {% set video_type = "video/mp4" %}
+                {% set video_src = video %}
             {% endif %}
-            {# <source src="https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8" type="{{type}}"> #}
+            <source src="/player/get/{{ video_src }}" type="{{ video_type }}">
         {% endif %}
     </video>
     <div id="video-overlay-copy">
