@@ -483,18 +483,34 @@ def play_video(video_id):
     )
 
 
+@app.route("/player/get/<string:video_file>.<string:video_extension>")
+def m3u8_request_ts(video_file, video_extension):
+    session_id = request.args.get("session")
+
+    root = os.path.dirname(os.path.realpath(__file__))
+    directory = os.path.join(root, "temp", session_id)
+    filename = f"{video_file}.{video_extension}"
+
+    return send_from_directory(directory=directory, filename=filename)
+
+
 @app.route("/player/get/<int:video_id>")
 def player_get_video(video_id):
 
     transcode = request.args.get("transcoding")
-    session = request.args.get("session")
+    session_id = request.args.get("session")
     transcode_time = request.args.get("time")
 
     try:
         if transcode == "1":
+
             m3u8fullpath = acid_transcode.ffmpeg_transcode(
-                tmdb.get_path(video_id), int(transcode_time), session
+                tmdb.get_path(video_id), int(transcode_time), session_id
             )
+
+            print("====================")
+            print(m3u8fullpath)
+            print("====================")
 
             return send_from_directory(
                 directory=os.path.dirname(m3u8fullpath),
