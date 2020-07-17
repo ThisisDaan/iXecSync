@@ -500,30 +500,38 @@ def m3u8_request_ts(session_id, video_file, video_extension):
 def player_get_video(session_id, video_id):
 
     transcode = request.args.get("transcoding")
-    # session_id = request.args.get("session")
+    session_id = request.args.get("session")
     transcode_time = request.args.get("time")
 
     try:
+        print("here")
         if transcode == "1":
-
-            m3u8fullpath = acid_transcode.ffmpeg_transcode(
-                tmdb.get_path(video_id), int(transcode_time), session_id
-            )
-
-            print("====================")
-            print(m3u8fullpath)
-            print("====================")
-
-            return send_from_directory(
-                directory=os.path.dirname(m3u8fullpath),
-                filename=os.path.basename(m3u8fullpath),
-            )
+            print("0")
+            if "m3u8fullpath" not in session_storage[session_id]:
+                print("1 no path")
+                m3u8fullpath = acid_transcode.ffmpeg_transcode(
+                    tmdb.get_path(video_id), int(transcode_time), session_id
+                )
+                if m3u8fullpath:
+                    session_storage[session_id]["m3u8fullpath"] = m3u8fullpath
+                    return send_from_directory(
+                        directory=os.path.dirname(m3u8fullpath),
+                        filename=os.path.basename(m3u8fullpath),
+                    )
+            else:
+                print("2 has path")
+                m3u8fullpath = session_storage[session_id]["m3u8fullpath"]
+                return send_from_directory(
+                    directory=os.path.dirname(m3u8fullpath),
+                    filename=os.path.basename(m3u8fullpath),
+                )
         else:
             data = tmdb.get_filename(video_id)
             return send_from_directory(
                 directory=data["path"], filename=data["filename"]
             )
-    except KeyError:
+    except Exception:
+        print("Holy shit")
         return abort(404)
 
 
