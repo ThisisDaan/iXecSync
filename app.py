@@ -500,7 +500,7 @@ def m3u8_request_ts(session_id, video_file, video_extension):
 def player_get_video(session_id, video_id):
 
     transcode = request.args.get("transcoding")
-    session_id = request.args.get("session")
+    # session_id = request.args.get("session")
     transcode_time = request.args.get("time")
 
     try:
