@@ -150,7 +150,7 @@ def ffmpeg_transcode(infile="", start=0, sessionid="0"):
     cmdline.extend(["-segment_list_type", "m3u8"])
     cmdline.extend(["-segment_time", "6"])
     cmdline.extend(["-segment_time_delta", f"-{str(start)}"])
-    cmdline.extend(["-segment_start_number", "255"])
+    cmdline.extend(["-segment_start_number", "420"])
     cmdline.extend(["-break_non_keyframes", "1"])
     cmdline.extend(["-individual_header_trailer", "0"])
     cmdline.extend(["-write_header_trailer", "0"])

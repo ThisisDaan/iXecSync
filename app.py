@@ -504,11 +504,8 @@ def player_get_video(session_id, video_id):
     transcode_time = request.args.get("time")
 
     try:
-        print("here")
         if transcode == "1":
-            print("0")
             if "m3u8fullpath" not in session_storage[session_id]:
-                print("1 no path")
                 m3u8fullpath = acid_transcode.ffmpeg_transcode(
                     tmdb.get_path(video_id), int(transcode_time), session_id
                 )
@@ -519,7 +516,6 @@ def player_get_video(session_id, video_id):
                         filename=os.path.basename(m3u8fullpath),
                     )
             else:
-                print("2 has path")
                 m3u8fullpath = session_storage[session_id]["m3u8fullpath"]
                 return send_from_directory(
                     directory=os.path.dirname(m3u8fullpath),
@@ -531,7 +527,6 @@ def player_get_video(session_id, video_id):
                 directory=data["path"], filename=data["filename"]
             )
     except Exception:
-        print("Holy shit")
         return abort(404)
 
 
