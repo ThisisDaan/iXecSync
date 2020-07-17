@@ -483,9 +483,11 @@ def play_video(video_id):
     )
 
 
-@app.route("/player/get/<string:video_file>.<string:video_extension>")
-def m3u8_request_ts(video_file, video_extension):
-    session_id = request.args.get("session")
+@app.route(
+    "/player/get/<string:session_id>/<string:video_file>.<string:video_extension>"
+)
+def m3u8_request_ts(session_id, video_file, video_extension):
+    # session_id = request.args.get("session")
 
     root = os.path.dirname(os.path.realpath(__file__))
     directory = os.path.join(root, "temp", session_id)
@@ -494,11 +496,11 @@ def m3u8_request_ts(video_file, video_extension):
     return send_from_directory(directory=directory, filename=filename)
 
 
-@app.route("/player/get/<int:video_id>")
-def player_get_video(video_id):
+@app.route("/player/get/<string:session_id>/<int:video_id>")
+def player_get_video(session_id, video_id):
 
     transcode = request.args.get("transcoding")
-    session_id = request.args.get("session")
+    # session_id = request.args.get("session")
     transcode_time = request.args.get("time")
 
     try:

@@ -20,12 +20,12 @@
         {% elif video %}
             {% if transcode %}
                 {% set video_type = "application/x-mpegURL" %}
-                {% set video_src = video|string + "?transcoding=1&time=0&session=" + session %}
+                {% set video_src = video|string + "?transcoding=1&time=0" %}
             {% else %}
                 {% set video_type = "video/mp4" %}
                 {% set video_src = video|string %}
             {% endif %}
-            <source src="/player/get/{{ video_src }}" type="{{ video_type }}">
+            <source src="/player/get/{{session}}/{{ video_src }}" type="{{ video_type }}">
         {% endif %}
     </video>
     <div id="video-overlay-copy">
