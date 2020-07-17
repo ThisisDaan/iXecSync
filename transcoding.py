@@ -122,13 +122,15 @@ def ffmpeg_transcode(infile="", start=0):
     cmdline.extend(["-f", "matroska,webm"])
     cmdline.extend(["-ss", str(start)])
     cmdline.append("-noaccurate_seek")
-    cmdline.extend(["-c:v:0", "h264"])
+    # cmdline.extend(["-c:v:0", "h264"])
     cmdline.extend(["-i", infile])
-    cmdline.extend(["-map", "0:0"])
-    cmdline.extend(["-map", "0:1"])
+    cmdline.extend(["-map", "0"])
+    # cmdline.extend(["-map", "0:0"])
+    # cmdline.extend(["-map", "0:1"])
     cmdline.append("-sn")
-    cmdline.extend(["-c:v:0", "copy"])
-    cmdline.extend(["-bsf:v:0", "h264_mp4toannexb"])
+    # cmdline.extend(["-c:v:0", "copy"])
+    cmdline.extend(["-c", "copy"])
+    # cmdline.extend(["-bsf:v:0", "h264_mp4toannexb"])
     cmdline.extend(["-c:a:0", "libmp3lame"])
     cmdline.extend(["-ab:a:0", "192000"])
     cmdline.extend(["-ac:a:0", "2"])
@@ -175,7 +177,7 @@ def ffmpeg_transcode(infile="", start=0):
     for line in iter(p.stdout.readline, ""):
         if line:
             linestring = line.decode("utf-8")
-            # print(linestring)
+            print(linestring)
             if "frame=" in linestring:
                 addmore = True
                 ##temp return after we know there is output, until I figure out this fucker https://stackoverflow.com/questions/11604699/is-there-a-way-to-do-more-work-after-a-return-statement
