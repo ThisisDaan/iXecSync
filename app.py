@@ -467,12 +467,12 @@ def play_video(video_id):
 
     meta = tmdb.get_meta_by_id("movie", video_id)
 
-    # try:
-    #     path = tmdb.get_path(video_id)
-    #     duration = acid_transcode.ffprobe_getduration(path)
-    # except Exception as e:
-    #     duration = 0
-    #     print(f"Can not get duration of video: {e}")
+    try:
+        path = tmdb.get_path(video_id)
+        duration = acid_transcode.ffprobe_getduration(path)
+    except Exception:
+        duration = 0
+        print(f"Can not get duration of video:")
 
     return render_template(
         "sync_player.html.j2",
@@ -480,6 +480,7 @@ def play_video(video_id):
         video=video_id,
         session=request.args.get("session"),
         transcode=request.args.get("transcoding"),
+        duration=duration,
     )
 
 
@@ -540,12 +541,12 @@ def play_episode(video_id, season_number, episode_number):
 
     meta = tmdb.get_meta_by_id("tvshow", video_id)
 
-    # try:
-    #     path = tmdb.get_path_episode(video_id, season_number, episode_number)
-    #     duration = acid_transcode.ffprobe_getduration(path)
-    # except Exception as e:
-    #     duration = 0
-    #     print(f"Can not get duration of video: {e}")
+    try:
+        path = tmdb.get_path_episode(video_id, season_number, episode_number)
+        duration = acid_transcode.ffprobe_getduration(path)
+    except Exception:
+        duration = 0
+        print(f"Can not get duration of video")
 
     return render_template(
         "sync_player.html.j2",
@@ -553,6 +554,7 @@ def play_episode(video_id, season_number, episode_number):
         video=f"{video_id}/{season_number}/{episode_number}",
         session=request.args.get("session"),
         transcode=request.args.get("transcoding"),
+        duration=duration,
     )
 
 

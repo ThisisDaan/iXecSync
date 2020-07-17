@@ -38,6 +38,23 @@ player.overlay({
 });
 
 
+function set_duration(duration) {
+    player.video_duration = duration
+    var sync_player_control = function (player) {
+        return {
+            duration: function () {
+                return player.video_duration;
+            },
+            callPlay: function () {
+                //return videojs.middleware.TERMINATOR;
+            },
+            callPause: function () {
+                //return videojs.middleware.TERMINATOR;
+            }
+        };
+    };
+}
+
 // Transcoding
 function load_player(video_id, video_type) {
     transcode = url_parameters.get('transcoding')
