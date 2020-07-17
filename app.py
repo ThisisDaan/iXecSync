@@ -539,6 +539,7 @@ def play_episode(video_id, season_number, episode_number):
 def player_get_episode(video_id, season_number, episode_number):
 
     transcode = request.args.get("transcoding")
+    session = request.args.get("session")
     transcode_time = request.args.get("time")
 
     try:
@@ -547,6 +548,7 @@ def player_get_episode(video_id, season_number, episode_number):
             m3u8fullpath = acid_transcode.ffmpeg_transcode(
                 tmdb.get_path_episode(video_id, season_number, episode_number),
                 start=int(transcode_time),
+                sessionid=session,
             )
 
             return send_from_directory(

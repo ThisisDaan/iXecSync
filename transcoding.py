@@ -193,7 +193,7 @@ def ffmpeg_transcode(infile="", start=0, sessionid="0"):
                     print(json.dumps(transcodingprogress, indent=4, sort_keys=True))
                     transcodingprogress.clear()
                     ##temp return after we know there is output, until I figure out this fucker https://stackoverflow.com/questions/11604699/is-there-a-way-to-do-more-work-after-a-return-statement
-                    return f"{temp_path}{sessionid}.m3u8"
+                    return f"{transcode_path}{sessionid}.m3u8"
             continue
         elif stoptranscoding:
             print("Force Stopped FFmpeg Transcoder")
