@@ -53,6 +53,7 @@ function set_duration(duration) {
             }
         };
     };
+    videojs.use('*', sync_player_control);
 }
 
 // Transcoding

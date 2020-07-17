@@ -543,6 +543,8 @@ def play_episode(video_id, season_number, episode_number):
 
     try:
         path = tmdb.get_path_episode(video_id, season_number, episode_number)
+        print(path)
+        print("FUCK" * 80)
         duration = acid_transcode.ffprobe_getduration(path)
     except Exception:
         duration = 0

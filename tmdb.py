@@ -643,6 +643,7 @@ def get_filename_episode(video_id, season_number, episode_number):
 def get_path_episode(video_id, season_number, episode_number):
     db = dbm.database_manager()
     sql_query = f"""SELECT path,filename from file WHERE id="{video_id}" AND filename LIKE "%S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}%" COLLATE NOCASE;"""
+    print(sql_query)
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
 
