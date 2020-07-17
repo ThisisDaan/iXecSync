@@ -488,7 +488,6 @@ def play_video(video_id):
     "/player/get/<string:session_id>/<string:video_file>.<string:video_extension>"
 )
 def m3u8_request_ts(session_id, video_file, video_extension):
-    # session_id = request.args.get("session")
 
     root = os.path.dirname(os.path.realpath(__file__))
     directory = os.path.join(root, "temp", session_id)
@@ -501,14 +500,15 @@ def m3u8_request_ts(session_id, video_file, video_extension):
 def player_get_video(session_id, video_id):
 
     transcode = request.args.get("transcoding")
-    # session_id = request.args.get("session")
     transcode_time = request.args.get("time")
 
     try:
         if transcode == "1":
             if "m3u8fullpath" not in session_storage[session_id]:
                 m3u8fullpath = acid_transcode.ffmpeg_transcode(
-                    tmdb.get_path(video_id), int(transcode_time), session_id
+                    tmdb.get_path(video_id),
+                    start=int(transcode_time),
+                    sessionid=session_id,
                 )
                 if m3u8fullpath:
                     session_storage[session_id]["m3u8fullpath"] = m3u8fullpath
@@ -543,8 +543,6 @@ def play_episode(video_id, season_number, episode_number):
 
     try:
         path = tmdb.get_path_episode(video_id, season_number, episode_number)
-        print(path)
-        print("FUCK" * 80)
         duration = acid_transcode.ffprobe_getduration(path)
     except Exception:
         duration = 0
@@ -560,11 +558,12 @@ def play_episode(video_id, season_number, episode_number):
     )
 
 
-@app.route("/player/get/<int:video_id>/<int:season_number>/<int:episode_number>")
-def player_get_episode(video_id, season_number, episode_number):
+@app.route(
+    "/player/get/<string:session_id>/<int:video_id>/<int:season_number>/<int:episode_number>"
+)
+def player_get_episode(session_id, video_id, season_number, episode_number):
 
     transcode = request.args.get("transcoding")
-    session = request.args.get("session")
     transcode_time = request.args.get("time")
 
     try:
@@ -573,7 +572,7 @@ def player_get_episode(video_id, season_number, episode_number):
             m3u8fullpath = acid_transcode.ffmpeg_transcode(
                 tmdb.get_path_episode(video_id, season_number, episode_number),
                 start=int(transcode_time),
-                sessionid=session,
+                sessionid=session_id,
             )
 
             return send_from_directory(

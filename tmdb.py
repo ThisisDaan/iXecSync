@@ -642,8 +642,14 @@ def get_filename_episode(video_id, season_number, episode_number):
 
 def get_path_episode(video_id, season_number, episode_number):
     db = dbm.database_manager()
-    sql_query = f"""SELECT path,filename from file WHERE id="{video_id}" AND filename LIKE "%S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}%" COLLATE NOCASE;"""
-    print(sql_query)
+    sql_query = f"""
+    SELECT DISTINCT f.path,f.filename from file as f 
+    JOIN tvshow_episode as tve ON tve.id = f.id
+    JOIN tvshow as tv ON tv.id = tve.show_id
+    WHERE f.id = tve.id AND tve.season_number = "{season_number}" AND tve.episode_number = "{episode_number}" AND tv.id = "{video_id}"
+    """
+    # sql_query = f"""SELECT path,filename from file WHERE id="{video_id}" AND filename LIKE "%S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}%" COLLATE NOCASE;"""
+
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
 
