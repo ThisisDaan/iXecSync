@@ -44,6 +44,8 @@
 <script src="{{ url_for('static', filename='js/sync.js') }}"></script>
 <script>
     var video_id = "{{ video }}"
+    var session_id = "{{session}}"
+    var video_type = "{{video_type}}"
     //player.video_duration = "{{ duration }}"
     set_duration("{{ duration }}")
 
@@ -52,7 +54,7 @@
     //     player.height(window.innerHeight) // changes player to height window
     //     player.width(window.innerWidth) // changes player to width window
     // }
-    //load_player(video_id, "{{type}}")
+    load_player(video_id, session_id, video_type)
     start_session(video_id)
 </script>
 {% endblock %}

@@ -450,7 +450,7 @@
 
 @media only screen {}
 
-@media (max-width: 600px) {
+@media (max-width: 1200px) {
     .library {
         justify-content: space-between;
     }

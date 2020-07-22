@@ -281,7 +281,7 @@ def library_media_genre(library_name, genre):
         selected=library_name,
         library=get_library_items(),
         media=files,
-        goback=False,
+        goback=True,
         meta={"library_name": library_name},
         media_filters=media_filters,
     )

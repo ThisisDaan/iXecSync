@@ -23,7 +23,6 @@ var player = videojs('player', {
     nativeControlsForTouch: false,
 });
 
-
 // Adding the player overlay
 
 var overlay_content = document.getElementById("video-overlay-copy").innerHTML
@@ -57,25 +56,10 @@ function set_duration(duration) {
 }
 
 // Transcoding
-function load_player(video_id, video_type) {
+function load_player(video_id, session_id, video_type) {
     transcode = url_parameters.get('transcoding')
     if (transcode == "1") {
         time = 0;
-        var sync_player_control = function (player) {
-            return {
-                duration: function () {
-                    return player.video_duration;
-                },
-                callPlay: function () {
-                    //return videojs.middleware.TERMINATOR;
-                },
-                callPause: function () {
-                    //return videojs.middleware.TERMINATOR;
-                }
-            };
-        };
-
-        videojs.use('*', sync_player_control);
 
         player.start = 0;
         player.oldCurrentTime = player.currentTime;
@@ -92,15 +76,15 @@ function load_player(video_id, video_type) {
             player.start = time;
             player.oldCurrentTime(0);
             player.src({
-                src: '/player/get/' + video_id + "?transcoding=" + transcode + "&time=" + Math.floor(time),
+                src: '/player/get/' + session_id + "/" + video_id + "?transcoding=1&time=" + Math.floor(time),
                 type: video_type
             });
             return time;
         };
 
         player.src({
-            type: video_type,
-            src: '/player/get/' + video_id + "?transcoding=" + transcode + "&time=" + time
+            src: '/player/get/' + session_id + "/" + video_id + "?transcoding=1&time=" + Math.floor(time),
+            type: video_type
         });
     }
 
