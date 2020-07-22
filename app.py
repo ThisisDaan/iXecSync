@@ -476,8 +476,8 @@ def play_video(video_id):
 
     return render_template(
         "sync_player.html.j2",
-        title=meta["title"],
-        video=video_id,
+        video_title=meta["title"],
+        video_id=video_id,
         session=request.args.get("session"),
         transcode=request.args.get("transcoding"),
         duration=duration,
@@ -553,8 +553,8 @@ def play_episode(video_id, season_number, episode_number):
 
     return render_template(
         "sync_player.html.j2",
-        title=f"""{meta["title"]} - S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}""",
-        video=f"{video_id}/{season_number}/{episode_number}",
+        video_title=f"""{meta["title"]} - S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}""",
+        video_id=f"{video_id}/{season_number}/{episode_number}",
         session=request.args.get("session"),
         transcode=request.args.get("transcoding"),
         duration=duration,
