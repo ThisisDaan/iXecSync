@@ -478,7 +478,7 @@ def play_video(video_id):
         "sync_player.html.j2",
         video_title=meta["title"],
         video_id=video_id,
-        session=request.args.get("session"),
+        session_id=request.args.get("session"),
         transcode=request.args.get("transcoding"),
         duration=duration,
     )
@@ -531,6 +531,7 @@ def player_get_video(session_id, video_id):
                 directory=data["path"], filename=data["filename"]
             )
     except Exception:
+        print("wow exception" * 80)
         return abort(404)
 
 
@@ -555,7 +556,7 @@ def play_episode(video_id, season_number, episode_number):
         "sync_player.html.j2",
         video_title=f"""{meta["title"]} - S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}""",
         video_id=f"{video_id}/{season_number}/{episode_number}",
-        session=request.args.get("session"),
+        session_id=request.args.get("session"),
         transcode=request.args.get("transcoding"),
         duration=duration,
     )

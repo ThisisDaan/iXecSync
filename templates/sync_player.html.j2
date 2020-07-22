@@ -23,7 +23,7 @@
                 {% set video_src %}{{ session_id }}/{{video_id|string}}?transcoding=1&time=0{% endset %}
             {% else %}
                 {% set video_type = "video/mp4" %}
-                {% set video_src %}{{video_id|string}}{% endset %}
+                {% set video_src %}{{ session_id }}/{{video_id|string}}{% endset %}
             {% endif %}
             <source src="/player/get/{{ video_src }}" type="{{ video_type }}">
         {% endif %}

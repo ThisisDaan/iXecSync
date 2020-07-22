@@ -83,7 +83,7 @@ def ffprobe_probe(in_file):
 def ffprobe_getduration(path):
     ##get duration in seconds
     _json = ffprobe_probe(path)
-    print(json.dumps(_json, indent=2))
+    # print(json.dumps(_json, indent=2))
     if "format" in _json:
         if "duration" in _json["format"]:
             timeformatted = datetime.timedelta(
