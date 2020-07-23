@@ -394,59 +394,48 @@ def library_media_overview_season_episode(
     )
 
 
-# Play buttons
+"""
+=-=-=-=-=-=-=-=-=-=-=-=-=-
+library_media_overview
+Play button
+=-=-=-=-=-=-=-=-=-=-=-=-=-
+"""
 
 
+@app.route("/library/<string:library_name>/<int:video_id>/play/")
 @app.route(
     "/library/<string:library_name>/<int:video_id>/<int:season_number>/<int:episode_number>/play"
 )
 def library_media_overview_season_episode_play(
-    library_name, video_id, season_number, episode_number
+    library_name, video_id, season_number=None, episode_number=None
 ):
 
-    data = tmdb.get_filename_episode(video_id, season_number, episode_number)
+    transcoding = request.args.get("transcoding")
+    session_id = f"{uuid.uuid4()}"[:8]
 
-    if data:
-        session_id = f"{uuid.uuid4()}"[:8]
-        create_new_session(f"{video_id}/{season_number}/{episode_number}")
-
+    if season_number:
+        available = tmdb.get_filename_episode(video_id, season_number, episode_number)
+        video_id = f"{video_id}/{season_number}/{episode_number}"
         redirect_url = f"""/video/{video_id}/{season_number}/{episode_number}?session={session_id}"""
-
-        transcode = request.args.get("transcoding")
-        if transcode:
-            redirect_url += f"""&transcoding={request.args.get("transcoding")}"""
-
-        return redirect(redirect_url)
     else:
-        meta = tmdb.get_meta_season_episode(video_id, season_number, episode_number)
-        return render_template(
-            "overview/library_media_overview.html",
-            selected=library_name,
-            library=get_library_items(),
-            meta=meta,
-            error=f"Error - File not found",
-            goback=True,
-        )
-
-
-@app.route("/library/<string:library_name>/<int:video_id>/play/")
-def library_media_overview_play(library_name, video_id):
-
-    data = tmdb.get_filename(video_id)
-
-    if data:
-        session_id = f"{uuid.uuid4()}"[:8]
-        create_new_session(video_id)
-
+        available = tmdb.get_filename(video_id)
         redirect_url = f"""/video/{video_id}?session={session_id}"""
 
-        transcode = request.args.get("transcoding")
-        if transcode:
+    if available:
+        create_new_session(video_id)
+
+        if transcoding:
             redirect_url += f"""&transcoding={request.args.get("transcoding")}"""
 
         return redirect(redirect_url)
+
     else:
-        meta = tmdb.get_meta(library_name, video_id)
+
+        if season_number:
+            meta = tmdb.get_meta_season_episode(video_id, season_number, episode_number)
+        else:
+            meta = tmdb.get_meta(library_name, video_id)
+
         return render_template(
             "overview/library_media_overview.html",
             selected=library_name,
@@ -457,31 +446,52 @@ def library_media_overview_play(library_name, video_id):
         )
 
 
-#
-#  PLAYER - MOVIES
-#
+"""
+=-=-=-=-=-=-=-=-=-
+Sync_player.html
+=-=-=-=-=-=-=-=-=-
+"""
 
 
 @app.route("/video/<int:video_id>")
-def play_video(video_id):
+@app.route("/video/<int:video_id>/<int:season_number>/<int:episode_number>")
+def play_video(video_id, season_number=None, episode_number=None):
 
-    meta = tmdb.get_meta_by_id("movie", video_id)
+    session_id = request.args.get("session")
+    transcoding = request.args.get("transcoding")
+
+    if season_number:
+        meta = tmdb.get_meta_by_id("tvshow", video_id)
+        path = tmdb.get_path_episode(video_id, season_number, episode_number)
+        video_title = f"""{meta["title"]} - S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}"""
+        video_id = f"{video_id}/{season_number}/{episode_number}"
+    else:
+        meta = tmdb.get_meta_by_id("movie", video_id)
+        path = tmdb.get_path(video_id)
+        video_title = f"""{meta["title"]}"""
 
     try:
-        path = tmdb.get_path(video_id)
-        duration = acid_transcode.ffprobe_getduration(path)
+        video_duration = acid_transcode.ffprobe_getduration(path)
     except Exception:
-        duration = 0
+        video_duration = 0
         print(f"Can not get duration of video:")
 
     return render_template(
         "sync_player.html.j2",
-        video_title=meta["title"],
+        video_title=video_title,
         video_id=video_id,
-        session_id=request.args.get("session"),
-        transcode=request.args.get("transcoding"),
-        duration=duration,
+        video_duration=video_duration,
+        session_id=session_id,
+        transcoding=transcoding,
     )
+
+
+"""
+=-=-=-=-=-=-=-=-=-
+sync_player.html
+videojs source requesting the ts files
+=-=-=-=-=-=-=-=-=-
+"""
 
 
 @app.route(
@@ -499,98 +509,44 @@ def m3u8_request_ts(session_id, video_file, video_extension, useless=""):
     return send_from_directory(directory=directory, filename=filename)
 
 
+"""
+=-=-=-=-=-=-=-=-=-
+sync_player.html
+videojs source requesting the video file
+=-=-=-=-=-=-=-=-=-
+"""
+
+
 @app.route("/player/get/<string:session_id>/<int:video_id>")
-def player_get_video(session_id, video_id):
-
-    transcode = request.args.get("transcoding")
-    transcode_time = request.args.get("time")
-
-    try:
-        if transcode == "1":
-            if "m3u8fullpath" not in session_storage[session_id]:
-                m3u8fullpath = acid_transcode.ffmpeg_transcode(
-                    tmdb.get_path(video_id),
-                    start=int(transcode_time),
-                    sessionid=session_id,
-                )
-                if m3u8fullpath:
-                    session_storage[session_id]["m3u8fullpath"] = m3u8fullpath
-                    return send_from_directory(
-                        directory=os.path.dirname(m3u8fullpath),
-                        filename=os.path.basename(m3u8fullpath),
-                    )
-            else:
-                m3u8fullpath = session_storage[session_id]["m3u8fullpath"]
-                return send_from_directory(
-                    directory=os.path.dirname(m3u8fullpath),
-                    filename=os.path.basename(m3u8fullpath),
-                )
-        else:
-            data = tmdb.get_filename(video_id)
-            return send_from_directory(
-                directory=data["path"], filename=data["filename"]
-            )
-    except Exception:
-        print("wow exception" * 80)
-        return abort(404)
-
-
-#
-#  PLAYER - TV SHOWS
-#
-
-
-@app.route("/video/<int:video_id>/<int:season_number>/<int:episode_number>")
-def play_episode(video_id, season_number, episode_number):
-
-    meta = tmdb.get_meta_by_id("tvshow", video_id)
-
-    try:
-        path = tmdb.get_path_episode(video_id, season_number, episode_number)
-        duration = acid_transcode.ffprobe_getduration(path)
-    except Exception:
-        duration = 0
-        print(f"Can not get duration of video")
-
-    return render_template(
-        "sync_player.html.j2",
-        video_title=f"""{meta["title"]} - S{str(season_number).zfill(2)}E{str(episode_number).zfill(2)}""",
-        video_id=f"{video_id}/{season_number}/{episode_number}",
-        session_id=request.args.get("session"),
-        transcode=request.args.get("transcoding"),
-        duration=duration,
-    )
-
-
 @app.route(
     "/player/get/<string:session_id>/<int:video_id>/<int:season_number>/<int:episode_number>"
 )
-def player_get_episode(session_id, video_id, season_number, episode_number):
+def player_get_video(session_id, video_id, season_number=None, episode_number=None):
 
-    transcode = request.args.get("transcoding")
-    transcode_time = request.args.get("time")
+    transcoding = request.args.get("transcoding")
+    video_time = request.args.get("time")
 
-    try:
-        if transcode == "1":
+    if season_number:
+        path = tmdb.get_path_episode(video_id, season_number, episode_number)
+    else:
+        path = tmdb.get_path(video_id)
 
+    if transcoding:
+        try:
             m3u8fullpath = acid_transcode.ffmpeg_transcode(
-                tmdb.get_path_episode(video_id, season_number, episode_number),
-                start=int(transcode_time),
-                sessionid=session_id,
+                path, start=int(video_time), sessionid=session_id,
             )
-
             return send_from_directory(
                 directory=os.path.dirname(m3u8fullpath),
                 filename=os.path.basename(m3u8fullpath),
             )
-        else:
-            data = tmdb.get_filename_episode(video_id, season_number, episode_number)
+        except Exception:
+            return abort(404)
 
-            return send_from_directory(
-                directory=data["path"], filename=data["filename"]
-            )
-    except KeyError:
-        return abort(404)
+    else:
+        return send_from_directory(
+            directory=os.path.dirname(path), filename=os.path.basename(path),
+        )
 
 
 @app.route("/search/", methods=["POST", "GET"])

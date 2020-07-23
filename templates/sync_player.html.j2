@@ -18,7 +18,7 @@
         {% if youtube %}
             <source src="https://www.youtube.com/watch?v={{youtube}}" type="video/youtube">
         {% elif video_id %}
-            {% if transcode %}
+            {% if transcoding %}
                 {% set video_type = "application/x-mpegURL" %}
                 {% set video_src %}{{ session_id }}/{{video_id|string}}?transcoding=1&time=0{% endset %}
             {% else %}
@@ -47,7 +47,7 @@
     var session_id = "{{ session_id }}"
     var video_type = "{{ video_type }}"
     //player.video_duration = "{{ duration }}"
-    set_duration("{{ duration }}")
+    set_duration("{{ video_duration }}")
 
     // // Resize on window resize
     // window.onresize = function () {
