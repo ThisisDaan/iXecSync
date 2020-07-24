@@ -615,7 +615,7 @@ def get_filename(video_id):
 
 def get_path(video_id):
     db = dbm.database_manager()
-    sql_query = f"""SELECT path,filename from file WHERE id="{video_id}";"""
+    sql_query = f"""SELECT f.path,f.filename from file as f JOIN movie as m ON m.id = f.id WHERE f.id="{video_id}" AND m.id="{video_id}";"""
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
 
