@@ -1,0 +1,57 @@
+{% extends "base/library_base-j2.html" %}
+
+{% block content_section %}
+{% if movie %}
+<section class="container">
+    <h2>Popular Movies</h2>
+    <ul id="media" class="media">
+        {% for item in movie %}
+
+        {% if not item.library_name %}
+        {% set library_name = "tmdb" %}
+        {% set item_not_available = True %}
+        {% set item_link = "/tmdb/movie/" + item.id|string + "/" %}
+        {% else %}
+        {% set library_name = item.library_name.lower() %}
+        {% set item_not_available = False %}
+        {% set item_link = "/library/" + library_name + "/" + item.id|string + "/" %}
+        {% endif %}
+
+        {% set item_image_src = "/thumbnail/" + item.poster_path %}
+        {% set item_meta_text_1 = item.title %}
+        {% set item_meta_text_2 = item.release_date[:4] %}
+
+        {% include "components/poster-meta-text-j2.html" %}
+
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+{% if tvshow %}
+<section class="container">
+    <h2>Popular TV Shows</h2>
+    <ul id="media" class="media">
+        {% for item in tvshow %}
+
+        {% if not item.library_name %}
+        {% set library_name = "tmdb" %}
+        {% set item_not_available = True %}
+        {% set item_link = "/tmdb/tv/" + item.id|string + "/" %}
+        {% else %}
+        {% set library_name = item.library_name.lower() %}
+        {% set item_not_available = False %}
+        {% set item_link = "/library/" + library_name + "/" + item.id|string + "/" %}
+        {% endif %}
+
+        {% set item_image_src = "/thumbnail/" + item.poster_path %}
+        {% set item_meta_text_1 = item.title %}
+        {% set item_meta_text_2 = item.release_date[:4] %}
+
+        {% include "components/poster-meta-text-j2.html" %}
+
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endblock %}

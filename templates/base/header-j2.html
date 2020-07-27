@@ -1,8 +1,8 @@
     <header id='header'>
         <ul class='library'>
+            {% set back_url = "javascript:window.history.back()" %}
             <li class="back-button">
-                <a href='javascript:window.history.back()'
-                    class='item icon icon-back{% if goback == False %} disabled{% endif %}'></a>
+                <a href='{{ back_url }}' class='item icon icon-back{% if not goback %} disabled{% endif %}'></a>
             </li>
             {% if video_title %}
             <li>
@@ -16,33 +16,35 @@
                 <a href="/"></a>
             </li>
             {% endif %}
-            {% if selected %}
-
             <li class="mobile">
                 <ul>
+                    {% if selected %}
                     <li>
                         <a href='/library/'
                             class='item icon icon-home {% if selected.lower() == 'home' %}selected{% endif %}'>
                             <span>Home</span>
                         </a>
                     </li>
-
-                    <li>
-                        <a href='/files/'
-                            class='item icon icon-folder {% if selected.lower() == 'files' %}selected{% endif %}'>
-                            <span>Files</span>
+                    {# <li>
+                        <a href='/sessions/'
+                            class='item icon icon-sessions {% if selected.lower() == 'sessions' %}selected{% endif %}'>
+                            <span>Sessions</span>
                         </a>
-                    </li>
-
-
-                    <li>
-                        <a href='/search/'
-                            class='item icon icon-search {% if selected.lower() == 'search' %}selected{% endif %}'>
-                            <span>Search</span>
-                        </a>
-                    </li>
+                    </li> #}
+                    
+                    {# <li>
+                            <a href='/files/'
+                                class='item icon icon-folder {% if selected.lower() == 'files' %}selected{% endif %}'>
+                                <span>Files</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href='/search/'
+                                class='item icon icon-search {% if selected.lower() == 'search' %}selected{% endif %}'>
+                                <span>Search</span>
+                            </a>
+                        </li> #}
                     {% endif %}
-
                     {% if library %}
                     {% for item in library %}
                     <li>
@@ -55,6 +57,5 @@
                     {% endif %}
                 </ul>
             </li>
-
         </ul>
     </header>

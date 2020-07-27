@@ -39,7 +39,7 @@ class database_manager:
                 );"""
         )
         self.sql_create_table(
-            """CREATE TABLE IF NOT EXISTS tvshow (
+            """CREATE TABLE IF NOT EXISTS tv (
                 id TEXT PRIMARY KEY,
                 library_name TEXT,
                 name TEXT,
@@ -58,7 +58,7 @@ class database_manager:
         )
 
         self.sql_create_table(
-            """CREATE TABLE IF NOT EXISTS tvshow_season (
+            """CREATE TABLE IF NOT EXISTS tv_season (
                 id TEXT PRIMARY KEY,
                 show_id TEXT,
                 name TEXT,
@@ -71,7 +71,7 @@ class database_manager:
         )
 
         self.sql_create_table(
-            """CREATE TABLE IF NOT EXISTS tvshow_episode (
+            """CREATE TABLE IF NOT EXISTS tv_episode (
                 id TEXT PRIMARY KEY,
                 show_id TEXT,
                 name TEXT,
@@ -109,20 +109,6 @@ class database_manager:
             self.connection.commit()
         except Exception as e:
             print(f"SQL_CREATE_TABLE ERROR: {e}")
-
-    def not_exists(self, directory, filename):
-        sql_query = f"""SELECT * FROM file WHERE path = "{directory}" COLLATE NOCASE AND filename = "{filename}" """
-        # print(sql_query)
-        cur = self.connection.cursor()
-
-        cur.execute(sql_query)
-        sql_result = cur.fetchall()
-        cur.close()
-
-        if sql_result:
-            return False
-        else:
-            return True
 
     def sql_execute(self, sql_query):
         cur = self.connection.cursor()

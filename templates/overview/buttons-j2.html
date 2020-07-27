@@ -1,0 +1,43 @@
+{% extends "overview/main-j2.html" %}
+
+{% block content_section %}
+{{ super() }}
+<section class="container">
+    <ul class="media buttons">
+        {% if not episode and not season and not tmdb %}
+        <li class="item">
+            <a href="play">
+                <button class="button theme">Play</button>
+            </a>
+        </li>
+
+        <li class="item">
+            <a href="play/?transcoding=1">
+                <button class="button theme">Play (Transcoding)</button>
+            </a>
+        </li>
+        {% endif %}
+
+        <li class="item">
+        {% if overview.episode_number %}
+        {% set tmdb_link = "https://www.themoviedb.org/tv/" + overview.show_id|string + "/season/" + overview.season_number|string + "/episode/" + overview.episode_number|string %}
+        {% elif overview.season_number %}
+        {% set tmdb_link = "https://www.themoviedb.org/tv/" + overview.show_id|string + "/season/" + overview.season_number|string %}
+        {% else %}
+        {% set tmdb_link = "https://www.themoviedb.org/" + overview.content_type + "/" + overview.id|string %}
+        {% endif %}
+            <a href="{{ tmdb_link }}">
+                <button class="button optional">View on TMDB</button>
+            </a>
+        </li>
+
+        {% if overview.video %}
+        <li class="item">
+            <a href="trailer/">
+                <button class="button optional">Trailer</button>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</section>
+{% endblock %}

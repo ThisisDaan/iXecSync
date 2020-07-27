@@ -1,0 +1,30 @@
+{% extends "overview/buttons-j2.html" %}
+
+{% block content_section %}
+{{ super() }}
+{% if episode %}
+<section class="container">
+    <h2>Episodes</h2>
+    <ul id="media" class="media hd">
+        {% for episode in episode %}
+
+        {% if episode.available %}
+        {% set item_link = episode.episode_number + "/play" %}
+        {% set item_not_available = False %}
+        {% else %}
+        {% set item_link = episode.episode_number + "/" %}
+        {% set item_not_available = True %}
+        {% endif %}
+
+        {% set orientation = "landscape" %}
+        {% set item_image_src = "/thumbnail/" + episode.still_path %}
+        {% set item_meta_text_1 = "Episode " + episode.episode_number|string %}
+        {% set item_meta_text_2 = episode.name %}
+
+        {% include "components/poster-meta-text-j2.html" %}
+
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endblock %}
