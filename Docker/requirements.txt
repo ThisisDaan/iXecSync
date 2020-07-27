@@ -4,3 +4,4 @@ gevent-websocket
 iso-639
 requests
 psutil
+flask-paginate
