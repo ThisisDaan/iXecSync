@@ -636,6 +636,36 @@
     right: 0;
 }
 
+.pagination {
+    padding: var(--margin);
+}
+
+.pagination ul {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination li {
+    opacity: 0.5;
+}
+
+.pagination li:hover {
+    opacity: 1;
+}
+
+.pagination .active {
+    opacity: 1;
+}
+
+.pagination a {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 20px;
+    padding: 25px;
+}
+
 
 /* .horizontal-scroll {
     display: flex;

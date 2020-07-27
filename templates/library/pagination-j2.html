@@ -1,0 +1,8 @@
+{% extends "library/media-j2.html" %}
+
+{% if pagination.links %}
+    {% block content_section %}
+        {{super()}}
+        {{ pagination.links }}
+    {% endblock %}
+{% endif %}

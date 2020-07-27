@@ -6,6 +6,7 @@ import database_queries as dbq
 from scan_library import scan
 from sessions import create_new_session
 from transcoding import ffprobe_getduration
+from flask_paginate import Pagination, get_page_args
 
 
 """
@@ -14,7 +15,7 @@ Default render template. Adds context to the template that needs to be on every 
 
 
 def default_render_template(template, **context):
-    return render_template(template, library=config["library"], **context)
+    return render_template(template, library=config["library"], **context,)
 
 
 """
@@ -74,17 +75,33 @@ def home():
     )
 
 
-def media(request, library_name, genre):
+def media(request, library_name, genre, **context):
 
     media_filters = get_media_filters(request, library_name, genre)
     media = dbq.library(library_name, media_filters["orderby"]["selected"], genre)
 
+    """
+    Pagination
+    """
+
+    page, per_page, offset = get_page_args(
+        page_parameter="page", per_page_parameter="per_page"
+    )
+    offset = (page - 1) * 100
+    per_page = 100
+    media_pagination = media[offset : offset + per_page]
+    total = len(media)
+    context["pagination"] = Pagination(page=page, per_page=per_page, total=total)
+    context["page"] = page
+    context["per_page"] = per_page
+
     return default_render_template(
-        "library/media-j2.html",
+        "library/pagination-j2.html",
         selected=library_name,
-        media=media,
+        media=media_pagination,
         media_filters=media_filters,
         goback=(genre),
+        **context,
     )
 
 
