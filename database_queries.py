@@ -286,3 +286,83 @@ def save_tmdb_genres():
             db.sql_update_by_json("genre", genre)
 
         db.connection.close()
+
+
+def get_popular_movies():
+
+    results = tmdb_api.get_popular_movies()
+
+    popular_movie_titles = []
+    for movie in results:
+        popular_movie_titles.append('"' + movie["title"] + '"')
+
+    sql_popular_movie_titles = ", ".join(popular_movie_titles)
+
+    db = dbm.database_manager()
+    sql_query = f"""SELECT title,release_date,id,poster_path,library_name,popularity,vote_average FROM movie WHERE title IN ({sql_popular_movie_titles}) COLLATE NOCASE """
+
+    sql_data = db.sql_execute(sql_query)
+
+    for movie in sql_data:
+        if movie["title"] in str(popular_movie_titles):
+            popular_movie_titles.remove('"' + movie["title"] + '"')
+
+    for movie in results:
+        if movie["title"] in str(popular_movie_titles):
+            json_data = {
+                "library_name": "",
+                "title": movie["title"],
+                "release_date": movie["release_date"],
+                "poster_path": movie["poster_path"],
+                "popularity": movie["popularity"],
+                "vote_average": movie["vote_average"],
+                "id": movie["id"],
+                "notavailable": True,
+            }
+            sql_data.append(json_data)
+
+    sql_data_sorted = sorted(sql_data, key=lambda i: i["vote_average"], reverse=True)
+
+    db.connection.close()
+
+    return sql_data_sorted
+
+
+def get_popular_tvshows():
+
+    results = tmdb_api.get_popular_tvshows()
+
+    popular_movie_titles = []
+    for movie in results:
+        popular_movie_titles.append('"' + movie["name"] + '"')
+
+    sql_popular_movie_titles = ", ".join(popular_movie_titles)
+
+    db = dbm.database_manager()
+    sql_query = f"""SELECT name as title,first_air_date as release_date,id,poster_path,library_name,popularity,vote_average FROM tv WHERE name IN ({sql_popular_movie_titles}) COLLATE NOCASE """
+
+    sql_data = db.sql_execute(sql_query)
+
+    for movie in sql_data:
+        if movie["title"] in str(popular_movie_titles):
+            popular_movie_titles.remove('"' + movie["title"] + '"')
+
+    for movie in results:
+        if movie["name"] in str(popular_movie_titles):
+            json_data = {
+                "library_name": "",
+                "title": movie["name"],
+                "release_date": movie["first_air_date"],
+                "poster_path": movie["poster_path"],
+                "popularity": movie["popularity"],
+                "vote_average": movie["vote_average"],
+                "id": movie["id"],
+                "notavailable": True,
+            }
+            sql_data.append(json_data)
+
+    sql_data_sorted = sorted(sql_data, key=lambda i: i["vote_average"], reverse=True)
+
+    db.connection.close()
+
+    return sql_data_sorted
