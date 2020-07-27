@@ -62,9 +62,8 @@ All the functions that are used in routes.py
 
 
 def home():
-    movie = tmdb_api.get_popular_movies()
-    tvshow = tmdb_api.get_popular_tvshows()
-    goback = False
+    movie = dbq.get_popular_movies()
+    tvshow = dbq.get_popular_tvshows()
 
     return default_render_template(
         "home/popular-j2.html",
