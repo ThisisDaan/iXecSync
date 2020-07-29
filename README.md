@@ -1,5 +1,4 @@
 # iXecSync
-Perfect in sync, like all things should be.
 
 Media server for watching movies together.</h4>
 - Scans your libraries.
