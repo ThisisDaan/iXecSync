@@ -219,7 +219,7 @@ def scan_library_tv(library, genres):
 
 def download_poster(tmdb_data):
     if "poster_path" in tmdb_data:
-        url = f"https://image.tmdb.org/t/p/w500/rhrv7gS7gNw0C9bglvuCtH9IRTd.jpg{tmdb_data['poster_path']}"
+        url = f"https://image.tmdb.org/t/p/w500{tmdb_data['poster_path']}"
 
         try:
             urllib.request.urlretrieve(

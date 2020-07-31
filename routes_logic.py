@@ -25,6 +25,7 @@ Media filters
 
 def get_media_filters(request, library_name, genre=None):
     orderby_number = request.form.get("orderby")
+    search_keyword = request.form.get("search")
 
     media_filter = [
         "popularity DESC",
@@ -45,12 +46,17 @@ def get_media_filters(request, library_name, genre=None):
     if genre is None:
         genre = "all"
 
+    if search_keyword is None:
+        search_keyword = ""
+    else:
+        search_keyword = search_keyword.strip()
+
     genres = dbq.library_genres(library_name)
 
     media_filters = {
         "orderby": {"selected": orderby,},
         "genres": {"selected": genre, "list": genres},
-        "search": True,
+        "search": {"available": True, "keyword": search_keyword},
         "library_name": library_name,
     }
 
@@ -78,7 +84,12 @@ def home():
 def media(request, library_name, genre, **context):
 
     media_filters = get_media_filters(request, library_name, genre)
-    media = dbq.library(library_name, media_filters["orderby"]["selected"], genre)
+    media = dbq.library(
+        library_name,
+        media_filters["orderby"]["selected"],
+        genre,
+        media_filters["search"]["keyword"],
+    )
 
     """
     Pagination

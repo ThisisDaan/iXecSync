@@ -63,7 +63,7 @@ def trailer(content_type, movie_id):
         if video["type"].lower() == "trailer" and video["site"].lower() == "youtube":
             return video["key"]
 
-    return False
+    return ""
 
 
 def tmdb_overview(content_type, video_id):

@@ -14,49 +14,67 @@ def library_content_type(library_name):
             return item["type"]
 
 
-def library(library_name, orderby, genre):
+def library(library_name, orderby, genre, search_keyword):
     db = dbm.database_manager()
 
     orderby = orderby.split(" ")
     content_type = library_content_type(library_name)
 
+    sql_params = []
+
     if content_type == "movie":
         if genre is None:
             sql_query = f"""
-                        SELECT title,release_date as release_date,id,poster_path,library_name 
-                        FROM movie WHERE library_name ="{library_name}" COLLATE NOCASE 
-                        ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
+                        SELECT DISTINCT title,release_date as release_date,id,poster_path,library_name FROM movie
+                        """
 
         else:
             sql_query = f"""
-                        SELECT DISTINCT m.title,m.library_name,m.poster_path,m.release_date,m.id from genre as g 
+                        SELECT DISTINCT m.title as title,m.library_name,m.poster_path,m.release_date,m.id,g.name as genre_name from genre as g 
                         JOIN media_genre as mg ON g.id = mg.genre_id
                         JOIN movie as m ON m.id = mg.id
-                        WHERE g.name = "{genre}" COLLATE NOCASE 
-                        AND m.library_name = "{library_name}" COLLATE NOCASE 
-                        ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}
                         """
 
     elif content_type == "tv":
         if genre is None:
             sql_query = f"""
-                        SELECT name as title,first_air_date as release_date,id,poster_path,library_name 
-                        FROM tv WHERE library_name ="{library_name}" COLLATE NOCASE 
-                        ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}
+                        SELECT DISTINCT name as title,first_air_date as release_date,id,poster_path,library_name FROM tv
                         """
 
         else:
             sql_query = f"""
-                        SELECT DISTINCT m.name as title,m.library_name,m.poster_path,m.first_air_date as release_date,m.id from genre as g 
+                        SELECT DISTINCT m.name as title,m.library_name,m.poster_path,m.first_air_date as release_date,m.id,g.name as genre_name from genre as g 
                         JOIN media_genre as mg ON g.id = mg.genre_id
                         JOIN tv as m ON m.id = mg.id
-                        WHERE g.name = "{genre}" COLLATE NOCASE 
-                        AND m.library_name = "{library_name}" COLLATE NOCASE 
-                        ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}
                         """
 
     else:
         return None
+
+    sql_params.append(sql_query)
+
+    if library_name:
+        sql_query = f"""WHERE library_name = "{library_name}" COLLATE NOCASE"""
+        sql_params.append(sql_query)
+
+    if search_keyword:
+        sql_query = f"""
+                     AND title like "%{search_keyword}%" COLLATE NOCASE 
+                     OR release_date like "%{search_keyword}%" COLLATE NOCASE
+                     """
+        sql_params.append(sql_query)
+
+    if genre:
+        sql_query = f"""AND genre_name = "{genre}" COLLATE NOCASE"""
+        sql_params.append(sql_query)
+
+    if orderby:
+        sql_query = f"""ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
+        sql_params.append(sql_query)
+
+    sql_query = " ".join(sql_params)
+
+    print(sql_query)
 
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
@@ -133,7 +151,7 @@ def library_overview(content_type, video_id, season_number=None, episode_number=
     sql_data = db.sql_execute(sql_query)
 
     genre_query = f"""
-                  SELECT g.name from genre as g 
+                  SELECT DISTINCT g.name from genre as g 
                   JOIN media_genre as mg ON g.id = mg.genre_id
                   JOIN {content_type} as m ON m.id = mg.id
                   WHERE m.id = "{video_id}"

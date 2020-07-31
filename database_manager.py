@@ -53,7 +53,7 @@ class database_manager:
                 popularity INTEGER,
                 vote_average INTEGER,
                 vote_count INTEGER,
-                video
+                video TEXT
                 );"""
         )
 

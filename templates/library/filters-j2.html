@@ -53,11 +53,15 @@
             </form>
         </li>
         {% endif %}
-        {% if media_filters.search %}
+        {% if media_filters.search.available %}
         <li class="search-filter">
-            <input id='search' type=search onkeyup="search()" placeholder="Search...">
+        <form method="post">
+            <input name="search" id='search' type=search placeholder="Search..." value="{{media_filters.search.keyword}}">
+            <input style="display:none" type="submit"/>
+        </form>
+            
         </li>
-        <script>
+        {# <script>
             function search() {
                 var input, filter, ul, li, a, i, txtValue;
                 input = document.getElementById('search');
@@ -76,7 +80,7 @@
                     }
                 }
             }
-        </script>
+        </script> #}
         {% endif %}
     </ul>
 </nav>

@@ -527,6 +527,7 @@
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     grid-column-gap: var(--margin);
     grid-row-gap: var(--margin);
+    margin-bottom: var(--margin);
 }
 
 .media.hd {
@@ -660,10 +661,18 @@
 }
 
 .pagination a {
+    border-radius: 5px;
     color: #ffffff;
     font-weight: 600;
     font-size: 20px;
-    padding: 25px;
+}
+
+.pagination li+li {
+    margin-left: 15px;
+}
+
+.pagination .disabled {
+    visibility: hidden;
 }
 
 
