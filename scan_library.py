@@ -17,6 +17,8 @@ scanning = False
 scanned_items = 0
 total_items = 0
 
+threads = []
+
 
 def scanning_and_threading():
     if scanning == False:
@@ -53,14 +55,30 @@ def scan():
             scan_thread = threading.Thread(
                 target=scan_library_movie, args=(library, genres,)
             )
+            threads.append(scan_thread)
             scan_thread.start()
         elif library["type"] == "tv":
             scan_thread = threading.Thread(
                 target=scan_library_tv, args=(library, genres,)
             )
+            threads.append(scan_thread)
             scan_thread.start()
         else:
             print("Invalid library type")
+
+    while True:
+        time.sleep(10)
+        total_threads = len(threads)
+        finished_threads = 0
+        for thread in threads:
+            if not thread.is_alive():
+                finished_threads += 1
+
+        print("HOW MANY THREADS??")
+        print(total_threads)
+        print(finished_threads)
+        if total_threads == finished_threads:
+            break
 
     time.sleep(60)
     scanning = False
