@@ -50,9 +50,15 @@ def scan():
 
     for library in config["library"]:
         if library["type"] == "movie":
-            scan_library_movie(library, genres)
+            scan_thread = threading.Thread(
+                target=scan_library_movie, args=(library, genres,)
+            )
+            scan_thread.start()
         elif library["type"] == "tv":
-            scan_library_tv(library, genres)
+            scan_thread = threading.Thread(
+                target=scan_library_tv, args=(library, genres,)
+            )
+            scan_thread.start()
         else:
             print("Invalid library type")
 
@@ -152,36 +158,40 @@ def scan_library_tv(library, genres):
     collected_files = defaultdict(lambda: defaultdict(list))
 
     for file in files:
-        scanned_items += 1
         if not file_exists(file.parent, file.name):
+            try:
+                match = re.findall(r"S[0-9][0-9]E[0-9][0-9]", file.name)
+                if match:
+                    if match[0][1] == "0":
+                        season_number = match[0][2]
+                        print(season_number)
+                    else:
+                        season_number = match[0][1:3]
 
-            match = re.findall(r"S[0-9][0-9]E[0-9][0-9]", file.name)
-            if match:
-                if match[0][1] == "0":
-                    season_number = match[0][2]
-                    print(season_number)
-                else:
-                    season_number = match[0][1:3]
+                    if match[0][-2] == "0":
+                        episode_number = match[0][-1]
+                        print(episode_number)
+                    else:
+                        episode_number = match[0][-2:]
 
-                if match[0][-2] == "0":
-                    episode_number = match[0][-1]
-                    print(episode_number)
-                else:
-                    episode_number = match[0][-2:]
+                episode = {
+                    "season_number": season_number,
+                    "episode_number": episode_number,
+                    "path": str(file.parent),
+                    "filename": str(file.name),
+                }
 
-            episode = {
-                "season_number": season_number,
-                "episode_number": episode_number,
-                "path": str(file.parent),
-                "filename": str(file.name),
-            }
-
-            collected_files[file.parent.parent.name][season_number].append(episode)
+                collected_files[file.parent.parent.name][season_number].append(episode)
+            except Exception:
+                scanned_items += 1
+                print("Error")
 
         else:
+            scanned_items += 1
             print(f"Skipped file - {file.name}")
 
     for tv in collected_files:
+        scanned_items += 1
         print(f"TVSHOW - {tv}")
 
         # Getting the movie name from parent direcotry

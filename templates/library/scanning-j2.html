@@ -3,7 +3,15 @@
 
 {% block content_section %}
 <div class="container">
+<p>
+<strong>
+{% if percentage != 100 %}
 Scanning libraries - {{percentage}}%
+{% else %}
+Scan complete
+{% endif %}
+</strong>
+</p>
 </div>
 {% endblock %}
 

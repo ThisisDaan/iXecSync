@@ -183,6 +183,11 @@
     mask-image: url(../icons/search-24px.svg);
 }
 
+.icon-scan::before {
+    -webkit-mask-image: url(../icons/find_replace-24px.svg);
+    mask-image: url(../icons/find_replace-24px.svg);
+}
+
 .icon-back::before {
     -webkit-mask-image: url(../icons/arrow_back-24px.svg);
     mask-image: url(../icons/arrow_back-24px.svg);
