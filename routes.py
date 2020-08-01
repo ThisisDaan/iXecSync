@@ -9,6 +9,7 @@ from routes_logic import (
     player_video,
     overview_play,
     overview_tmdb,
+    page_not_found,
 )
 
 
@@ -81,3 +82,8 @@ def route_tmdb_overview(content_type, video_id):
 @app.route("/scan_library")
 def route_scan_library():
     return scan_library()
+
+
+@app.errorhandler(404)
+def route_page_not_found(e):
+    return page_not_found(e)

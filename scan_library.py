@@ -9,8 +9,37 @@ from database_queries import save_tmdb_genres, all_genres, file_exists
 import tmdb_api
 from collections import defaultdict
 
+import threading
+import time
+
+
+scanning = False
+scanned_items = 0
+total_items = 0
+
+
+def scanning_and_threading():
+    if scanning == False:
+        scan_thread = threading.Thread(target=scan)
+        scan_thread.start()
+
+
+def return_scan_percentage():
+    if scanned_items != 0 and total_items != 0:
+        percentage = round((scanned_items / total_items) * 100)
+    else:
+        percentage = 0
+
+    return percentage
+
 
 def scan():
+    global scanning
+    global scanned_items
+    global total_items
+
+    scanning = True
+
     save_tmdb_genres()
 
     results = all_genres()
@@ -26,6 +55,11 @@ def scan():
             scan_library_tv(library, genres)
         else:
             print("Invalid library type")
+
+    time.sleep(60)
+    scanning = False
+    total_items = 0
+    scanned_items = 0
 
 
 """
@@ -46,13 +80,19 @@ def get_supported_files(directory):
 
 
 def scan_library_movie(library, genres):
+    global scanning
+    global scanned_items
+    global total_items
 
     # opening database connection
     db = dbm.database_manager()
 
     files = get_supported_files(library["path"])
 
+    total_items += len(files)
+
     for file in files:
+        scanned_items += 1
         if not file_exists(file.parent, file.name):
 
             print(f"Scanned file - {file.name}")
@@ -99,15 +139,20 @@ def scan_library_movie(library, genres):
 
 
 def scan_library_tv(library, genres):
+    global scanning
+    global scanned_items
+    global total_items
 
     # opening database connection
     db = dbm.database_manager()
 
     files = get_supported_files(library["path"])
+    total_items += len(files)
 
     collected_files = defaultdict(lambda: defaultdict(list))
 
     for file in files:
+        scanned_items += 1
         if not file_exists(file.parent, file.name):
 
             match = re.findall(r"S[0-9][0-9]E[0-9][0-9]", file.name)

@@ -11,7 +11,12 @@ Check the type of content of the libraries
 def library_content_type(library_name):
     for item in config["library"]:
         if item["name"].lower() == library_name.lower():
-            return item["type"]
+            if item["type"] == "tv":
+                return "tv"
+            elif item["type"] == "movie":
+                return "movie"
+            else:
+                return None
 
 
 def library(library_name, orderby, genre, search_keyword):
@@ -32,7 +37,7 @@ def library(library_name, orderby, genre, search_keyword):
             sql_query = f"""
                         SELECT DISTINCT m.title as title,m.library_name,m.poster_path,m.release_date,m.id,g.name as genre_name from genre as g 
                         JOIN media_genre as mg ON g.id = mg.genre_id
-                        JOIN movie as m ON m.id = mg.id
+                        JOIN movie as m ON m.id  = mg.id
                         """
 
     elif content_type == "tv":
@@ -49,32 +54,35 @@ def library(library_name, orderby, genre, search_keyword):
                         """
 
     else:
-        return None
+        return "Invalid Library Type"
 
     sql_params.append(sql_query)
 
     if library_name:
-        sql_query = f"""WHERE library_name = "{library_name}" COLLATE NOCASE"""
+        sql_query = f"""
+                    WHERE library_name = "{library_name}" COLLATE NOCASE
+                    """
         sql_params.append(sql_query)
 
     if search_keyword:
         sql_query = f"""
-                     AND title like "%{search_keyword}%" COLLATE NOCASE 
-                     OR release_date like "%{search_keyword}%" COLLATE NOCASE
+                     AND title like "%{search_keyword}%" COLLATE NOCASE
                      """
         sql_params.append(sql_query)
 
     if genre:
-        sql_query = f"""AND genre_name = "{genre}" COLLATE NOCASE"""
+        sql_query = f"""
+                    AND genre_name = "{genre}" COLLATE NOCASE
+                    """
         sql_params.append(sql_query)
 
     if orderby:
-        sql_query = f"""ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}"""
+        sql_query = f"""
+                    ORDER BY {orderby[0]} COLLATE NOCASE {orderby[1]}
+                    """
         sql_params.append(sql_query)
 
     sql_query = " ".join(sql_params)
-
-    print(sql_query)
 
     sql_data = db.sql_execute(sql_query)
     db.connection.close()
@@ -100,19 +108,22 @@ def library_genres(library_name):
 
     content_type = library_content_type(library_name)
 
-    sql_query = f"""
-                SELECT DISTINCT g.name from genre as g 
-                JOIN media_genre as mg ON g.id = mg.genre_id
-                JOIN {content_type} as m ON m.id = mg.id
-                WHERE m.id = mg.id 
-                AND m.library_name = "{library_name}" COLLATE NOCASE
-                """
+    if content_type:
+        sql_query = f"""
+                    SELECT DISTINCT g.name from genre as g 
+                    JOIN media_genre as mg ON g.id = mg.genre_id
+                    JOIN {content_type} as m ON m.id = mg.id
+                    WHERE m.id = mg.id 
+                    AND m.library_name = "{library_name}" COLLATE NOCASE
+                    """
 
-    sql_data = db.sql_execute(sql_query)
-    db.connection.close()
-    sql_data_sorted = sorted(sql_data, key=lambda i: i["name"], reverse=False)
+        sql_data = db.sql_execute(sql_query)
+        db.connection.close()
+        sql_data_sorted = sorted(sql_data, key=lambda i: i["name"], reverse=False)
 
-    return sql_data_sorted
+        return sql_data_sorted
+    else:
+        return None
 
 
 def library_overview(content_type, video_id, season_number=None, episode_number=None):
@@ -146,7 +157,7 @@ def library_overview(content_type, video_id, season_number=None, episode_number=
                         """
 
     else:
-        return None
+        return "Invalid Library Type"
 
     sql_data = db.sql_execute(sql_query)
 

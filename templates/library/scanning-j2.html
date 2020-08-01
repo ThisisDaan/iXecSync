@@ -1,0 +1,17 @@
+{% extends "base/library_base-j2.html" %}
+
+
+{% block content_section %}
+<div class="container">
+Scanning libraries - {{percentage}}%
+</div>
+{% endblock %}
+
+{% block scripts_bottom %}
+{{ super() }}
+<script>
+{% if auto_refresh %}
+setTimeout("location.reload(true);", 5000)
+{% endif %}
+</script>
+{% endblock %}

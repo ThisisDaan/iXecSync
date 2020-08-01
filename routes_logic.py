@@ -1,9 +1,9 @@
 from __main__ import config
-from flask import render_template, redirect
+from flask import render_template, redirect, abort, Response
 import routes_file_request
 import tmdb_api
 import database_queries as dbq
-from scan_library import scan
+from scan_library import scanning_and_threading, return_scan_percentage
 from sessions import create_new_session
 from transcoding import ffprobe_getduration
 from flask_paginate import Pagination, get_page_args
@@ -91,29 +91,33 @@ def media(request, library_name, genre, **context):
         media_filters["search"]["keyword"],
     )
 
-    """
-    Pagination
-    """
+    if media != "Invalid Library Type":
 
-    page, per_page, offset = get_page_args(
-        page_parameter="page", per_page_parameter="per_page"
-    )
-    offset = (page - 1) * 100
-    per_page = 100
-    media_pagination = media[offset : offset + per_page]
-    total = len(media)
-    context["pagination"] = Pagination(page=page, per_page=per_page, total=total)
-    context["page"] = page
-    context["per_page"] = per_page
+        """
+        Pagination
+        """
 
-    return default_render_template(
-        "library/pagination-j2.html",
-        selected=library_name,
-        media=media_pagination,
-        media_filters=media_filters,
-        goback=(genre),
-        **context,
-    )
+        page, per_page, offset = get_page_args(
+            page_parameter="page", per_page_parameter="per_page"
+        )
+        offset = (page - 1) * 100
+        per_page = 100
+        media_pagination = media[offset : offset + per_page]
+        total = len(media)
+        context["pagination"] = Pagination(page=page, per_page=per_page, total=total)
+        context["page"] = page
+        context["per_page"] = per_page
+
+        return default_render_template(
+            "library/pagination-j2.html",
+            selected=library_name,
+            media=media_pagination,
+            media_filters=media_filters,
+            goback=(genre),
+            **context,
+        )
+    else:
+        return abort(404)
 
 
 def overview(library_name, video_id, season_number, episode_number, **context):
@@ -244,5 +248,17 @@ def overview_tmdb(content_type, video_id):
 
 
 def scan_library():
-    scan()
-    return "scan complete"
+    scanning_and_threading()
+    percentage = return_scan_percentage()
+    auto_refresh = percentage != 100
+    return default_render_template(
+        "library/scanning-j2.html",
+        selected="scan",
+        percentage=return_scan_percentage(),
+        auto_refresh=auto_refresh,
+    )
+
+
+def page_not_found(error):
+    return default_render_template("error/404-j2.html")
+
