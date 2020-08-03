@@ -3,27 +3,29 @@
 
 {% block content_section %}
 <img class="backdrop" src="/thumbnail/{{ overview.poster_path }}">
-<section class="overview">
-    <img class="poster" src="/thumbnail/{{ overview.poster_path }}">
-    <div class="overview-side">
-        <h1>{{ overview.title }}</h1>
-        <div class="subtext">
-            <span>{{ overview.release_date[:4] }}</span>
-            {% if overview.vote_average %}
-            <span class="rating">{{ overview.vote_average|round(1) }}</span>
-            {% endif %}
-            {% if overview.genres %}
-            {% for genre in overview.genres %}
-            {% set link = (genre_prefix or "../") + genre.name.lower() + "/" %}
-            <span><a class="genre" href="{{ link }}">{{ genre.name }}</a></span>
-            {% endfor %}
-            {% endif %}
 
+<section class="container overview">
+        <img class="poster" src="/thumbnail/{{ overview.poster_path }}">
+        <div class="overview-side">
+            <h1>{{ overview.title }}</h1>
+            <div class="subtext">
+                <span>{{ overview.release_date[:4] }}</span>
+                {% if overview.vote_average %}
+                <span class="rating">{{ overview.vote_average|round(1) }}</span>
+                {% endif %}
+                {% if overview.genres %}
+                {% for genre in overview.genres %}
+                {% set link = (genre_prefix or "../") + genre.name.lower() + "/" %}
+                <span><a class="genre" href="{{ link }}">{{ genre.name }}</a></span>
+                {% endfor %}
+                {% endif %}
+
+            </div>
+
+            <span class="overview-text">
+            {{ overview.overview }}
+            </span>
         </div>
-
-        <span class="overview-text">
-        {{ overview.overview }}
-        </span>
-    </div>
 </section>
+
 {% endblock %}

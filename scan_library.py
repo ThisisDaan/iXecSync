@@ -80,6 +80,8 @@ def scan():
         if total_threads == finished_threads:
             break
 
+    # At this point all the threads are closed so we should be 100% scanned.
+    scanned_items = total_items
     time.sleep(60)
     scanning = False
     total_items = 0
@@ -171,7 +173,6 @@ def scan_library_tv(library, genres):
     db = dbm.database_manager()
 
     files = get_supported_files(library["path"])
-    total_items += len(files)
 
     collected_files = defaultdict(lambda: defaultdict(list))
 
@@ -201,13 +202,12 @@ def scan_library_tv(library, genres):
 
                 collected_files[file.parent.parent.name][season_number].append(episode)
             except Exception:
-                scanned_items += 1
                 print("Error")
 
         else:
-            scanned_items += 1
             print(f"Skipped file - {file.name}")
 
+    total_items += len(collected_files)
     for tv in collected_files:
         scanned_items += 1
         print(f"TVSHOW - {tv}")

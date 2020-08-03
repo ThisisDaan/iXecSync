@@ -1,67 +1,54 @@
-    <header id='header'>
-        <ul class='library'>
-            {% set back_url = "javascript:window.history.back()" %}
-            <li class="back-button">
-                <a href='{{ back_url }}' class='item icon icon-back{% if not goback %} disabled{% endif %}'></a>
+<header class='header'>
+    <nav class='nav horizontal'>
+        <ul>
+            <li>
+                <a class="item" href="javascript:window.history.back()">
+                <i class="icon icon-back"></i>
+                </a>
             </li>
             {% if video_title %}
-            <li>
-                <h1 class="video-title">{{ video_title }}</h1>
-            </li>
+                <li>
+                    <h1 class="video-title">{{ video_title }}</h1>
+                </li>
             {% else %}
-            <li class="menu-button" onclick="$('.mobile').toggleClass('active');$('body').toggleClass('no-scroll')">
-                <a class='item icon icon-menu'></a>
+            <li>
+                <a class="item" href="/">
+                <i class="logo"></i>
+                </a>
             </li>
-            <li class="logo">
-                <a href="/"></a>
+            <li>
+                <label  class="item" for="side-menu">
+                <i class="icon icon-menu"></i>
+                </label>
             </li>
             {% endif %}
-            <li class="mobile">
-                <ul>
-                    {% if selected %}
-                    <li>
-                        <a href='/library/'
-                            class='item icon icon-home {% if selected.lower() == 'home' %}selected{% endif %}'>
-                            <span>Home</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href='/scan_library'
-                            class='item icon icon-scan {% if selected.lower() == 'scan' %}selected{% endif %}'>
-                            <span>Scan</span>
-                        </a>
-                    </li>
-                    {# <li>
-                        <a href='/sessions/'
-                            class='item icon icon-sessions {% if selected.lower() == 'sessions' %}selected{% endif %}'>
-                            <span>Sessions</span>
-                        </a>
-                    </li> #}
-                    
-                    {# <li>
-                            <a href='/files/'
-                                class='item icon icon-folder {% if selected.lower() == 'files' %}selected{% endif %}'>
-                                <span>Files</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href='/search/'
-                                class='item icon icon-search {% if selected.lower() == 'search' %}selected{% endif %}'>
-                                <span>Search</span>
-                            </a>
-                        </li> #}
-                    {% endif %}
-                    {% if library %}
-                    {% for item in library %}
-                    <li>
-                        <a href='/library/{{ item.name.lower() }}/'
-                            class='item icon icon-{{ item.type.lower() }} {% if selected.lower() == item.name.lower() %}selected{% endif %}'>
-                            <span>{{ item.name }}</span>
-                        </a>
-                    </li>
-                    {% endfor %}
-                    {% endif %}
-                </ul>
-            </li>
         </ul>
-    </header>
+    </nav>
+    {% if not video_title %}
+    <input type="checkbox" id="side-menu" style="display:none;" />
+    <div class="side-menu-overlay">
+        <label for="side-menu">
+            <ul class="side-menu-list">
+                <li class="list-item-header">
+                Library
+                </li>
+                {% for item in library %}
+                <li class="item">
+                    <a href="/library/{{ item.name.lower() }}/">
+                        {{ item.name }}
+                    </a>
+                </li>
+                {% endfor %}
+                 <li class="list-item-header">
+                Settings
+                </li>
+                 <li class="item">
+                    <a href="/scan_library">
+                        Scan library
+                    </a>
+                </li>
+            </ul>
+        </label>
+    </div>
+    {% endif %}
+</header>

@@ -2,8 +2,10 @@
 
 {% block content_section %}
 {% if media_filters %}
-<nav class="media-filters">
-    <ul>
+
+<div class="container media-filters">
+<h2 class="subheader">Filters</h2>
+    <ul class="button-list">
         {% if media_filters.orderby %}
         <li class="sort-filter">
             <form method="post">
@@ -83,6 +85,6 @@
         </script> #}
         {% endif %}
     </ul>
-</nav>
+</div>
 {% endif %}
 {% endblock %}

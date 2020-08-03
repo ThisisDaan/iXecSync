@@ -111,6 +111,7 @@ def media(request, library_name, genre, **context):
         return default_render_template(
             "library/pagination-j2.html",
             selected=library_name,
+            library_name=library_name,
             media=media_pagination,
             media_filters=media_filters,
             goback=(genre),

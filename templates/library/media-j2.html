@@ -3,6 +3,8 @@
 {% block content_section %}
 {{ super() }}
 {% if media %}
+<div class="container">
+<h2 class="subheader">{{ library_name }}</h2>
 <ul id="media" class="media">
     {% for item in media %}
 
@@ -16,6 +18,7 @@
 
     {% endfor %}
 </ul>
+</div>
 {% else %}
 <div class="container">
 <p><strong>No items match your search</strong></p>

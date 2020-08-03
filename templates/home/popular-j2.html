@@ -1,9 +1,22 @@
 {% extends "base/library_base-j2.html" %}
 
 {% block content_section %}
+
+{% if library %}
+<section class="container">
+<h2 class="subheader">Library</h2>
+  <div class="button-list">
+    {% for item in library %}
+        <a href='/library/{{ item.name.lower() }}/' class="button theme">{{ item.name }}</a>
+    {% endfor %}
+    </div>
+</section>
+ {% endif %}
+
+
 {% if movie %}
 <section class="container">
-    <h2>Popular Movies</h2>
+    <h2 class="subheader">Popular Movies</h2>
     <ul id="media" class="media">
         {% for item in movie %}
 
@@ -30,7 +43,7 @@
 
 {% if tvshow %}
 <section class="container">
-    <h2>Popular TV Shows</h2>
+    <h2 class="subheader">Popular TV Shows</h2>
     <ul id="media" class="media">
         {% for item in tvshow %}
 
