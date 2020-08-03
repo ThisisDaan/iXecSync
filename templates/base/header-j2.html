@@ -2,10 +2,15 @@
     <nav class='nav horizontal'>
         <ul>
             <li>
-                <a class="item" href="javascript:window.history.back()">
+                <a class="item{% if goback == False %} disabled{% endif %}" href="javascript:window.history.back()">
                 <i class="icon icon-back"></i>
                 </a>
             </li>
+            {# <li style="margin-right: auto;">
+                <a class="item{% if goback == False %} disabled{% endif %}" href="/">
+                <i class="icon icon-home"></i>
+                </a>
+            </li> #}
             {% if video_title %}
                 <li>
                     <h1 class="video-title">{{ video_title }}</h1>
@@ -16,25 +21,26 @@
                 <i class="logo"></i>
                 </a>
             </li>
-            <li>
-                <label  class="item" for="side-menu">
-                <i class="icon icon-menu"></i>
-                </label>
+            <li class="item">
+                <i class="icon icon-menu" onclick="menu()"></i>
             </li>
+            <script>
+                function menu() {
+                    $( ".side-menu-overlay" ).toggleClass("active");
+                }
+            </script>
             {% endif %}
         </ul>
     </nav>
     {% if not video_title %}
-    <input type="checkbox" id="side-menu" style="display:none;" />
-    <div class="side-menu-overlay">
-        <label for="side-menu">
+    <div class="side-menu-overlay" onclick="menu()">
             <ul class="side-menu-list">
                 <li class="list-item-header">
                 Library
                 </li>
                 {% for item in library %}
                 <li class="item">
-                    <a href="/library/{{ item.name.lower() }}/">
+                    <a class="icon icon-{{ item.type.lower() }}" href="/library/{{ item.name.lower() }}/">
                         {{ item.name }}
                     </a>
                 </li>
@@ -43,12 +49,11 @@
                 Settings
                 </li>
                  <li class="item">
-                    <a href="/scan_library">
+                    <a class="icon icon-scan" href="/scan_library">
                         Scan library
                     </a>
                 </li>
             </ul>
-        </label>
-    </div>
+        </div>
     {% endif %}
 </header>

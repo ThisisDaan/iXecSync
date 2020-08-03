@@ -82,6 +82,7 @@ def scan():
 
     # At this point all the threads are closed so we should be 100% scanned.
     scanned_items = total_items
+    threads.clear()
     time.sleep(60)
     scanning = False
     total_items = 0
@@ -103,6 +104,29 @@ def get_supported_files(directory):
     ]
 
     return supported_files
+
+
+class scan_library:
+    def __init__(self, dir, content_type):
+        self.dir = dir
+        self.content_type = content_type
+
+    def scan(self):
+        self.get_files_in_dir()
+
+    def get_files_in_dir(self):
+
+        directory = Path(self.dir)
+
+        file_types = [".mp4", ".mkv"]
+
+        self.files = [
+            file
+            for file_type in file_types
+            for file in directory.rglob(f"*{file_type}")
+        ]
+
+        print(self.files)
 
 
 def scan_library_movie(library, genres):

@@ -354,7 +354,7 @@ def get_popular_movies():
 
     db.connection.close()
 
-    return sql_data_sorted
+    return sql_data_sorted[:18]
 
 
 def get_popular_tvshows():
@@ -394,4 +394,4 @@ def get_popular_tvshows():
 
     db.connection.close()
 
-    return sql_data_sorted
+    return sql_data_sorted[:18]

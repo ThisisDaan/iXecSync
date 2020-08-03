@@ -34,8 +34,8 @@ def get_media_filters(request, library_name, genre=None):
         "vote_average ASC",
         "release_date DESC",
         "release_date ASC",
-        "title ASC",
         "title DESC",
+        "title ASC",
     ]
 
     try:
